@@ -9,9 +9,16 @@ import SwiftUI
 import CoreData
 
 struct ContentView: View {
+    @StateObject private var appState = AppState()
     var body: some View {
-        NavigationStack {
-            RoleSelectionView()
+        if appState.currentUser != nil {
+            Text("Hello Admin SWU!")
+                .navigationTitle("Dashboard")
+        } else {
+            NavigationStack {
+                RoleSelectionView()
+                    .environmentObject(appState)
+            }
         }
     }
 }
