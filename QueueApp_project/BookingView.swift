@@ -1,8 +1,13 @@
-//
-//  BookingView.swift
-//  QueueApp_project
-//
-//  Created by Thanapong Yamkamol on 12/11/2568 BE.
-//
+import SwiftUI
 
-import Foundation
+struct BookingView: View {
+    var body: some View {
+        Text("This is the Booking View")
+            .font(.largeTitle)
+            .padding()
+    }
+}
+
+#Preview {
+    BookingView()
+}

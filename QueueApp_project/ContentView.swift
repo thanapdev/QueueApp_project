@@ -25,7 +25,7 @@ struct ContentView: View {
             }
         } else {
             NavigationStack {
-                RoleSelectionView()
+                ServiceView()
                     .environmentObject(appState)
             }
         }
@@ -37,3 +37,4 @@ struct ContentView_Previews: PreviewProvider {
         ContentView()
     }
 }
+
