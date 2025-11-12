@@ -49,6 +49,26 @@ struct QueueView: View {
             .foregroundColor(.white)
             .cornerRadius(10)
             .disabled(activity.queues.isEmpty || isCountingDown)
+            .confirmationDialog(
+                "เลือกการกระทำ",
+                isPresented: $showingCallOptions,
+                titleVisibility: .visible
+            ) {
+                Button("✅ มาแล้ว") {
+                    if !activity.queues.isEmpty {
+                        activity.queues.removeFirst()
+                    }
+                }
+                Button("⏳ ยังไม่มา") {
+                    isCountingDown = true
+                }
+                Button("⏭️ ข้ามคิว") {
+                    if !activity.queues.isEmpty {
+                        activity.queues.removeFirst()
+                    }
+                }
+                Button("ยกเลิก", role: .cancel) { }
+            }
 
             // ปุ่มเพิ่มคิว
             Button("เพิ่มคิว") {
@@ -105,24 +125,6 @@ struct QueueView: View {
                 }
                 .padding()
             }
-        }
-        .actionSheet(isPresented: $showingCallOptions) {
-            ActionSheet(title: Text("เลือกการกระทำ"), buttons: [
-                .default(Text("✅ มาแล้ว")) {
-                    if !activity.queues.isEmpty {
-                        activity.queues.removeFirst()
-                    }
-                },
-                .default(Text("⏳ ยังไม่มา")) {
-                    isCountingDown = true
-                },
-                .default(Text("⏭️ ข้ามคิว")) {
-                    if !activity.queues.isEmpty {
-                        activity.queues.removeFirst()
-                    }
-                },
-                .cancel()
-            ])
         }
         .sheet(isPresented: $isCountingDown) {
             CountdownModal(
