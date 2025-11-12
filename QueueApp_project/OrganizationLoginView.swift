@@ -5,7 +5,6 @@
 //  Created by Thanapong Yamkamol on 11/11/2568 BE.
 //
 
-
 import SwiftUI
 
 struct OrganizationLoginView: View {
@@ -17,7 +16,7 @@ struct OrganizationLoginView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Loing (Admin)")
+            Text("Login (Admin)")
                 .font(.title2)
                 .fontWeight(.bold)
 
@@ -30,8 +29,16 @@ struct OrganizationLoginView: View {
             Button("Login") {
                 if appState.loginAsOrganization(username: username, password: password) {
                     dismiss()
+                } else {
+                    // Can show an alert, but using print for the demo
+                    print("Login failed")
                 }
             }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
             .disabled(username.isEmpty || password.isEmpty)
         }
         .padding()

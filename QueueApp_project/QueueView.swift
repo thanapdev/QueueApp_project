@@ -1,0 +1,209 @@
+//
+//  AppState.swift
+//  term_projecct
+//
+//  Created by Thanapong Yamkamol on 7/11/2568 BE.
+//
+
+import SwiftUI
+
+struct QueueView: View {
+    @Binding var activity: Activity
+    @State private var showingAddQueue = false
+    @State private var newCustomerName = ""
+    @State private var showingCallOptions = false
+    @State private var isCountingDown = false // ควบคุมการเปิด Modal
+    @State private var showTimeoutMessage = false
+
+    var body: some View {
+        VStack(spacing: 20) {
+            // ส่วนแสดงคิวถัดไป
+            if let next = activity.queues.first {
+                VStack {
+                    Text("Next Queue")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    Text("#\(next.number) - \(next.studentName)")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .padding()
+                        .background(Color.green.opacity(0.2))
+                        .cornerRadius(10)
+                }
+                .padding(.bottom)
+            } else {
+                Text("No queues yet")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                    .padding(.bottom)
+            }
+
+            // ปุ่มเรียกคิว
+            Button("Call Next Queue") {
+                if !activity.queues.isEmpty {
+                    showingCallOptions = true
+                }
+            }
+            .padding()
+            .background(Color.red)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .disabled(activity.queues.isEmpty || isCountingDown)
+            .confirmationDialog(
+                "Select Action",
+                isPresented: $showingCallOptions,
+                titleVisibility: .visible
+            ) {
+                Button("✅ Arrived") {
+                    if !activity.queues.isEmpty {
+                        activity.queues.removeFirst()
+                    }
+                }
+                Button("⏳ Not Here Yet") {
+                    isCountingDown = true
+                }
+                Button("⏭️ Skip Queue") {
+                    if !activity.queues.isEmpty {
+                        activity.queues.removeFirst()
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            }
+
+            // ปุ่มเพิ่มคิว
+            Button("Add Queue") {
+                showingAddQueue = true
+            }
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+
+            // รายการคิว
+            List(activity.queues) { item in
+                HStack {
+                    Text("#\(item.number)")
+                    Text("\(item.studentName) (\(item.studentId))")
+                }
+            }
+            .frame(maxHeight: 200)
+
+            Spacer()
+        }
+        .navigationTitle(activity.name)
+        .sheet(isPresented: $showingAddQueue) {
+            NavigationStack {
+                VStack {
+                    Text("Add New Queue")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .padding()
+
+                    TextField("Customer Name", text: $newCustomerName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+
+                    HStack {
+                        Button("Cancel") { showingAddQueue = false }
+                        Spacer()
+                        Button("Add") {
+                            if !newCustomerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                let newItem = QueueItem(
+                                    studentId: "MANUAL-\(activity.nextQueueNumber)",
+                                    studentName: newCustomerName,
+                                    number: activity.nextQueueNumber
+                                )
+                                activity.queues.append(newItem)
+                                activity.nextQueueNumber += 1
+                                newCustomerName = ""
+                            }
+                            showingAddQueue = false
+                        }
+                        .disabled(newCustomerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                    .padding()
+                }
+                .padding()
+            }
+        }
+        .sheet(isPresented: $isCountingDown) {
+            CountdownModal(
+                isActive: $isCountingDown,
+                onTimeout: {
+                    if !activity.queues.isEmpty {
+                        activity.queues.removeFirst() // ✅ ลบเพียงครั้งเดียว
+                    }
+                },
+                onCancel: {
+                    // ไม่ทำอะไร — ไม่ลบคิว
+                }
+            )
+            .presentationDetents([.medium])
+        }
+        .alert("Too Late!", isPresented: $showTimeoutMessage, actions: {
+            Button("OK") {
+                showTimeoutMessage = false
+            }
+        }, message: {
+            Text("Customer did not arrive in time. The queue has been skipped.")
+        })
+    }
+}
+
+// ✅ Modal สำหรับนับถอยหลัง — จัดการ Timer และลบคิวด้วยตัวเอง
+struct CountdownModal: View {
+    @Binding var isActive: Bool
+    let onTimeout: () -> Void
+    let onCancel: () -> Void
+
+    @State private var seconds = 10
+    @State private var timer: Timer?
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Not Here Yet?")
+                .font(.title)
+                .fontWeight(.bold)
+
+            Text("Time left: \(seconds) seconds")
+                .font(.headline)
+
+            ProgressView(value: Double(seconds), total: 10.0)
+                .tint(.orange)
+                .padding()
+
+            Text("If they don't arrive, the queue will be skipped automatically.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Button("Cancel") {
+                timer?.invalidate()
+                onCancel()
+                isActive = false
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding()
+        .onAppear {
+            startTimer()
+        }
+        .onDisappear {
+            timer?.invalidate()
+            if seconds == 0 {
+                onTimeout()
+            }
+        }
+    }
+
+    private func startTimer() {
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            if seconds > 0 {
+                seconds -= 1
+            } else {
+                timer?.invalidate()
+                isActive = false // ปิด Modal หลังจากหมดเวลา
+                onTimeout()
+            }
+        }
+    }
+}

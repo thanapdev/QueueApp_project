@@ -11,10 +11,12 @@ import CoreData
 struct ContentView: View {
     @StateObject private var appState = AppState()
     var body: some View {
-        if appState.currentUser != nil {
-            Text("Hello Admin SWU!")
-                .navigationTitle("Dashboard")
-        } else {
+        if appState.currentUser?.role == .organization {
+                        NavigationStack {
+                            ActivityListView()
+                                .environmentObject(appState)
+                        }
+                    } else {
             NavigationStack {
                 RoleSelectionView()
                     .environmentObject(appState)
