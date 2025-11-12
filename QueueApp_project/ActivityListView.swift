@@ -1,11 +1,4 @@
 //
-//  ActivityListView.swift
-//  QueueApp_project
-//
-//  Created by Thanapong Yamkamol on 12/11/2568 BE.
-//
-
-//
 //  AppState.swift
 //  term_projecct
 //
@@ -19,16 +12,16 @@ struct ActivityListView: View {
     @EnvironmentObject var appState: AppState
     @State private var showingAddActivity = false
     @State private var newActivityName = ""
-    @State private var showDeleteConfirmation = false
-    @State private var deleteIndex: Int? = nil
+    @State private var showDeleteConfirmation = false // ✅ ใช้สำหรับ Alert
+    @State private var deleteIndex: Int? = nil // เก็บ index ที่จะลบ
 
     var body: some View {
         VStack {
             HStack {
-                Text("Hello, \(appState.currentUser?.name ?? "Admin")")
+                Text("สวัสดี, \(appState.currentUser?.name ?? "ผู้ดูแล")")
                     .font(.headline)
                 Spacer()
-                Button("Logout") {
+                Button("ออกจากระบบ") {
                     appState.logout()
                 }
                 .font(.caption)
@@ -39,10 +32,10 @@ struct ActivityListView: View {
 
             if appState.activities.isEmpty {
                 VStack {
-                    Text("No activities yet")
+                    Text("ยังไม่มีกิจกรรม")
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    Button("Create new activity") {
+                    Button("สร้างกิจกรรมใหม่") {
                         showingAddActivity = true
                     }
                     .padding()
@@ -71,26 +64,26 @@ struct ActivityListView: View {
                         }
                     }
                     ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Add") {
+                        Button("เพิ่ม") {
                             showingAddActivity = true
                         }
                     }
                 }
             }
         }
-        .navigationTitle("Your Activities")
+        .navigationTitle("กิจกรรมของคุณ")
         .sheet(isPresented: $showingAddActivity) {
             NavigationStack {
                 VStack {
-                    TextField("Activity Name", text: $newActivityName)
+                    TextField("ชื่อกิจกรรม", text: $newActivityName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
                     HStack {
-                        Button("Cancel") {
+                        Button("ยกเลิก") {
                             showingAddActivity = false
                         }
                         Spacer()
-                        Button("Create") {
+                        Button("สร้าง") {
                             if !newActivityName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 appState.activities.append(Activity(name: newActivityName))
                                 newActivityName = ""
@@ -101,16 +94,16 @@ struct ActivityListView: View {
                     }
                     .padding()
                 }
-                .navigationTitle("Create Activity")
+                .navigationTitle("สร้างกิจกรรม")
             }
         }
-        
-        .alert("Confirm deletion?", isPresented: $showDeleteConfirmation, actions: {
-            Button("Cancel", role: .cancel) {
+        // ✅ Alert ยืนยันการลบ
+        .alert("ยืนยันการลบ?", isPresented: $showDeleteConfirmation, actions: {
+            Button("ยกเลิก", role: .cancel) {
                 showDeleteConfirmation = false
                 deleteIndex = nil
             }
-            Button("Delete", role: .destructive) {
+            Button("ลบ", role: .destructive) {
                 if let index = deleteIndex {
                     appState.activities.remove(at: index)
                 }
@@ -119,12 +112,12 @@ struct ActivityListView: View {
             }
         }, message: {
             if let index = deleteIndex {
-                Text("Are you sure you want to delete activity \"\(appState.activities[index].name)\"? \nAll queues will be lost!")
+                Text("คุณแน่ใจหรือไม่ว่าจะลบกิจกรรม \"\(appState.activities[index].name)\"? \nคิวทั้งหมดจะหายไปด้วย!")
             }
         })
     }
 
-    
+    // ✅ ฟังก์ชันลบกิจกรรม — แสดง Alert ก่อนลบ
     func deleteActivities(offsets: IndexSet) {
         if let index = offsets.first {
             deleteIndex = index

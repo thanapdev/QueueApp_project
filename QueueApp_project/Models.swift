@@ -1,8 +1,8 @@
 //
 //  Models.swift
-//  QueueApp_project
+//  term_projecct
 //
-//  Created by Thanapong Yamkamol on 11/11/2568 BE.
+//  Created by Thanapong Yamkamol on 7/11/2568 BE.
 //
 
 import Foundation
@@ -12,14 +12,14 @@ enum UserRole {
     case student
 }
 
-struct Activity: Identifiable {
+struct Activity: Identifiable, Equatable {
     let id = UUID()
     var name: String
     var queues: [QueueItem] = []
     var nextQueueNumber = 1
 }
 
-struct QueueItem: Identifiable {
+struct QueueItem: Identifiable, Equatable {
     let id = UUID()
     let studentId: String
     let studentName: String

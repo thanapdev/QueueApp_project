@@ -1,8 +1,8 @@
 //
-//  OrganizationLoginView.swift
-//  QueueApp_project
+//  AppState.swift
+//  term_projecct
 //
-//  Created by Thanapong Yamkamol on 11/11/2568 BE.
+//  Created by Thanapong Yamkamol on 7/11/2568 BE.
 //
 
 import SwiftUI
@@ -16,22 +16,22 @@ struct OrganizationLoginView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Login (Admin)")
+            Text("เข้าสู่ระบบ (องค์กร)")
                 .font(.title2)
                 .fontWeight(.bold)
 
-            TextField("Username", text: $username)
+            TextField("ชื่อผู้ใช้", text: $username)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
 
-            SecureField("Password", text: $password)
+            SecureField("รหัสผ่าน", text: $password)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
 
-            Button("Login") {
+            Button("เข้าสู่ระบบ") {
                 if appState.loginAsOrganization(username: username, password: password) {
                     dismiss()
                 } else {
-                    // Can show an alert, but using print for the demo
-                    print("Login failed")
+                    // สามารถแสดง alert ได้ แต่ demo ใช้ print ไปก่อน
+                    print("ล็อกอินไม่สำเร็จ")
                 }
             }
             .padding()

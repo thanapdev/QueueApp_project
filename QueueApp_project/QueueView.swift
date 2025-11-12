@@ -20,7 +20,7 @@ struct QueueView: View {
             // ส่วนแสดงคิวถัดไป
             if let next = activity.queues.first {
                 VStack {
-                    Text("Next Queue")
+                    Text("คิวถัดไป")
                         .font(.headline)
                         .foregroundColor(.secondary)
                     Text("#\(next.number) - \(next.studentName)")
@@ -32,14 +32,14 @@ struct QueueView: View {
                 }
                 .padding(.bottom)
             } else {
-                Text("No queues yet")
+                Text("ยังไม่มีคิว")
                     .font(.headline)
                     .foregroundColor(.secondary)
                     .padding(.bottom)
             }
 
             // ปุ่มเรียกคิว
-            Button("Call Next Queue") {
+            Button("เรียกคิวถัดไป") {
                 if !activity.queues.isEmpty {
                     showingCallOptions = true
                 }
@@ -49,29 +49,9 @@ struct QueueView: View {
             .foregroundColor(.white)
             .cornerRadius(10)
             .disabled(activity.queues.isEmpty || isCountingDown)
-            .confirmationDialog(
-                "Select Action",
-                isPresented: $showingCallOptions,
-                titleVisibility: .visible
-            ) {
-                Button("✅ Arrived") {
-                    if !activity.queues.isEmpty {
-                        activity.queues.removeFirst()
-                    }
-                }
-                Button("⏳ Not Here Yet") {
-                    isCountingDown = true
-                }
-                Button("⏭️ Skip Queue") {
-                    if !activity.queues.isEmpty {
-                        activity.queues.removeFirst()
-                    }
-                }
-                Button("Cancel", role: .cancel) { }
-            }
 
             // ปุ่มเพิ่มคิว
-            Button("Add Queue") {
+            Button("เพิ่มคิว") {
                 showingAddQueue = true
             }
             .padding()
@@ -94,19 +74,19 @@ struct QueueView: View {
         .sheet(isPresented: $showingAddQueue) {
             NavigationStack {
                 VStack {
-                    Text("Add New Queue")
+                    Text("เพิ่มคิวใหม่")
                         .font(.title2)
                         .fontWeight(.bold)
                         .padding()
 
-                    TextField("Customer Name", text: $newCustomerName)
+                    TextField("ชื่อลูกค้า", text: $newCustomerName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
 
                     HStack {
-                        Button("Cancel") { showingAddQueue = false }
+                        Button("ยกเลิก") { showingAddQueue = false }
                         Spacer()
-                        Button("Add") {
+                        Button("เพิ่ม") {
                             if !newCustomerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 let newItem = QueueItem(
                                     studentId: "MANUAL-\(activity.nextQueueNumber)",
@@ -126,6 +106,24 @@ struct QueueView: View {
                 .padding()
             }
         }
+        .actionSheet(isPresented: $showingCallOptions) {
+            ActionSheet(title: Text("เลือกการกระทำ"), buttons: [
+                .default(Text("✅ มาแล้ว")) {
+                    if !activity.queues.isEmpty {
+                        activity.queues.removeFirst()
+                    }
+                },
+                .default(Text("⏳ ยังไม่มา")) {
+                    isCountingDown = true
+                },
+                .default(Text("⏭️ ข้ามคิว")) {
+                    if !activity.queues.isEmpty {
+                        activity.queues.removeFirst()
+                    }
+                },
+                .cancel()
+            ])
+        }
         .sheet(isPresented: $isCountingDown) {
             CountdownModal(
                 isActive: $isCountingDown,
@@ -140,12 +138,12 @@ struct QueueView: View {
             )
             .presentationDetents([.medium])
         }
-        .alert("Too Late!", isPresented: $showTimeoutMessage, actions: {
-            Button("OK") {
+        .alert("มาช้าเกินไป!", isPresented: $showTimeoutMessage, actions: {
+            Button("ตกลง") {
                 showTimeoutMessage = false
             }
         }, message: {
-            Text("Customer did not arrive in time. The queue has been skipped.")
+            Text("ลูกค้าไม่มาภายในเวลาที่กำหนด\nจึงข้ามคิวไปแล้ว")
         })
     }
 }
@@ -161,22 +159,22 @@ struct CountdownModal: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Not Here Yet?")
+            Text("ยังไม่มา?")
                 .font(.title)
                 .fontWeight(.bold)
 
-            Text("Time left: \(seconds) seconds")
+            Text("เหลือเวลา \(seconds) วินาที")
                 .font(.headline)
 
             ProgressView(value: Double(seconds), total: 10.0)
                 .tint(.orange)
                 .padding()
 
-            Text("If they don't arrive, the queue will be skipped automatically.")
+            Text("หากไม่มา จะข้ามคิวอัตโนมัติ")
                 .font(.caption)
                 .foregroundColor(.secondary)
 
-            Button("Cancel") {
+            Button("ยกเลิก") {
                 timer?.invalidate()
                 onCancel()
                 isActive = false
@@ -196,13 +194,15 @@ struct CountdownModal: View {
     }
 
     private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+        seconds = 10
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             if seconds > 0 {
                 seconds -= 1
             } else {
                 timer?.invalidate()
-                isActive = false // ปิด Modal หลังจากหมดเวลา
-                onTimeout()
+                DispatchQueue.main.async {
+                    isActive = false
+                }
             }
         }
     }
