@@ -103,6 +103,13 @@ struct LoginView: View {
                     .opacity(loginType == .organization ? 1 : 0.8) // Add opacity animation
                     .animation(.easeInOut, value: loginType)
                     
+                    // Register Link
+                    NavigationLink(destination: RegisterView()) {
+                        Text("Don't have an account? Register")
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.top, 10)
+                    
                     Spacer()
                 }
                 .padding()
@@ -118,7 +125,7 @@ struct LoginView: View {
     func login() {
         var success = false
         if loginType == .organization {
-            success = appState.loginAsOrganization(username: email, password: password)
+            success = appState.loginAsOrganization(username: email, passwordInput: password)
         } else {
             success = appState.loginAsStudent(studentId: email)
         }
@@ -141,9 +148,4 @@ struct LoginView: View {
             StudentActivityListView()
         }
     }
-}
-
-#Preview {
-    LoginView()
-        .environmentObject(AppState())
 }
