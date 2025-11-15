@@ -19,47 +19,6 @@ class AppState: ObservableObject {
         loadActivities()
     }
     
-    func loginAsOrganization(username: String, passwordInput: String) -> Bool {
-        // Dummy authentication logic for organization
-        if username == "admin" && passwordInput == "123456" {
-            currentUser = (role: .organization, name: "SWU Admin", id: "admin")
-            isLoggedIn = true
-            return true
-        }
-        return false
-    }
-    
-    func loginAsStudent(studentId: String) -> Bool {
-        // Query Firestore to check if the student ID exists and retrieve user data
-        db.collection("users")
-            .whereField("studentID", isEqualTo: studentId)
-            .getDocuments { (querySnapshot, error) in
-                if let error = error {
-                    print("Error getting documents: \(error)")
-                    // Handle the error appropriately, e.g., show an alert
-                    return
-                }
-                
-                guard let document = querySnapshot?.documents.first else {
-                    print("Student ID not found")
-                    // Handle the case where the student ID is not found, e.g., show an alert
-                    return
-                }
-                
-                // Retrieve user data from the document
-                let data = document.data()
-                let name = data["name"] as? String ?? ""
-                let roleString = data["role"] as? String ?? "student"
-                let role: UserRole = roleString == "organization" ? .organization : .student
-                
-                // Set the current user
-                self.currentUser = (role: role, name: name, id: studentId)
-                self.isLoggedIn = true
-            }
-        
-        return isLoggedIn // Return true if login is successful
-    }
-    
     func logout() {
         isLoggedIn = false
         currentUser = nil
@@ -122,7 +81,7 @@ class AppState: ObservableObject {
                          "name": name,
                          "studentID": studentID,
                          "email": email,
-                         "role": role == .student ? "student" : "organization"
+                         "role": role == .student ? "student" : "admin" // Store "admin" for admin role
                      ]
                      
                      self.db.collection("users").document(user.uid).setData(userData) { error in
@@ -142,4 +101,43 @@ class AppState: ObservableObject {
              }
          }
      }
+    
+    func loginAsStudent(studentID: String, password: String, completion: @escaping (Bool, String?) -> Void) {
+        // 1. Query Firestore to get the user's email based on studentID
+        db.collection("users")
+            .whereField("studentID", isEqualTo: studentID)
+            .getDocuments { (querySnapshot, error) in
+                if let error = error {
+                    print("Error getting documents: \(error)")
+                    completion(false, "Failed to retrieve user data.")
+                    return
+                }
+                
+                guard let document = querySnapshot?.documents.first else {
+                    print("Student ID not found")
+                    completion(false, "Invalid Student ID or Password.")
+                    return
+                }
+                
+                let data = document.data()
+                let email = data["email"] as? String ?? ""
+                let name = data["name"] as? String ?? ""
+                let roleString = data["role"] as? String ?? "student"
+                let role: UserRole = roleString == "admin" ? .organization : .student
+                
+                // 2. Use the email and password to sign in with Firebase Authentication
+                Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
+                    if let error = error {
+                        print("Error signing in: \(error.localizedDescription)")
+                        completion(false, "Invalid Student ID or Password.")
+                        return
+                    } else {
+                        // Sign in successful
+                        self.currentUser = (role: role, name: name, id: studentID)
+                        self.isLoggedIn = true
+                        completion(true, nil)
+                    }
+                }
+            }
+    }
 }

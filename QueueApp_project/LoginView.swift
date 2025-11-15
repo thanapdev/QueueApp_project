@@ -3,21 +3,15 @@ import FirebaseAuth
 
 struct LoginView: View {
     @EnvironmentObject var appState: AppState
-    @State private var email = ""
+    @State private var studentID = "" // Use studentID for both
     @State private var password = ""
     @State private var isLoggedIn = false
-    @State private var loginType: LoginType = .student // Default to student
     @State private var showAlert = false
     @State private var errorMessage = ""
     
     // SWU Colors
     let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
     let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
-    
-    enum LoginType {
-        case organization
-        case student
-    }
     
     var body: some View {
         NavigationView {
@@ -47,48 +41,26 @@ struct LoginView: View {
                         .foregroundColor(.black)
                         .padding(.bottom, 20)
                     
-                    // Login Type Picker
-                    Picker("Login As", selection: $loginType) {
-                        Text("Student").tag(LoginType.student)
-                        Text("SWU Admin").tag(LoginType.organization)
-                    }
-                    .pickerStyle(.segmented)
-                    .padding()
-                    .frame(width: 200)
-                    
                     // Input Fields
-                    if loginType == .organization {
-                        TextField("Email", text: $email)
-                            .padding()
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(.white.opacity(0.3), lineWidth: 1)
-                            )
-                            .foregroundColor(.black)
-                            .padding(.bottom, 10)
-                        
-                        SecureField("Password", text: $password)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(.white.opacity(0.3), lineWidth: 1)
-                            )
-                            .foregroundColor(.white)
-                            .padding(.bottom, 20)
-                    } else {
-                        TextField("Student ID", text: $email)
-                            .padding()
-                            .keyboardType(.numberPad)
-                            .autocapitalization(.none)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(.white.opacity(0.3), lineWidth: 1)
-                            )
-                            .foregroundColor(.white)
-                            .padding(.bottom, 20)
-                    }
+                    TextField("Student ID", text: $studentID) // Use studentID for both
+                        .padding()
+                        .keyboardType(.numberPad)
+                        .autocapitalization(.none)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(.white.opacity(0.3), lineWidth: 1)
+                        )
+                        .foregroundColor(.white)
+                        .padding(.bottom, 10)
+                    
+                    SecureField("Password", text: $password)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(.white.opacity(0.3), lineWidth: 1)
+                        )
+                        .foregroundColor(.white)
+                        .padding(.bottom, 20)
                     
                     // Login Button
                     Button("Login") {
@@ -100,8 +72,6 @@ struct LoginView: View {
                     .background(swuRed)
                     .cornerRadius(8)
                     .shadow(radius: 5)
-                    .opacity(loginType == .organization ? 1 : 0.8) // Add opacity animation
-                    .animation(.easeInOut, value: loginType)
                     
                     // Register Link
                     NavigationLink(destination: RegisterView()) {
@@ -116,27 +86,23 @@ struct LoginView: View {
                 .alert(isPresented: $showAlert) {
                     Alert(title: Text("Login Failed"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
                 }
-//                .navigationTitle("Login")
-//                .navigationBarTitleDisplayMode(.inline) // Force title to be inline
             }
+            .fullScreenCover(isPresented: $isLoggedIn, content: {
+                destinationView()
+            })
         }
     }
     
     func login() {
-        var success = false
-        if loginType == .organization {
-            success = appState.loginAsOrganization(username: email, passwordInput: password)
-        } else {
-            success = appState.loginAsStudent(studentId: email)
-        }
-        
-        if success {
-            withAnimation {
-                isLoggedIn = true
+        appState.loginAsStudent(studentID: studentID, password: password) { success, message in
+            if success {
+                withAnimation {
+                    isLoggedIn = true
+                }
+            } else {
+                errorMessage = message ?? "Invalid credentials. Please try again."
+                showAlert = true
             }
-        } else {
-            errorMessage = "Invalid credentials. Please try again."
-            showAlert = true
         }
     }
     
