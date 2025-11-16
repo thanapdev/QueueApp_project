@@ -27,11 +27,11 @@ struct ActivityListView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background (Gradient From LoginView.swift)
+                // Background (Gradient จาก LoginView.swift)
                 LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
                     .edgesIgnoringSafeArea(.all)
 
-                // Shape Background (Circles From LoginView.swift)
+                // Shape Background (Circles จาก LoginView.swift)
                 GeometryReader { geometry in
                     Circle()
                         .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
@@ -82,35 +82,10 @@ struct ActivityListView: View {
                         }
                         .padding()
                     } else {
-                                        // ⭐️ 1. เปลี่ยนจาก List เป็น ScrollView + LazyVStack
-                                        ScrollView {
-                                            LazyVStack(spacing: 16) { // 👈 ใช้ spacing 16 แบบเดียวกับ StudentView
-                                                ForEach(appState.activities.indices, id: \.self) { index in
-                                                    let activity = appState.activities[index]
-                                                    
-                                                    // ⭐️ 2. ใช้ NavigationLink ที่มี content เป็น HStack (เหมือน StudentView)
-                                                    NavigationLink(
-                                                        // ❗️ 3. ใช้ Destination เดิมของ Admin (QueueView)
-                                                        destination: QueueView(activity: .constant(activity))
-                                                            .environmentObject(appState) // 👈 อย่าลืม .environmentObject(appState)
-                                                    ) {
-                                                        // ⭐️ 4. เอาดีไซน์การ์ด Hstack สวยๆ จาก StudentView มาใส่
-                                                        HStack {
-                                                            Text(activity.name)
-                                                                .font(.title3)
-                                                                .fontWeight(.semibold)
-                                                                .foregroundColor(.black)
-                                                            Spacer()
-                                                            // ⭐️ 5. (Bonus) เพิ่ม Badge ให้ Admin ดูด้วยเลย!
-                                                            QueueCountBadge(activity: activity)
-                                                        }
-                                                        .padding()
-                                                        .background(.white)
-                                                        .cornerRadius(12)
-                                                        .shadow(radius: 3)
-                                                    }
-                                                    .buttonStyle(PlainButtonStyle()) // 👈 ใส่เพื่อให้สีตัวอักษรไม่เพี้ยน
-                                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) { // ⭐️ 6. ย้าย SwipeActions มาไว้ที่นี่
+                                        List {
+                                            ForEach(appState.activities.indices, id: \.self) { index in
+                                                ActivityNavigationLink(activity: appState.activities[index])
+                                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                                         Button {
                                                             editIndex = index
                                                             editActivityName = appState.activities[index].name
@@ -127,18 +102,18 @@ struct ActivityListView: View {
                                                             Label("Delete", systemImage: "trash")
                                                         }
                                                     }
-                                                    // ⭐️ 7. เราไม่ต้องใช้ .listRowBackground() อีกต่อไป
-                                                }
+                                                    .listRowBackground(Color.white.opacity(0.7)) // <- คุณทำส่วนนี้ไว้ดีแล้วครับ
                                             }
-                                            .padding() // 👈 ใส่ padding ภายนอก (เหมือน StudentView)
                                         }
-                                        .toolbar { // 👈 Toolbar ยังอยู่เหมือนเดิม
-                                            ToolbarItem(placement: .navigationBarTrailing) {
-                                                if !appState.activities.isEmpty {
-                                                    EditButton()
-                                                        .foregroundColor(.black)
-                                                }
-                                            }
+                                        .scrollContentBackground(.hidden) // ⬅️ ✨ 1. ซ่อนพื้นหลังทึบของ List
+                                        .listStyle(.insetGrouped)         // ⬅️ ✨ 2. ทำให้ขอบมนและดูเหมือนการ์ด
+                                        .toolbar {
+//                                            ToolbarItem(placement: .navigationBarTrailing) {
+//                                                if !appState.activities.isEmpty {
+//                                                    EditButton()
+//                                                        .foregroundColor(.black)
+//                                                }
+//                                            }
                                             ToolbarItem(placement: .navigationBarLeading) {
                                                 Button("เพิ่ม") {
                                                     showingAddActivity = true
@@ -148,8 +123,8 @@ struct ActivityListView: View {
                                         }
                                     }
 
-                                    Spacer() // Push content to the top
-                                }
+                    Spacer() // Push content to the top
+                }
             }
             .navigationTitle("กิจกรรมของคุณ")
             .sheet(isPresented: $showingAddActivity) {

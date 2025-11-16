@@ -27,24 +27,23 @@ struct QueueView: View {
     }
 
     var body: some View {
-        ZStack {
-            // Background (Gradient From LoginView.swift)
-            LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                .edgesIgnoringSafeArea(.all)
+            ZStack {
+                // Background (Gradient จาก LoginView.swift)
+                LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
+                    .edgesIgnoringSafeArea(.all)
 
-            // Shape Background (Circles From LoginView.swift)
-            GeometryReader { geometry in
-                Circle()
-                    .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                    .frame(width: 200, height: 200)
-                    .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
+                // Shape Background (Circles จาก LoginView.swift)
+                GeometryReader { geometry in
+                    Circle()
+                        .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
+                        .frame(width: 200, height: 200)
+                        .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
 
-                Circle()
-                    .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                    .frame(width: 200, height: 200)
-                    .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
-            }
-
+                    Circle()
+                        .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
+                        .frame(width: 200, height: 200)
+                        .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
+                }
             VStack(spacing: 16) { // 👈 ปรับ spacing เล็กน้อย
                             // ⭐️ 1. ส่วนแสดงคิวถัดไป (ปรับเป็นการ์ดขาว)
                             if let next = nextQueueItem {
@@ -116,13 +115,18 @@ struct QueueView: View {
                             .cornerRadius(10)
                             .padding(.horizontal) // 👈 เว้นขอบซ้ายขวา
 
-                            // ⭐️ 3. รายการคิว (เปลี่ยนจาก List เป็น ScrollView)
-                            Text("คิวที่กำลังรอ")
-                                .font(.headline)
-                                .foregroundColor(.black)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal)
-                                .padding(.top, 8)
+                            // ⭐️ แสดงจำนวนคิวที่กำลังรอ
+                            HStack {
+                                Text("คิวที่กำลังรอ")
+                                    .font(.headline)
+                                    .foregroundColor(.black)
+                                Spacer()
+                                Text("(\(queueItems.count) คิว)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 8)
                             
                             ScrollView {
                                 LazyVStack(spacing: 12) {
@@ -247,6 +251,9 @@ struct QueueView: View {
     private func loadQueueItems() {
         appState.loadQueueItems(activity: activity) { loadedQueueItems in
             queueItems = loadedQueueItems
+            // Also update the activity's queue count when local items are loaded/filtered
+            activity.queueCount = loadedQueueItems.count
+            appState.updateActivity(activity: activity)
         }
     }
 
@@ -259,7 +266,13 @@ struct QueueView: View {
         var updatedItem = firstQueueItem
         updatedItem.status = status
         appState.updateQueueItemStatus(activity: activity, queueItem: updatedItem, status: status)
-        queueItems.removeFirst()
+        
+        // Remove the item locally and update the activity's queue count
+        if let index = queueItems.firstIndex(where: { $0.id == firstQueueItem.id }) {
+            queueItems.remove(at: index)
+            activity.queueCount = queueItems.count // Update local activity object immediately
+            appState.updateActivity(activity: activity) // Save updated queue count to Firestore
+        }
         activity.currentQueueNumber = nil
         appState.updateActivity(activity: activity) // Update currentQueueNumber
     }
@@ -327,9 +340,11 @@ struct CountdownModal: View {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             if seconds > 0 {
                 seconds -= 1
-            } else {
-                timer?.invalidate()
-                DispatchQueue.main.async {
+            }
+            // Use DispatchQueue.main.async to update isActive on the main thread
+            DispatchQueue.main.async {
+                if seconds == 0 {
+                    timer?.invalidate()
                     isActive = false
                 }
             }
