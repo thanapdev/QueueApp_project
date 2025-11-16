@@ -83,7 +83,7 @@ struct StudentActivityListView: View {
                                 ForEach(appState.activities.indices, id: \.self) { index in
                                     let activity = appState.activities[index]
                                     NavigationLink(
-                                        destination: StudentQueueJoinView(activityIndex: index).environmentObject(appState)
+                                        destination: StudentQueueJoinView(activity: activity).environmentObject(appState)
                                     ) {
                                         HStack {
                                             Text(activity.name)
@@ -92,7 +92,7 @@ struct StudentActivityListView: View {
                                                 .foregroundColor(.black) // Adjusted color
                                             Spacer()
                                             // ✅ แสดงจำนวนคิว + สีตามสถานะ
-                                            QueueCountBadge(count: activity.queues.count)
+                                            QueueCountBadge(activity: activity)
                                         }
                                         .padding()
                                         .background(.white)
@@ -112,15 +112,18 @@ struct StudentActivityListView: View {
             .navigationTitle("กิจกรรม")
             .navigationBarTitleDisplayMode(.inline) // Ensure title is inline
         }
+        .onAppear {
+            appState.loadActivities()
+        }
     }
 }
 
 // ✅ สร้าง View แยกสำหรับแสดง Badge จำนวนคิว
 struct QueueCountBadge: View {
-    let count: Int
+    @ObservedObject var activity: Activity
     
     var body: some View {
-        Text("(\(count) คิว)")
+        Text("(\(activity.queues.count) คิว)")
             .font(.caption)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -130,7 +133,7 @@ struct QueueCountBadge: View {
     }
     
     private var queueColor: Color {
-        switch count {
+        switch activity.queues.count {
         case 0:
             return Color.green.opacity(0.7)
         case 1...3:

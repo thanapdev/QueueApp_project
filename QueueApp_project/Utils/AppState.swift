@@ -8,6 +8,7 @@ class AppState: ObservableObject {
     @Published var activities: [Activity] = []
 
     private let db = Firestore.firestore()
+    private var activityListeners: [UUID: ListenerRegistration] = [:]
 
     enum UserRole {
         case admin
@@ -52,7 +53,8 @@ class AppState: ObservableObject {
 
     // Function to load activities from Firestore
     func loadActivities() {
-        db.collection("activities").getDocuments() { (querySnapshot, err) in
+        db.collection("activities").getDocuments() { [weak self] (querySnapshot, err) in
+            guard let self = self else { return }
             if let err = err {
                 print("Error getting documents: \(err)")
             } else {
@@ -124,6 +126,7 @@ class AppState: ObservableObject {
                     print("Queue item added for activity \(activity.name)")
                     // Update queue count in Activity
                     self.updateQueueCount(activity: activity, increment: true)
+                    self.loadActivities()
                 }
             }
     }
@@ -174,6 +177,7 @@ class AppState: ObservableObject {
                     print("Queue item status updated for \(queueItem.studentName)")
                     // Update current queue number in Activity when status is updated
                     self.updateCurrentQueueNumber(activity: activity, queueItem: queueItem)
+                    self.loadActivities()
                 }
             }
     }
@@ -297,4 +301,48 @@ class AppState: ObservableObject {
             }
     }
 
+    // Function to start listening for queue item changes
+    func startListening(to activity: Activity) {
+           guard activityListeners[activity.id] == nil else { return }
+
+           let listener = db.collection("activities")
+               .document(activity.id.uuidString)
+               .collection("queues")
+               .addSnapshotListener { [weak self] querySnapshot, error in
+                   guard let self = self else { return }
+                   guard let documents = querySnapshot?.documents else {
+                       print("Error fetching documents: \(error?.localizedDescription ?? "Unknown error")")
+                       return
+                   }
+
+                   let queueItems = documents.compactMap { document in
+                       let data = document.data()
+                       let studentName = data["studentName"] as? String ?? ""
+                       let number = data["number"] as? Int ?? 0
+                       let studentId = data["studentId"] as? String ?? ""
+                       let status = data["status"] as? String // Load status
+                       if let idString = document.documentID as String?, let id = UUID(uuidString: idString) {
+                           return QueueItem(id: id, studentId: studentId, studentName: studentName, number: number, status: status)
+                       } else {
+                           return nil
+                       }
+                   }.filter { item in
+                       item.status == nil // Keep only items without a status (nil status)
+                   }
+
+                   DispatchQueue.main.async {
+                       activity.queues = queueItems
+                   }
+               }
+
+           activityListeners[activity.id] = listener
+       }
+
+    // Function to stop listening for queue item changes
+    func stopListening(to activity: Activity) {
+        if let listener = activityListeners[activity.id] {
+            listener.remove()
+            activityListeners.removeValue(forKey: activity.id)
+        }
+    }
 }

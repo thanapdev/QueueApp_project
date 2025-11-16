@@ -2,20 +2,13 @@ import SwiftUI
 
 struct StudentQueueJoinView: View {
     @EnvironmentObject var appState: AppState
-    let activityIndex: Int
+    @ObservedObject var activity: Activity
 
     @State private var isJoined = false
 
     // SWU Colors (From StudentActivityListView.swift)
     let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
     let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
-
-    var activity: Activity? { // Make activity an optional
-        guard activityIndex >= 0 && activityIndex < appState.activities.count else {
-            return nil // Return nil if the index is out of bounds
-        }
-        return appState.activities[activityIndex]
-    }
 
     var body: some View {
         ZStack {
@@ -36,101 +29,125 @@ struct StudentQueueJoinView: View {
                     .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
             }
 
-            if let activity = activity { // Check if activity is not nil
-                VStack(spacing: 24) {
-                    Text("กิจกรรม: \(activity.name)")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.black)
+            VStack(spacing: 24) {
+                Text("กิจกรรม: \(activity.name)")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
 
-                    if isJoined {
-                        if let myQueue = activity.queues.first(where: { $0.studentId == appState.currentUser?.id }) {
-                            if let myIndex = activity.queues.firstIndex(where: { $0.id == myQueue.id }) {
-                                let myPosition = myIndex + 1
-                                let queuesAhead = myIndex // คนข้างหน้า = จำนวนคิวที่ต้องรอ
+                if isJoined {
+                    if let myQueue = activity.queues.first(where: { $0.studentId == appState.currentUser?.id }) {
+                        if let myIndex = activity.queues.firstIndex(where: { $0.id == myQueue.id }) {
+                            let myPosition = myIndex + 1
+                            let queuesAhead = myIndex // คนข้างหน้า = จำนวนคิวที่ต้องรอ
 
-                                VStack(spacing: 16) {
-                                    // ✅ 1. อีกกี่คิวจะถึงเรา → เน้นสุด!
-                                    if queuesAhead > 0 {
-                                        VStack {
-                                            Text("อีก")
-                                                .font(.headline)
-                                                .foregroundColor(.secondary)
-                                            Text("\(queuesAhead) คิว")
-                                                .font(.system(size: 48, weight: .bold))
-                                                .foregroundColor(.blue)
-                                                .padding(.bottom, 4)
-                                            Text("จะถึงคิวคุณ")
-                                                .font(.headline)
-                                                .foregroundColor(.secondary)
-                                        }
-                                    } else {
-                                        // ✅ ถึงคิวแล้ว → แจ้งเตือนสวย ๆ
-                                        VStack {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .font(.system(size: 60))
-                                                .foregroundColor(.green)
-                                                .padding(.bottom, 8)
-                                            Text("ถึงคิวคุณแล้ว!")
-                                                .font(.largeTitle)
-                                                .fontWeight(.bold)
-                                                .foregroundColor(.green)
-                                                .multilineTextAlignment(.center)
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .background(Color.green.opacity(0.1))
-                                        .cornerRadius(16)
+                            VStack(spacing: 16) {
+                                // ✅ 1. อีกกี่คิวจะถึงเรา → เน้นสุด!
+                                if queuesAhead > 0 {
+                                    VStack {
+                                        Text("อีก")
+                                            .font(.headline)
+                                            .foregroundColor(.secondary)
+                                        Text("\(queuesAhead) คิว")
+                                            .font(.system(size: 48, weight: .bold))
+                                            .foregroundColor(.blue)
+                                            .padding(.bottom, 4)
+                                        Text("จะถึงคิวคุณ")
+                                            .font(.headline)
+                                            .foregroundColor(.secondary)
                                     }
+                                } else {
+                                    // ✅ ถึงคิวแล้ว → แจ้งเตือนสวย ๆ
+                                    VStack {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.system(size: 60))
+                                            .foregroundColor(.green)
+                                            .padding(.bottom, 8)
+                                        Text("ถึงคิวคุณแล้ว!")
+                                            .font(.largeTitle)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.green)
+                                            .multilineTextAlignment(.center)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.green.opacity(0.1))
+                                    .cornerRadius(16)
+                                }
 
-                                    // ✅ 2. คุณอยู่คิวที่ #\(myPosition)
-                                    Text("คุณอยู่คิวที่ #\(myPosition)")
-                                        .font(.headline)
-                                        .foregroundColor(.secondary)
+                                // ✅ 2. คุณอยู่คิวที่ #\(myPosition)
+                                Text("คุณอยู่คิวที่ #\(myPosition)")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+
+                                Button("ยกเลิกคิว") {
+                                    leaveQueue()
                                 }
                                 .padding()
-                                .background(.white) // Adding a background for better readability
+                                .background(swuRed) // Use SWU red for button
+                                .foregroundColor(.white)
                                 .cornerRadius(10)
-                                .shadow(radius: 3)
+                                .shadow(radius: 3) // Adding shadow for the button
                             }
+                            .padding()
+                            .background(.white) // Adding a background for better readability
+                            .cornerRadius(10)
+                            .shadow(radius: 3)
                         }
-                    } else {
-                        Button("ต่อคิว") {
-                            guard let student = appState.currentUser else { return }
-                            let newItem = QueueItem(
-                                id: UUID(), //Provide a unique ID here
-                                studentId: student.id,
-                                studentName: student.name,
-                                number: activity.nextQueueNumber
-                            )
-                            appState.activities[activityIndex].queues.append(newItem)
-                            appState.activities[activityIndex].nextQueueNumber += 1
-                            isJoined = true
-                        }
-                        .padding()
-                        .background(swuRed) // Use SWU red for button
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .shadow(radius: 3) // Adding shadow for the button
                     }
-
-                    Spacer()
+                } else {
+                    Button("ต่อคิว") {
+                        joinQueue()
+                    }
+                    .padding()
+                    .background(swuRed) // Use SWU red for button
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .shadow(radius: 3) // Adding shadow for the button
                 }
-                .padding()
-                .navigationTitle("ต่อคิว")
-                .navigationBarTitleDisplayMode(.inline)
-            } else {
-                Text("ไม่พบกิจกรรม") // Display a message if the activity is not found
-                    .foregroundColor(.gray) // Style the "Activity not found" message
+
+                Spacer()
             }
+            .padding()
+            .navigationTitle("ต่อคิว")
+            .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear {
-            if let studentId = appState.currentUser?.id {
-                if let activity = activity {
-                    isJoined = activity.queues.contains { $0.studentId == studentId }
-                }
-            }
+            checkIfJoined()
+            appState.startListening(to: activity)
         }
+        .onDisappear {
+            appState.stopListening(to: activity)
+        }
+    }
+
+    func joinQueue() {
+        guard let student = appState.currentUser else { return }
+        let newItem = QueueItem(
+            id: UUID(), //Provide a unique ID here
+            studentId: student.id,
+            studentName: student.name,
+            number: activity.nextQueueNumber,
+            status: nil
+        )
+        appState.addQueueItem(activity: activity, queueItem: newItem)
+        isJoined = true
+    }
+
+    func leaveQueue() {
+        guard let student = appState.currentUser else { return }
+        if let myQueue = activity.queues.first(where: { $0.studentId == student.id }) {
+            appState.updateQueueItemStatus(activity: activity, queueItem: myQueue, status: "ยกเลิกคิว")
+            isJoined = false
+        }
+    }
+
+    func checkIfJoined() {
+        guard let studentId = appState.currentUser?.id else {
+            isJoined = false
+            return
+        }
+        isJoined = activity.queues.contains { $0.studentId == studentId }
     }
 }
 
