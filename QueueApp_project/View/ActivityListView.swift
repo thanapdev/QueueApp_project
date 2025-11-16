@@ -82,47 +82,74 @@ struct ActivityListView: View {
                         }
                         .padding()
                     } else {
-                        List {
-                            ForEach(appState.activities.indices, id: \.self) { index in
-                                ActivityNavigationLink(activity: appState.activities[index])
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                        Button {
-                                            editIndex = index
-                                            editActivityName = appState.activities[index].name
-                                            showEditActivity = true
-                                        } label: {
-                                            Label("Edit", systemImage: "pencil")
-                                        }
-                                        .tint(.blue)
+                                        // ⭐️ 1. เปลี่ยนจาก List เป็น ScrollView + LazyVStack
+                                        ScrollView {
+                                            LazyVStack(spacing: 16) { // 👈 ใช้ spacing 16 แบบเดียวกับ StudentView
+                                                ForEach(appState.activities.indices, id: \.self) { index in
+                                                    let activity = appState.activities[index]
+                                                    
+                                                    // ⭐️ 2. ใช้ NavigationLink ที่มี content เป็น HStack (เหมือน StudentView)
+                                                    NavigationLink(
+                                                        // ❗️ 3. ใช้ Destination เดิมของ Admin (QueueView)
+                                                        destination: QueueView(activity: .constant(activity))
+                                                            .environmentObject(appState) // 👈 อย่าลืม .environmentObject(appState)
+                                                    ) {
+                                                        // ⭐️ 4. เอาดีไซน์การ์ด Hstack สวยๆ จาก StudentView มาใส่
+                                                        HStack {
+                                                            Text(activity.name)
+                                                                .font(.title3)
+                                                                .fontWeight(.semibold)
+                                                                .foregroundColor(.black)
+                                                            Spacer()
+                                                            // ⭐️ 5. (Bonus) เพิ่ม Badge ให้ Admin ดูด้วยเลย!
+                                                            QueueCountBadge(activity: activity)
+                                                        }
+                                                        .padding()
+                                                        .background(.white)
+                                                        .cornerRadius(12)
+                                                        .shadow(radius: 3)
+                                                    }
+                                                    .buttonStyle(PlainButtonStyle()) // 👈 ใส่เพื่อให้สีตัวอักษรไม่เพี้ยน
+                                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) { // ⭐️ 6. ย้าย SwipeActions มาไว้ที่นี่
+                                                        Button {
+                                                            editIndex = index
+                                                            editActivityName = appState.activities[index].name
+                                                            showEditActivity = true
+                                                        } label: {
+                                                            Label("Edit", systemImage: "pencil")
+                                                        }
+                                                        .tint(.blue)
 
-                                        Button(role: .destructive) {
-                                            deleteIndex = index
-                                            showDeleteConfirmation = true
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
+                                                        Button(role: .destructive) {
+                                                            deleteIndex = index
+                                                            showDeleteConfirmation = true
+                                                        } label: {
+                                                            Label("Delete", systemImage: "trash")
+                                                        }
+                                                    }
+                                                    // ⭐️ 7. เราไม่ต้องใช้ .listRowBackground() อีกต่อไป
+                                                }
+                                            }
+                                            .padding() // 👈 ใส่ padding ภายนอก (เหมือน StudentView)
+                                        }
+                                        .toolbar { // 👈 Toolbar ยังอยู่เหมือนเดิม
+                                            ToolbarItem(placement: .navigationBarTrailing) {
+                                                if !appState.activities.isEmpty {
+                                                    EditButton()
+                                                        .foregroundColor(.black)
+                                                }
+                                            }
+                                            ToolbarItem(placement: .navigationBarLeading) {
+                                                Button("เพิ่ม") {
+                                                    showingAddActivity = true
+                                                }
+                                                .foregroundColor(.black)
+                                            }
                                         }
                                     }
-                                    .listRowBackground(Color.white.opacity(0.7))
-                            }
-                        }
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                if !appState.activities.isEmpty {
-                                    EditButton()
-                                        .foregroundColor(.black)
-                                }
-                            }
-                            ToolbarItem(placement: .navigationBarLeading) {
-                                Button("เพิ่ม") {
-                                    showingAddActivity = true
-                                }
-                                .foregroundColor(.black)
-                            }
-                        }
-                    }
 
-                    Spacer() // Push content to the top
-                }
+                                    Spacer() // Push content to the top
+                                }
             }
             .navigationTitle("กิจกรรมของคุณ")
             .sheet(isPresented: $showingAddActivity) {

@@ -42,57 +42,63 @@ struct StudentQueueJoinView: View {
                             let queuesAhead = myIndex // คนข้างหน้า = จำนวนคิวที่ต้องรอ
 
                             VStack(spacing: 16) {
-                                // ✅ 1. อีกกี่คิวจะถึงเรา → เน้นสุด!
-                                if queuesAhead > 0 {
-                                    VStack {
-                                        Text("อีก")
-                                            .font(.headline)
-                                            .foregroundColor(.secondary)
-                                        Text("\(queuesAhead) คิว")
-                                            .font(.system(size: 48, weight: .bold))
-                                            .foregroundColor(.blue)
-                                            .padding(.bottom, 4)
-                                        Text("จะถึงคิวคุณ")
-                                            .font(.headline)
-                                            .foregroundColor(.secondary)
-                                    }
-                                } else {
-                                    // ✅ ถึงคิวแล้ว → แจ้งเตือนสวย ๆ
-                                    VStack {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .font(.system(size: 60))
-                                            .foregroundColor(.green)
-                                            .padding(.bottom, 8)
-                                        Text("ถึงคิวคุณแล้ว!")
-                                            .font(.largeTitle)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.green)
-                                            .multilineTextAlignment(.center)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.green.opacity(0.1))
-                                    .cornerRadius(16)
-                                }
+                            // ✅ 1. อีกกี่คิวจะถึงเรา → เน้นสุด!
+                            if queuesAhead > 0 {
+                            VStack {
+                            Text("อีก")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                            Text("\(queuesAhead) คิว")
+                                    .font(.system(size: 48, weight: .bold))
+                                                                        .foregroundColor(.blue)
+                                                                        .padding(.bottom, 4)
+                                                                    Text("จะถึงคิวคุณ")
+                                                                        .font(.headline)
+                                                                        .foregroundColor(.secondary)
+                                                                }
+                                                                // ⭐️ เพิ่ม 4 บรรทัดนี้เข้าไป ⭐️
+                                                                .frame(maxWidth: .infinity)
+                                                                .padding()
+                                                                .background(Color.blue.opacity(0.1)) // ใช้สีฟ้าอ่อนๆ
+                                                                .cornerRadius(16)
+                                                                
+                                                            } else {
+                                                                // ✅ ถึงคิวแล้ว → แจ้งเตือนสวย ๆ
+                                                                VStack {
+                                                                    Image(systemName: "checkmark.circle.fill")
+                                                                        .font(.system(size: 60))
+                                                                        .foregroundColor(.green)
+                                                                        .padding(.bottom, 8)
+                                                                    Text("ถึงคิวคุณแล้ว!")
+                                                                        .font(.largeTitle)
+                                                                        .fontWeight(.bold)
+                                                                        .foregroundColor(.green)
+                                                                        .multilineTextAlignment(.center)
+                                                                }
+                                                                .frame(maxWidth: .infinity)
+                                                                .padding()
+                                                                .background(Color.green.opacity(0.1))
+                                                                .cornerRadius(16)
+                                                            }
 
-                                // ✅ 2. คุณอยู่คิวที่ #\(myPosition)
-                                Text("คุณอยู่คิวที่ #\(myPosition)")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
+                                                            // ✅ 2. คุณอยู่คิวที่ #\(myPosition)
+                                                            Text("คุณอยู่คิวที่ #\(myPosition)")
+                                                                .font(.headline)
+                                                                .foregroundColor(.secondary)
 
-                                Button("ยกเลิกคิว") {
-                                    leaveQueue()
-                                }
-                                .padding()
-                                .background(swuRed) // Use SWU red for button
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                                .shadow(radius: 3) // Adding shadow for the button
-                            }
-                            .padding()
-                            .background(.white) // Adding a background for better readability
-                            .cornerRadius(10)
-                            .shadow(radius: 3)
+                                                            Button("ยกเลิกคิว") {
+                                                                leaveQueue()
+                                                            }
+                                                            .padding()
+                                                            .background(swuRed) // Use SWU red for button
+                                                            .foregroundColor(.white)
+                                                            .cornerRadius(10)
+                                                            .shadow(radius: 3) // Adding shadow for the button
+                                                        }
+                                                        .padding()
+                                                        .background(.white) // Adding a background for better readability
+                                                        .cornerRadius(10)
+                                                        .shadow(radius: 3)
                         }
                     }
                 } else {

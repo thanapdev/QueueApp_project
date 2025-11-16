@@ -45,87 +45,125 @@ struct QueueView: View {
                     .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
             }
 
-            VStack(spacing: 20) {
-                // ส่วนแสดงคิวถัดไป
-                if let next = nextQueueItem {
-                    VStack {
-                        Text("คิวถัดไป")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        Text("#\(next.number) - \(next.studentName)")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+            VStack(spacing: 16) { // 👈 ปรับ spacing เล็กน้อย
+                            // ⭐️ 1. ส่วนแสดงคิวถัดไป (ปรับเป็นการ์ดขาว)
+                            if let next = nextQueueItem {
+                                VStack {
+                                    Text("คิวถัดไป")
+                                        .font(.headline)
+                                        .foregroundColor(.secondary)
+                                    Text("#\(next.number) - \(next.studentName)")
+                                        .font(.largeTitle)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.black) // 👈 เปลี่ยนเป็นสีดำ
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity) // 👈 ทำให้เต็มความกว้าง
+                                .background(.white) // 👈 ใช้พื้นหลังขาว
+                                .cornerRadius(12) // 👈 ขอบมน
+                                .shadow(radius: 3) // 👈 ใส่เงา
+                                .padding(.horizontal) // 👈 เว้นขอบซ้ายขวา
+                                
+                            } else {
+                                Text("ยังไม่มีคิว")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                    .padding(.vertical, 32) // 👈 เพิ่ม padding ให้ไม่โล่งไป
+                            }
+
+                            // ⭐️ 2. ปุ่มเรียกคิว (ปรับให้เต็มความกว้าง)
+                            Button("เรียกคิวถัดไป") {
+                                if !queueItems.isEmpty {
+                                    showingCallOptions = true
+                                }
+                            }
                             .padding()
-                            .background(Color.green.opacity(0.2))
+                            .frame(maxWidth: .infinity) // 👈 ทำให้เต็มความกว้าง (ใน padding)
+                            .background(swuRed)
+                            .foregroundColor(.white)
                             .cornerRadius(10)
-                    }
-                    .padding(.bottom)
-                } else {
-                    Text("ยังไม่มีคิว")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                        .padding(.bottom)
-                }
+                            .padding(.horizontal) // 👈 เว้นขอบซ้ายขวา
+                            .disabled(queueItems.isEmpty || isCountingDown)
+                            .confirmationDialog(
+                                "เลือกการกระทำ",
+                                isPresented: $showingCallOptions,
+                                titleVisibility: .visible
+                            ) {
+                                Button("✅ มาแล้ว") {
+                                    callNextQueue(status: "มาแล้ว")
+                                }
+                                .foregroundColor(.black)
+                                Button("⏳ ยังไม่มา") {
+                                    isCountingDown = true
+                                }
+                                .foregroundColor(.black)
+                                Button("⏭️ ข้ามคิว") {
+                                    callNextQueue(status: "ข้ามคิว")
+                                }
+                                .foregroundColor(.black)
+                                Button("ยกเลิก", role: .cancel) { }
+                                    .foregroundColor(.black)
+                            }
 
-                // ปุ่มเรียกคิว
-                Button("เรียกคิวถัดไป") {
-                    if !queueItems.isEmpty {
-                        showingCallOptions = true
-                    }
-                }
-                .padding()
-                .background(swuRed)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-                .disabled(queueItems.isEmpty || isCountingDown)
-                .confirmationDialog(
-                    "เลือกการกระทำ",
-                    isPresented: $showingCallOptions,
-                    titleVisibility: .visible
-                ) {
-                    Button("✅ มาแล้ว") {
-                        callNextQueue(status: "มาแล้ว")
-                    }
-                    .foregroundColor(.black)
-                    Button("⏳ ยังไม่มา") {
-                        isCountingDown = true
-                    }
-                    .foregroundColor(.black)
-                    Button("⏭️ ข้ามคิว") {
-                        callNextQueue(status: "ข้ามคิว")
-                    }
-                    .foregroundColor(.black)
-                    Button("ยกเลิก", role: .cancel) { }
-                        .foregroundColor(.black)
-                }
+                            // ⭐️ 2. ปุ่มเพิ่มคิว (ปรับให้เต็มความกว้าง)
+                            Button("เพิ่มคิว") {
+                                showingAddQueue = true
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity) // 👈 ทำให้เต็มความกว้าง (ใน padding)
+                            .background(swuRed)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            .padding(.horizontal) // 👈 เว้นขอบซ้ายขวา
 
-                // ปุ่มเพิ่มคิว
-                Button("เพิ่มคิว") {
-                    showingAddQueue = true
-                }
-                .padding()
-                .background(swuRed)
-                .foregroundColor(.white)
-                .cornerRadius(10)
+                            // ⭐️ 3. รายการคิว (เปลี่ยนจาก List เป็น ScrollView)
+                            Text("คิวที่กำลังรอ")
+                                .font(.headline)
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal)
+                                .padding(.top, 8)
+                            
+                            ScrollView {
+                                LazyVStack(spacing: 12) {
+                                    ForEach(queueItems) { item in
+                                        // ⭐️ นี่คือการ์ดของแต่ละคิว
+                                        HStack {
+                                            Text("#\(item.number)")
+                                                .font(.title.weight(.bold))
+                                                .foregroundColor(swuRed) // 👈 ใช้สีแดง SWU ให้เด่น
+                                            
+                                            VStack(alignment: .leading) {
+                                                Text(item.studentName)
+                                                    .font(.headline)
+                                                    .foregroundColor(.black)
+                                                Text(item.studentId)
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            if let status = item.status {
+                                                Text(status)
+                                                    .font(.caption)
+                                                    .foregroundColor(.gray)
+                                                    .italic()
+                                            }
+                                        }
+                                        .padding()
+                                        .background(.white)
+                                        .cornerRadius(12)
+                                        .shadow(radius: 3)
+                                    }
+                                }
+                                .padding(.horizontal) // 👈 เว้นขอบซ้ายขวาให้ ScrollView
+                                .padding(.bottom) // 👈 เว้นด้านล่างหน่อย
+                            }
+                            // ❗️ ลบ .frame(maxHeight: 200) ทิ้งไปเลย
 
-                // รายการคิว
-                List(queueItems) { item in
-                    HStack {
-                        Text("#\(item.number)")
-                            .foregroundColor(.black)
-                        Text("\(item.studentName) (\(item.studentId))")
-                            .foregroundColor(.black)
-                        if let status = item.status {
-                            Text("(\(status))")
-                                .foregroundColor(.gray)
+                            Spacer() // 👈 Spacer ตัวนี้ยังอยู่เหมือนเดิม
                         }
-                    }
-                    .listRowBackground(Color.white.opacity(0.7))
-                }
-                .frame(maxHeight: 200)
-
-                Spacer()
-            }
             .navigationTitle(activity.name)
             .sheet(isPresented: $showingAddQueue) {
                 NavigationStack {
