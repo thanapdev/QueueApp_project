@@ -98,6 +98,7 @@ struct StudentQueueJoinView: View {
                         Button("ต่อคิว") {
                             guard let student = appState.currentUser else { return }
                             let newItem = QueueItem(
+                                id: UUID(), //Provide a unique ID here
                                 studentId: student.id,
                                 studentName: student.name,
                                 number: activity.nextQueueNumber
@@ -133,16 +134,16 @@ struct StudentQueueJoinView: View {
     }
 }
 
-#Preview {
-    let appState = AppState()
-    appState.activities = [
-        Activity(name: "กิจกรรมทดสอบ", queues: [
-            QueueItem(studentId: "654231024", studentName: "สมชาย", number: 1)
-        ]),
-        Activity(name: "กิจกรรมที่สอง", queues: [])
-    ]
-    appState.currentUser = (role: .student, name: "สมศรี", id: "654231024")
-
-    return StudentQueueJoinView(activityIndex: 0)
-        .environmentObject(appState)
-}
+//#Preview {
+//    let appState = AppState()
+//    appState.activities = [
+//        Activity(name: "กิจกรรมทดสอบ", queues: [
+//            QueueItem(id: <#UUID#>, studentId: "654231024", studentName: "สมชาย", number: 1)
+//        ]),
+//        Activity(name: "กิจกรรมที่สอง", queues: [])
+//    ]
+//    appState.currentUser = (role: .student, name: "สมศรี", id: "654231024")
+//
+//    StudentQueueJoinView(activityIndex: 0)
+//        .environmentObject(appState)
+//}

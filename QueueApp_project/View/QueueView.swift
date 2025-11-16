@@ -14,6 +14,8 @@ struct QueueView: View {
     @State private var showingCallOptions = false
     @State private var isCountingDown = false // ควบคุมการเปิด Modal
     @State private var showTimeoutMessage = false
+    @EnvironmentObject var appState: AppState
+    @State private var queueItems: [QueueItem] = [] // Local state for queue items
 
     // SWU Colors (From LoginView.swift)
     let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
@@ -40,7 +42,7 @@ struct QueueView: View {
 
             VStack(spacing: 20) {
                 // ส่วนแสดงคิวถัดไป
-                if let next = activity.queues.first {
+                if let next = queueItems.first {
                     VStack {
                         Text("คิวถัดไป")
                             .font(.headline)
@@ -62,7 +64,7 @@ struct QueueView: View {
 
                 // ปุ่มเรียกคิว
                 Button("เรียกคิวถัดไป") {
-                    if !activity.queues.isEmpty {
+                    if !queueItems.isEmpty {
                         showingCallOptions = true
                     }
                 }
@@ -70,15 +72,20 @@ struct QueueView: View {
                 .background(swuRed)
                 .foregroundColor(.white)
                 .cornerRadius(10)
-                .disabled(activity.queues.isEmpty || isCountingDown)
+                .disabled(queueItems.isEmpty || isCountingDown)
                 .confirmationDialog(
                     "เลือกการกระทำ",
                     isPresented: $showingCallOptions,
                     titleVisibility: .visible
                 ) {
                     Button("✅ มาแล้ว") {
-                        if !activity.queues.isEmpty {
-                            activity.queues.removeFirst()
+                        if let firstQueueItem = queueItems.first {
+                            var updatedItem = firstQueueItem
+                            updatedItem.status = "มาแล้ว"
+                            appState.updateQueueItemStatus(activity: activity, queueItem: updatedItem, status: "มาแล้ว")
+                            queueItems.removeFirst()
+                            activity.currentQueueNumber = nil
+                            appState.updateActivity(activity: activity) // Update currentQueueNumber
                         }
                     }
                     .foregroundColor(.black)
@@ -87,8 +94,13 @@ struct QueueView: View {
                     }
                     .foregroundColor(.black)
                     Button("⏭️ ข้ามคิว") {
-                        if !activity.queues.isEmpty {
-                            activity.queues.removeFirst()
+                        if let firstQueueItem = queueItems.first {
+                            var updatedItem = firstQueueItem
+                            updatedItem.status = "ข้ามคิว"
+                            appState.updateQueueItemStatus(activity: activity, queueItem: updatedItem, status: "ข้ามคิว")
+                            queueItems.removeFirst()
+                            activity.currentQueueNumber = nil
+                            appState.updateActivity(activity: activity) // Update currentQueueNumber
                         }
                     }
                     .foregroundColor(.black)
@@ -106,12 +118,16 @@ struct QueueView: View {
                 .cornerRadius(10)
 
                 // รายการคิว
-                List(activity.queues) { item in
+                List(queueItems) { item in
                     HStack {
                         Text("#\(item.number)")
                             .foregroundColor(.black)
                         Text("\(item.studentName) (\(item.studentId))")
                             .foregroundColor(.black)
+                        if let status = item.status {
+                            Text("(\(status))")
+                                .foregroundColor(.gray)
+                        }
                     }
                     .listRowBackground(Color.white.opacity(0.7))
                 }
@@ -147,12 +163,16 @@ struct QueueView: View {
                                 Button("เพิ่ม") {
                                     if !newCustomerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                         let newItem = QueueItem(
+                                            id: UUID(),
                                             studentId: "MANUAL-\(activity.nextQueueNumber)",
                                             studentName: newCustomerName,
-                                            number: activity.nextQueueNumber
+                                            number: activity.nextQueueNumber,
+                                            status: nil
                                         )
-                                        activity.queues.append(newItem)
+                                        appState.addQueueItem(activity: activity, queueItem: newItem)
+                                        queueItems.append(newItem)
                                         activity.nextQueueNumber += 1
+                                        appState.updateActivity(activity: activity) // Update nextQueueNumber in Firestore
                                         newCustomerName = ""
                                     }
                                     showingAddQueue = false
@@ -170,8 +190,13 @@ struct QueueView: View {
                 CountdownModal(
                     isActive: $isCountingDown,
                     onTimeout: {
-                        if !activity.queues.isEmpty {
-                            activity.queues.removeFirst() // ✅ ลบเพียงครั้งเดียว
+                        if let firstQueueItem = queueItems.first {
+                            var updatedItem = firstQueueItem
+                            updatedItem.status = "หมดเวลา"
+                            appState.updateQueueItemStatus(activity: activity, queueItem: updatedItem, status: "หมดเวลา")
+                            queueItems.removeFirst() // ✅ ลบเพียงครั้งเดียว
+                            activity.currentQueueNumber = nil
+                            appState.updateActivity(activity: activity) // Update currentQueueNumber
                         }
                     },
                     onCancel: {
@@ -189,6 +214,16 @@ struct QueueView: View {
                 Text("ลูกค้าไม่มาภายในเวลาที่กำหนด\nจึงข้ามคิวไปแล้ว")
             })
         }
+        .onAppear {
+            appState.loadQueueItems(activity: activity) { loadedQueueItems in
+                queueItems = loadedQueueItems // Update local state
+            }
+        }
+        .onChange(of: activity.id) { _ in
+                    appState.loadQueueItems(activity: activity) { loadedQueueItems in
+                        queueItems = loadedQueueItems
+                    }
+                }
     }
 }
 
@@ -203,7 +238,7 @@ struct CountdownModal: View {
 
     // SWU Colors (From LoginView.swift)
     let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
-    let swuRed = Color(red: 190/255, green: 50/255, blue: 150/255)
+    let swuRed = Color(red: 190/255, green: 150/255, blue: 150/255)
 
     var body: some View {
         ZStack {
@@ -266,7 +301,7 @@ struct CountdownModal: View {
 
 #Preview {
     @State var activity: Activity = Activity(name: "ตัวอย่างกิจกรรม", queues: [
-        QueueItem(studentId: "654231001", studentName: "สมปอง", number: 1)
+        QueueItem(id: UUID(), studentId: "654231001", studentName: "สมปอง", number: 1)
     ])
-    return QueueView(activity: $activity)
+     QueueView(activity: $activity)
 }

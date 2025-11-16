@@ -133,7 +133,7 @@ struct ActivityListView: View {
                                     Spacer()
                                     Button("สร้าง") {
                                         if !newActivityName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                            appState.activities.append(Activity(name: newActivityName))
+                                            appState.addActivity(name: newActivityName)
                                             newActivityName = ""
                                             showingAddActivity = false
                                         }
@@ -159,6 +159,8 @@ struct ActivityListView: View {
                 }
                 Button("ลบ", role: .destructive) {
                     if let index = deleteIndex {
+                        let activityToDelete = appState.activities[index]
+                        appState.deleteActivity(activity: activityToDelete)
                         appState.activities.remove(at: index)
                     }
                     showDeleteConfirmation = false
