@@ -11,17 +11,22 @@ struct ContentView: View {
     @StateObject private var appState = AppState()
 
     var body: some View {
-        if let user = appState.currentUser {
-            if user.role == .organization {
-                NavigationStack {
-                    ActivityListView()
-                        .environmentObject(appState)
+        if appState.isLoggedIn {
+            if let user = appState.currentUser {
+                if user.role == .admin {
+                    NavigationStack {
+                        ActivityListView()
+                            .environmentObject(appState)
+                    }
+                } else {
+                    NavigationStack {
+                        StudentActivityListView()
+                            .environmentObject(appState)
+                    }
                 }
             } else {
-                NavigationStack {
-                    StudentActivityListView()
-                        .environmentObject(appState)
-                }
+                // Handle the case where isLoggedIn is true but currentUser is nil
+                Text("Error: No user data found.") // Show an error message
             }
         } else {
             NavigationStack {
@@ -31,10 +36,3 @@ struct ContentView: View {
         }
     }
 }
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
-}
-

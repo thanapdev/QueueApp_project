@@ -5,7 +5,7 @@ struct LoginView: View {
     @EnvironmentObject var appState: AppState
     @State private var studentID = "" // Use studentID for both
     @State private var password = ""
-    @State private var isLoggedIn = false
+    //@State private var isLoggedIn = false // Remove this line
     @State private var showAlert = false
     @State private var errorMessage = ""
     
@@ -87,7 +87,7 @@ struct LoginView: View {
                     Alert(title: Text("Login Failed"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
                 }
             }
-            .fullScreenCover(isPresented: $isLoggedIn, content: {
+            .fullScreenCover(isPresented: $appState.isLoggedIn, content: { // Use appState.isLoggedIn
                 destinationView()
             })
         }
@@ -97,7 +97,7 @@ struct LoginView: View {
         appState.loginAsStudent(studentID: studentID, password: password) { success, message in
             if success {
                 withAnimation {
-                    isLoggedIn = true
+                    //isLoggedIn = true // Remove this line
                 }
             } else {
                 errorMessage = message ?? "Invalid credentials. Please try again."
@@ -108,7 +108,7 @@ struct LoginView: View {
     
     @ViewBuilder
     private func destinationView() -> some View {
-        if appState.currentUser?.role == .organization {
+        if appState.currentUser?.role == .admin {
             ActivityListView()
         } else {
             StudentActivityListView()

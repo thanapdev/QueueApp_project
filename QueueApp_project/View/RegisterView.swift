@@ -87,7 +87,7 @@ struct RegisterView: View {
                     
                     Picker("Role", selection: $selectedRole) {
                         Text("Student").tag(AppState.UserRole.student)
-                        Text("Admin").tag(AppState.UserRole.organization)
+                        Text("Admin").tag(AppState.UserRole.admin)
                     }
                     .pickerStyle(.segmented)
                     .padding()
@@ -131,9 +131,4 @@ struct RegisterView: View {
             }
         }
     }
-}
-
-#Preview {
-    RegisterView()
-        .environmentObject(AppState())
 }

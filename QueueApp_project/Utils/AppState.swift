@@ -10,7 +10,7 @@ class AppState: ObservableObject {
     private let db = Firestore.firestore()
 
     enum UserRole {
-        case organization
+        case admin
         case student
     }
     
@@ -22,6 +22,12 @@ class AppState: ObservableObject {
     func logout() {
         isLoggedIn = false
         currentUser = nil
+        // Optional: Sign out from Firebase Authentication
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            print("Error signing out: \(error.localizedDescription)")
+        }
     }
     
     // Function to add an activity to Firestore
@@ -123,7 +129,7 @@ class AppState: ObservableObject {
                 let email = data["email"] as? String ?? ""
                 let name = data["name"] as? String ?? ""
                 let roleString = data["role"] as? String ?? "student"
-                let role: UserRole = roleString == "admin" ? .organization : .student
+                let role: UserRole = roleString == "admin" ? .admin : .student
                 
                 // 2. Use the email and password to sign in with Firebase Authentication
                 Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
