@@ -27,17 +27,17 @@ struct ActivityListView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background (Gradient จาก LoginView.swift)
+                // Background
                 LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
                     .edgesIgnoringSafeArea(.all)
-
-                // Shape Background (Circles จาก LoginView.swift)
+                
+                // Shape Background
                 GeometryReader { geometry in
                     Circle()
                         .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
                         .frame(width: 200, height: 200)
                         .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
-
+                    
                     Circle()
                         .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
                         .frame(width: 200, height: 200)
@@ -82,91 +82,111 @@ struct ActivityListView: View {
                         }
                         .padding()
                     } else {
-                                        List {
-                                            ForEach(appState.activities.indices, id: \.self) { index in
-                                                ActivityNavigationLink(activity: appState.activities[index])
-                                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                                        Button {
-                                                            editIndex = index
-                                                            editActivityName = appState.activities[index].name
-                                                            showEditActivity = true
-                                                        } label: {
-                                                            Label("Edit", systemImage: "pencil")
-                                                        }
-                                                        .tint(.blue)
-
-                                                        Button(role: .destructive) {
-                                                            deleteIndex = index
-                                                            showDeleteConfirmation = true
-                                                        } label: {
-                                                            Label("Delete", systemImage: "trash")
-                                                        }
-                                                    }
-                                                    .listRowBackground(Color.white.opacity(0.7)) // <- คุณทำส่วนนี้ไว้ดีแล้วครับ
-                                            }
+                        List {
+                            ForEach(appState.activities.indices, id: \.self) { index in
+                                ActivityNavigationLink(activity: appState.activities[index])
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button {
+                                            editIndex = index
+                                            editActivityName = appState.activities[index].name
+                                            showEditActivity = true
+                                        } label: {
+                                            Label("Edit", systemImage: "pencil")
                                         }
-                                        .scrollContentBackground(.hidden) // ⬅️ ✨ 1. ซ่อนพื้นหลังทึบของ List
-                                        .listStyle(.insetGrouped)         // ⬅️ ✨ 2. ทำให้ขอบมนและดูเหมือนการ์ด
-                                        .toolbar {
-//                                            ToolbarItem(placement: .navigationBarTrailing) {
-//                                                if !appState.activities.isEmpty {
-//                                                    EditButton()
-//                                                        .foregroundColor(.black)
-//                                                }
-//                                            }
-                                            ToolbarItem(placement: .navigationBarLeading) {
-                                                Button("เพิ่ม") {
-                                                    showingAddActivity = true
-                                                }
-                                                .foregroundColor(.black)
-                                            }
+                                        .tint(.blue)
+
+                                        Button(role: .destructive) {
+                                            deleteIndex = index
+                                            showDeleteConfirmation = true
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
                                         }
                                     }
+                                    .listRowBackground(Color.white.opacity(0.7)) // <- คุณทำส่วนนี้ไว้ดีแล้วครับ
+                            }
+                        }
+                        .scrollContentBackground(.hidden) // ⬅️ ✨ 1. ซ่อนพื้นหลังทึบของ List
+                        .listStyle(.insetGrouped)       // ⬅️ ✨ 2. ทำให้ขอบมนและดูเหมือนการ์ด
+                        .toolbar {
+//                            ToolbarItem(placement: .navigationBarTrailing) {
+//                                if !appState.activities.isEmpty {
+//                                    EditButton()
+//                                        .foregroundColor(.black)
+//                                }
+//                            }
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                Button("เพิ่ม") {
+                                    showingAddActivity = true
+                                }
+                                .foregroundColor(.black)
+                            }
+                        }
+                    }
 
                     Spacer() // Push content to the top
                 }
             }
             .navigationTitle("กิจกรรมของคุณ")
+            
+            // ⭐️⭐️⭐️======= โค้ดที่ปรับปรุงอยู่ตรงนี้ =======⭐️⭐️⭐️
             .sheet(isPresented: $showingAddActivity) {
                 NavigationStack {
-                    VStack {
-                        ZStack {
-                            LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                                .edgesIgnoringSafeArea(.all)
-
-                            VStack {
-                                TextField("ชื่อกิจกรรม", text: $newActivityName)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .padding()
-                                    .background(Color.white.opacity(0.7))
-                                    .cornerRadius(8)
-
-                                HStack {
-                                    Button("ยกเลิก") {
-                                        showingAddActivity = false
-                                    }
-                                    .foregroundColor(.black)
-                                    Spacer()
-                                    Button("สร้าง") {
-                                        if !newActivityName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                            appState.addActivity(name: newActivityName)
-                                            newActivityName = ""
-                                            showingAddActivity = false
-                                        }
-                                    }
-                                    .disabled(newActivityName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                    .foregroundColor(.black)
-                                }
-                                .padding()
+                    ZStack {
+                        // ✅ 1. ใช้พื้นหลัง Gradient เดิมของคุณ
+                        LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
+                            .edgesIgnoringSafeArea(.all)
+                        
+                        VStack(spacing: 20) {
+                            // ✅ 2. เพิ่มคำอธิบายเล็กน้อย
+                            Text("กรุณาป้อนชื่อกิจกรรมใหม่")
+                                .font(.headline)
+                                .foregroundColor(.black.opacity(0.7))
+                                .padding(.top, 20) // เพิ่มช่องว่างจาก Title
+                            
+                            // ✅ 3. จัดสไตล์ TextField ใหม่ให้สวยงาม
+                            TextField("เช่น 'กิจกรรมรับน้อง', 'ไหว้ครู'", text: $newActivityName)
+                                .padding() // เพิ่ม padding ให้ช่องกรอก
+                                .background(Color.white.opacity(0.8)) // พื้นหลังสีขาวกึ่งโปร่งแสง
+                                .cornerRadius(10) // ขอบมน
+                                .overlay(
+                                    // เพิ่มเส้นขอบบางๆ
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                                )
+                            
+                            Spacer() // ดันทุกอย่างขึ้นบน
+                        }
+                        .padding() // เว้นขอบซ้ายขวา
+                    }
+                    .navigationTitle("สร้างกิจกรรมใหม่") // ✅ 4. เพิ่ม Title ให้หน้านี้
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        // ✅ 5. ย้ายปุ่ม 'ยกเลิก' มาไว้บน Toolbar
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("ยกเลิก") {
+                                showingAddActivity = false
+                                newActivityName = "" // เคลียร์ค่าเมื่อยกเลิก
                             }
-                            .padding()
+                            .foregroundColor(swuRed) // ใช้สีธีมของแอป
+                        }
+                        
+                        // ✅ 6. ย้ายปุ่ม 'สร้าง' มาไว้บน Toolbar
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("สร้าง") {
+                                if !newActivityName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    appState.addActivity(name: newActivityName)
+                                    newActivityName = ""
+                                    showingAddActivity = false
+                                }
+                            }
+                            .bold() // ทำให้ปุ่มหลักชัดเจน
+                            .disabled(newActivityName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
                     }
-                    
                 }
-                .background(LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom))
-                    .edgesIgnoringSafeArea(.all)
             }
+            // ⭐️⭐️⭐️======= สิ้นสุดโค้ดที่ปรับปรุง =======⭐️⭐️⭐️
+            
             // ✅ Alert ยืนยันการลบ
             .alert("ยืนยันการลบ?", isPresented: $showDeleteConfirmation, actions: {
                 Button("ยกเลิก", role: .cancel) {
@@ -259,6 +279,10 @@ struct EditActivityView: View {
             .padding()
             .navigationTitle("Edit Activity Name")
             .navigationBarTitleDisplayMode(.inline)
+            
+            // ⭐️ หมายเหตุ: EditActivityView ยังไม่ได้ใส่พื้นหลัง Gradient
+            // ถ้าอยากให้สวยเหมือนกัน สามารถเพิ่ม ZStack และ LinearGradient
+            // แบบเดียวกับที่ทำใน .sheet(isPresented: $showingAddActivity) ได้ครับ
         }
     }
 }

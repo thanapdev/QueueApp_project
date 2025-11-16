@@ -1,8 +1,33 @@
-# Xcode
+# Xcode personal user data (prevent xcuserstate)
+xcuserdata/
 *.xcuserstate
 
-# Xcode User-specific files
-xcuserdata/
+# Xcode build
+build/
+DerivedData/
 
-# macOS
-.DS_Store
+# Swift Package Manager
+.packages/
+.swiftpm/
+.build/
+
+# CocoaPods
+Pods/
+*.xcworkspace
+
+# Carthage
+Carthage/Build/
+
+# Fastlane generated files
+fastlane/report.xml
+fastlane/preview.html
+fastlane/screenshots/**/*.png
+
+# Archives
+*.xcarchive
+
+# iOS Device logs
+*.mobileprovision
+*.ipa
+*.dSYM.zip
+*.dSYM
