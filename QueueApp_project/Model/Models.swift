@@ -8,18 +8,18 @@
 import Foundation
 
 enum UserRole {
-    case organization
+    case admin
     case student
 }
 
-struct Activity: Identifiable, Equatable {
+struct Activity: Identifiable, Equatable, Codable {
     let id = UUID()
     var name: String
     var queues: [QueueItem] = []
     var nextQueueNumber = 1
 }
 
-struct QueueItem: Identifiable, Equatable {
+struct QueueItem: Identifiable, Equatable, Codable {
     let id = UUID()
     let studentId: String
     let studentName: String
