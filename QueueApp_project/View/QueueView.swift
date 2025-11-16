@@ -21,6 +21,11 @@ struct QueueView: View {
     let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
     let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
 
+    // Computed property to get the next queue item
+    private var nextQueueItem: QueueItem? {
+        queueItems.first
+    }
+
     var body: some View {
         ZStack {
             // Background (Gradient From LoginView.swift)
@@ -42,7 +47,7 @@ struct QueueView: View {
 
             VStack(spacing: 20) {
                 // ส่วนแสดงคิวถัดไป
-                if let next = queueItems.first {
+                if let next = nextQueueItem {
                     VStack {
                         Text("คิวถัดไป")
                             .font(.headline)
@@ -79,14 +84,7 @@ struct QueueView: View {
                     titleVisibility: .visible
                 ) {
                     Button("✅ มาแล้ว") {
-                        if let firstQueueItem = queueItems.first {
-                            var updatedItem = firstQueueItem
-                            updatedItem.status = "มาแล้ว"
-                            appState.updateQueueItemStatus(activity: activity, queueItem: updatedItem, status: "มาแล้ว")
-                            queueItems.removeFirst()
-                            activity.currentQueueNumber = nil
-                            appState.updateActivity(activity: activity) // Update currentQueueNumber
-                        }
+                        callNextQueue(status: "มาแล้ว")
                     }
                     .foregroundColor(.black)
                     Button("⏳ ยังไม่มา") {
@@ -94,14 +92,7 @@ struct QueueView: View {
                     }
                     .foregroundColor(.black)
                     Button("⏭️ ข้ามคิว") {
-                        if let firstQueueItem = queueItems.first {
-                            var updatedItem = firstQueueItem
-                            updatedItem.status = "ข้ามคิว"
-                            appState.updateQueueItemStatus(activity: activity, queueItem: updatedItem, status: "ข้ามคิว")
-                            queueItems.removeFirst()
-                            activity.currentQueueNumber = nil
-                            appState.updateActivity(activity: activity) // Update currentQueueNumber
-                        }
+                        callNextQueue(status: "ข้ามคิว")
                     }
                     .foregroundColor(.black)
                     Button("ยกเลิก", role: .cancel) { }
@@ -190,14 +181,7 @@ struct QueueView: View {
                 CountdownModal(
                     isActive: $isCountingDown,
                     onTimeout: {
-                        if let firstQueueItem = queueItems.first {
-                            var updatedItem = firstQueueItem
-                            updatedItem.status = "หมดเวลา"
-                            appState.updateQueueItemStatus(activity: activity, queueItem: updatedItem, status: "หมดเวลา")
-                            queueItems.removeFirst() // ✅ ลบเพียงครั้งเดียว
-                            activity.currentQueueNumber = nil
-                            appState.updateActivity(activity: activity) // Update currentQueueNumber
-                        }
+                        callNextQueue(status: "หมดเวลา")
                     },
                     onCancel: {
                         // ไม่ทำอะไร — ไม่ลบคิว
@@ -215,15 +199,31 @@ struct QueueView: View {
             })
         }
         .onAppear {
-            appState.loadQueueItems(activity: activity) { loadedQueueItems in
-                queueItems = loadedQueueItems // Update local state
-            }
+            loadQueueItems()
         }
         .onChange(of: activity.id) { _ in
-                    appState.loadQueueItems(activity: activity) { loadedQueueItems in
-                        queueItems = loadedQueueItems
-                    }
-                }
+            loadQueueItems()
+        }
+    }
+
+    private func loadQueueItems() {
+        appState.loadQueueItems(activity: activity) { loadedQueueItems in
+            queueItems = loadedQueueItems
+        }
+    }
+
+
+    private func callNextQueue(status: String) {
+        guard let firstQueueItem = queueItems.first else {
+            return
+        }
+
+        var updatedItem = firstQueueItem
+        updatedItem.status = status
+        appState.updateQueueItemStatus(activity: activity, queueItem: updatedItem, status: status)
+        queueItems.removeFirst()
+        activity.currentQueueNumber = nil
+        appState.updateActivity(activity: activity) // Update currentQueueNumber
     }
 }
 

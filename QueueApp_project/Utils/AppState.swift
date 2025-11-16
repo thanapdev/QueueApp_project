@@ -150,6 +150,8 @@ class AppState: ObservableObject {
                         } else {
                             return nil
                         }
+                    }.filter { item in
+                        item.status == nil // Keep only items without a status (nil status)
                     }
                     completion(queueItems)
                 }

@@ -14,6 +14,11 @@ struct ActivityListView: View {
     @State private var newActivityName = ""
     @State private var showDeleteConfirmation = false // ✅ ใช้สำหรับ Alert
     @State private var deleteIndex: Int? = nil // เก็บ index ที่จะลบ
+    @Environment(\.editMode) var editMode
+    @State private var showEditActivity = false
+    @State private var editIndex: Int? = nil
+    @State private var editActivityName: String = ""
+
 
     // SWU Colors (From LoginView.swift)
     let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
@@ -79,17 +84,26 @@ struct ActivityListView: View {
                     } else {
                         List {
                             ForEach(appState.activities.indices, id: \.self) { index in
-                                NavigationLink(
-                                    destination: QueueView(activity: $appState.activities[index])
-                                        .environmentObject(appState)
-                                ) {
-                                    Text(appState.activities[index].name)
-                                        .font(.body)
-                                        .foregroundColor(.black)
-                                }
-                                .listRowBackground(Color.white.opacity(0.7))
+                                ActivityNavigationLink(activity: appState.activities[index])
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button {
+                                            editIndex = index
+                                            editActivityName = appState.activities[index].name
+                                            showEditActivity = true
+                                        } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        .tint(.blue)
+
+                                        Button(role: .destructive) {
+                                            deleteIndex = index
+                                            showDeleteConfirmation = true
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
+                                    .listRowBackground(Color.white.opacity(0.7))
                             }
-                            .onDelete(perform: deleteActivities)
                         }
                         .toolbar {
                             ToolbarItem(placement: .navigationBarTrailing) {
@@ -171,6 +185,19 @@ struct ActivityListView: View {
                     Text("คุณแน่ใจหรือไม่ว่าจะลบกิจกรรม \"\(appState.activities[index].name)\"? \nคิวทั้งหมดจะหายไปด้วย!")
                 }
             })
+            .sheet(isPresented: $showEditActivity) {
+                EditActivityView(
+                    showEditActivity: $showEditActivity,
+                    activityName: $editActivityName,
+                    onSave: {
+                        if let index = editIndex {
+                            let activity = appState.activities[index]
+                            activity.name = editActivityName
+                            appState.updateActivity(activity: activity)
+                        }
+                    }
+                )
+            }
         }
     }
 
@@ -182,6 +209,58 @@ struct ActivityListView: View {
         }
     }
 }
+
+struct ActivityNavigationLink: View {
+    @ObservedObject var activity: Activity
+
+    var body: some View {
+        NavigationLink(
+            destination: QueueView(activity: .constant(activity)) // Use a constant binding
+                .environmentObject(AppState())
+        ) {
+            Text(activity.name)
+                .font(.body)
+                .foregroundColor(.black)
+        }
+    }
+}
+
+
+struct EditActivityView: View {
+    @Binding var showEditActivity: Bool
+    @Binding var activityName: String
+    var onSave: () -> Void
+
+    var body: some View {
+        NavigationView {
+            VStack {
+                TextField("Activity Name", text: $activityName)
+                    .padding()
+                    .background(Color.white.opacity(0.7))
+                    .cornerRadius(8)
+                    .padding(.bottom, 20)
+
+                HStack {
+                    Button("Cancel") {
+                        showEditActivity = false
+                    }
+                    .foregroundColor(.black)
+                    Spacer()
+                    Button("Save") {
+                        onSave()
+                        showEditActivity = false
+                    }
+                    .foregroundColor(.black)
+                }
+                .padding()
+            }
+            .padding()
+            .navigationTitle("Edit Activity Name")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
 
 #Preview {
     ActivityListView().environmentObject(AppState())
