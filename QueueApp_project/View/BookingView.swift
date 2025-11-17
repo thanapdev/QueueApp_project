@@ -64,6 +64,7 @@ struct BookingView: View { // 👈 (1) เปลี่ยนชื่อ struct 
                         .frame(width: 200, height: 200)
                         .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
                 }
+                ScrollView { // ⭐️ ย้าย ScrollView มาไว้ข้างนอก
                     VStack(alignment: .leading, spacing: 20) {
                         
                         // 4. ตาราง Grid แสดงบริการ (Services Grid)
@@ -86,6 +87,7 @@ struct BookingView: View { // 👈 (1) เปลี่ยนชื่อ struct 
             .navigationBarTitleDisplayMode(.large)
         }
     }
+}
 
 
 // MARK: - 4. Service Card (การ์ดแสดงผลแต่ละบริการ)
@@ -151,8 +153,13 @@ struct BookingDetailView: View {
             if service.name == "Co-working Space" {
                 // 3. ถ้าใช่ ให้แสดงหน้าจองที่นั่ง
                 CoWorkingBookingView(service: service)
+                
+            // ⭐️ 4. เพิ่ม else if สำหรับ Netflix
+            } else if service.name == "Netflix & Chill" {
+                NetflixBookingView(service: service) // 👈 หน้าใหม่ (ที่แก้ไขแล้ว)
+                
             } else {
-                // 4. ถ้าเป็น Service อื่น ให้แสดงแบบเดิม
+                // 5. ถ้าเป็น Service อื่น ให้แสดงแบบเดิม
                 Text("หน้าสำหรับจอง: \(service.name)")
                     .font(.title)
                     .navigationTitle(service.name)
@@ -162,8 +169,224 @@ struct BookingDetailView: View {
     }
 }
 
+// ⭐️ START: โค้ดใหม่สำหรับหน้า Netflix & Chill (ฉบับแก้ไข)
+// ⭐️ (E) โมเดลสำหรับรอบเวลา (ยังใช้เหมือนเดิม)
+struct TimeSlot: Identifiable, Hashable {
+    let id = UUID()
+    let time: String
+    var isBooked: Bool = false
+}
 
-// ⭐️ START: โค้ดใหม่สำหรับหน้า Co-Working Space
+// ⭐️ (F) สร้างหน้าสำหรับจอง Netflix (เลือกห้อง + เวลา)
+struct NetflixBookingView: View {
+    let service: LibraryService
+    
+    // Grid 3 คอลัมน์ (สำหรับ 6 ห้อง)
+    let roomColumns = [
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
+    ]
+    // Grid 2 คอลัมน์ (สำหรับรอบเวลา)
+    let slotColumns = [
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
+    
+    // --- State ที่ต้องใช้ ---
+    // 1. State (จำลอง) ว่าห้องไหนจองแล้ว (เช่น ห้อง 3 ซ่อม)
+    @State private var bookedRooms: Set<Int> = [3]
+    // 2. State (จำลอง) รอบเวลาที่เต็ม (เช่น 18:00 เต็ม)
+    @State private var timeSlots: [TimeSlot] = []
+    
+    // --- State ที่ผู้ใช้เลือก ---
+    // 1. ห้องที่เลือก (เลือกได้แค่ 1)
+    @State private var selectedRoom: Int? = nil
+    // 2. รอบเวลาที่เลือก (เลือกได้แค่ 1)
+    @State private var selectedSlot: TimeSlot? = nil
+    
+    var body: some View {
+        VStack { // ⭐️ Vstack หลัก (สำหรับ ScrollView + ปุ่ม)
+            ScrollView {
+                VStack {
+                    // --- 1. ส่วนเลือกห้อง ---
+                    Text("1. Select a Room")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .padding(.top)
+                    
+                    LegendView(service: service) // ⭐️ ใช้ LegendView ซ้ำ
+                        .padding(.bottom, 5)
+
+                    LazyVGrid(columns: roomColumns, spacing: 15) {
+                        ForEach(1...6, id: \.self) { roomNumber in
+                            // ⭐️ ใช้ View ใหม่ (NetflixRoomView)
+                            NetflixRoomView(
+                                roomNumber: roomNumber,
+                                selectedRoom: $selectedRoom,
+                                bookedRooms: bookedRooms,
+                                themeColor: service.themeColor
+                            )
+                        }
+                    }
+                    .padding(.horizontal)
+
+                    Divider().padding()
+
+                    // --- 2. ส่วนเลือกรอบเวลา ---
+                    Text("2. Select a Time Slot")
+                        .font(.title2)
+                        .fontWeight(.bold)
+
+                    LazyVGrid(columns: slotColumns, spacing: 10) {
+                        ForEach(timeSlots) { slot in
+                            TimeSlotView(
+                                slot: slot,
+                                selectedSlot: $selectedSlot,
+                                themeColor: service.themeColor
+                            )
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            } // ⭐️ End ScrollView
+            
+            Spacer()
+            
+            // --- 3. ปุ่มยืนยัน ---
+            Button(action: {
+                if let room = selectedRoom, let slot = selectedSlot {
+                    print("จอง Netflix: Room \(room) @ \(slot.time)")
+                }
+            }) {
+                Text("Confirm Booking")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(selectedRoom == nil || selectedSlot == nil ? Color.gray : Color.green) // ⭐️ เช็ก 2 ค่า
+                    .cornerRadius(12)
+            }
+            .disabled(selectedRoom == nil || selectedSlot == nil) // ⭐️ ปิดปุ่มถ้ายังไม่เลือกครบ
+            .padding()
+        }
+        .navigationTitle(service.name)
+        .onAppear {
+            // โหลดข้อมูลรอบเวลา (จำลอง)
+            loadMockTimeSlots()
+        }
+    }
+    
+    // ฟังก์ชันจำลองการโหลดข้อมูลรอบเวลา (ไม่ต้องใช้ Date แล้ว)
+    func loadMockTimeSlots() {
+        self.timeSlots = [
+            TimeSlot(time: "10:00 - 12:00", isBooked: false),
+            TimeSlot(time: "12:00 - 14:00", isBooked: false),
+            TimeSlot(time: "14:00 - 16:00", isBooked: false),
+            TimeSlot(time: "16:00 - 18:00", isBooked: false),
+            TimeSlot(time: "18:00 - 20:00", isBooked: true) // ⭐️ 6 โมงเย็นเต็ม
+        ]
+    }
+}
+
+// ⭐️ (G) สร้าง View ของ "ห้อง Netflix" (คล้าย SeatView แต่เลือกได้อันเดียว)
+struct NetflixRoomView: View {
+    let roomNumber: Int
+    @Binding var selectedRoom: Int? // ⭐️ ใช้ Int? (Optional)
+    let bookedRooms: Set<Int>
+    let themeColor: Color // สีประจำ service (สีแดง)
+    
+    // เช็กสถานะ
+    var isBooked: Bool { bookedRooms.contains(roomNumber) }
+    var isSelected: Bool { selectedRoom == roomNumber } // ⭐️ เช็กว่าตรงกันไหม
+
+    // เลือกสีตามสถานะ
+    var seatColor: Color {
+        if isBooked { return .gray }
+        if isSelected { return .green }
+        return themeColor.opacity(0.3) // ว่าง = สีธีม (แดงอ่อน)
+    }
+    
+    // สีตัวอักษร
+    var textColor: Color {
+        if isBooked { return .white.opacity(0.7) }
+        if isSelected { return .white }
+        return themeColor
+    }
+
+    var body: some View {
+        Button(action: {
+            // action ตอนกด
+            selectedRoom = roomNumber // ⭐️ เลือกห้องนี้เลย
+        }) {
+            VStack {
+                Image(systemName: "play.tv.fill") // ⭐️ ไอคอน Netflix
+                    .font(.title2)
+                Text("Room \(roomNumber)") // ⭐️ ข้อความ
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, minHeight: 70)
+            .background(seatColor)
+            .foregroundColor(textColor)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? .green : Color.clear, lineWidth: 2)
+            )
+        }
+        .disabled(isBooked) // กดไม่ได้ถ้าจองแล้ว
+    }
+}
+
+// ⭐️ (H) สร้าง View ของ "รอบเวลา" (ของเดิมจากรอบที่แล้ว)
+struct TimeSlotView: View {
+    let slot: TimeSlot
+    @Binding var selectedSlot: TimeSlot?
+    let themeColor: Color
+
+    var isBooked: Bool { slot.isBooked }
+    var isSelected: Bool { selectedSlot?.id == slot.id } // ⭐️ เช็กด้วย ID
+
+    // เลือกสีตามสถานะ
+    var slotColor: Color {
+        if isBooked { return .gray }
+        if isSelected { return .green }
+        return themeColor.opacity(0.3)
+    }
+    
+    // สีตัวอักษร
+    var textColor: Color {
+        if isBooked { return .white.opacity(0.7) }
+        if isSelected { return .white }
+        return themeColor
+    }
+
+    var body: some View {
+        Button(action: {
+            selectedSlot = slot
+        }) {
+            Text(slot.time)
+                .font(.system(size: 14, weight: .bold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(slotColor)
+                .foregroundColor(textColor)
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(isSelected ? .green : Color.clear, lineWidth: 2)
+                )
+        }
+        .disabled(isBooked)
+    }
+}
+// ⭐️ END: โค้ดใหม่สำหรับหน้า Netflix
+
+
+// ⭐️ START: โค้ดสำหรับหน้า Co-Working Space (ของเดิม)
 // ⭐️ (B) สร้างหน้าสำหรับจอง Co-Working
 struct CoWorkingBookingView: View {
     let service: LibraryService
@@ -173,47 +396,51 @@ struct CoWorkingBookingView: View {
         GridItem(.flexible(), spacing: 10),
         GridItem(.flexible(), spacing: 10),
         GridItem(.flexible(), spacing: 10)
-//        GridItem(.flexible(), spacing: 10)
     ]
     
-    // State สำหรับเก็บที่นั่งที่ "เลือก"
-    @State private var selectedSeats: Set<Int> = []
+    // 🔴 1. แก้ไขตรงนี้: เปลี่ยนจาก Set เป็น Int? (Optional)
+    @State private var selectedSeat: Int? = nil // 👈 เปลี่ยนชื่อและชนิด
     
     // State (จำลอง) ว่ามีที่นั่ง "จองแล้ว"
     @State private var bookedSeats: Set<Int> = [3, 8] // สมมติว่าล็อก 3 กับ 8 ไม่ว่าง
 
     var body: some View {
         VStack {
-            Text("เลือกช่องที่ต้องการจอง")
-                .font(.title2)
-                .fontWeight(.bold)
-                .padding(.top)
-
-            // 1. คำอธิบายสถานะ
-            LegendView(service: service)
-                .padding(.bottom)
-
-            // 2. Grid ของที่นั่ง
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 15) {
-                    ForEach(1...15, id: \.self) { seatNumber in
-                        SeatView(
-                            seatNumber: seatNumber,
-                            selectedSeats: $selectedSeats,
-                            bookedSeats: bookedSeats,
-                            themeColor: service.themeColor
-                        )
+                VStack {
+                    Text("เลือกช่องที่ต้องการจอง")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .padding(.top)
+
+                    // 1. คำอธิบายสถานะ
+                    LegendView(service: service)
+                        .padding(.bottom)
+
+                    // 2. Grid ของที่นั่ง
+                    LazyVGrid(columns: columns, spacing: 15) {
+                        ForEach(1...15, id: \.self) { seatNumber in
+                            SeatView(
+                                seatNumber: seatNumber,
+                                // 🔴 2. ส่ง Binding ของตัวแปรใหม่
+                                selectedSeat: $selectedSeat, // 👈 ส่งตัวนี้แทน
+                                bookedSeats: bookedSeats,
+                                themeColor: service.themeColor
+                            )
+                        }
                     }
+                    .padding()
                 }
-                .padding()
             }
             
             Spacer()
             
             // 3. ปุ่มยืนยัน
             Button(action: {
-                // ใส่ action ยืนยันการจองที่นี่
-                print("จองที่นั่ง: \(selectedSeats)")
+                // 🔴 3. อัปเดต action
+                if let seat = selectedSeat {
+                    print("จองที่นั่ง: \(seat)")
+                }
             }) {
                 Text("Confirm Booking")
                     .font(.headline)
@@ -221,10 +448,12 @@ struct CoWorkingBookingView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(selectedSeats.isEmpty ? Color.gray : Color.green) // ⭐️ เปลี่ยนสีปุ่ม
+                    // 🔴 4. อัปเดตเงื่อนไขสี
+                    .background(selectedSeat == nil ? Color.gray : Color.green)
                     .cornerRadius(12)
             }
-            .disabled(selectedSeats.isEmpty) // ⭐️ ปิดปุ่มถ้ายังไม่เลือก
+            // 🔴 5. อัปเดตเงื่อนไข disabled
+            .disabled(selectedSeat == nil)
             .padding()
             
         }
@@ -235,13 +464,15 @@ struct CoWorkingBookingView: View {
 // ⭐️ (C) สร้าง View ของ "ล็อก" หรือ "ที่นั่ง"
 struct SeatView: View {
     let seatNumber: Int
-    @Binding var selectedSeats: Set<Int>
+    // 🔴 1. เปลี่ยน Binding ให้ตรงกัน
+    @Binding var selectedSeat: Int?
     let bookedSeats: Set<Int>
     let themeColor: Color // สีประจำ service (สีฟ้า)
     
     // เช็กสถานะ
     var isBooked: Bool { bookedSeats.contains(seatNumber) }
-    var isSelected: Bool { selectedSeats.contains(seatNumber) }
+    // 🔴 2. อัปเดต Logic การเช็ก isSelected
+    var isSelected: Bool { selectedSeat == seatNumber } // 👈 เช็กว่าตรงกันไหม
 
     // เลือกสีตามสถานะ
     var seatColor: Color {
@@ -259,11 +490,11 @@ struct SeatView: View {
 
     var body: some View {
         Button(action: {
-            // action ตอนกด
+            // 🔴 3. อัปเดต action ตอนกด
             if isSelected {
-                selectedSeats.remove(seatNumber) // ถ้าเลือกอยู่แล้ว ให้เอาออก
+                selectedSeat = nil // 👈 กดซ้ำเพื่อ "ยกเลิก" การเลือก
             } else {
-                selectedSeats.insert(seatNumber) // ถ้ายังไม่เลือก ให้เพิ่ม
+                selectedSeat = seatNumber // 👈 เลือกที่นั่งนี้
             }
         }) {
             VStack {
@@ -288,7 +519,7 @@ struct SeatView: View {
     }
 }
 
-// ⭐️ (D) สร้าง View อธิบายสัญลักษณ์สี
+// ⭐️ (D) สร้าง View อธิบายสัญลักษณ์สี (ใช้ซ้ำได้)
 struct LegendView: View {
     let service: LibraryService
     
@@ -316,7 +547,7 @@ struct LegendView: View {
         .font(.caption)
     }
 }
-// ⭐️ END: โค้ดใหม่
+// ⭐️ END: โค้ด Co-Working
 // ⭐️
 
 
