@@ -1,61 +1,330 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
+import Combine
 
 class AppState: ObservableObject {
+    
+    // MARK: - 1. Published Properties (State)
+    
+    // --- State เดิม (Authentication & QueueApp) ---
     @Published var isLoggedIn = false
-    @Published var currentUser: (role: UserRole, name: String, id: String)?
-    @Published var activities: [Activity] = []
+    @Published var currentUser: (role: UserRole, name: String, id: String)? // id = studentID 11 หลัก
+    @Published var activities: [Activity] = [] // (นี่คือคิวของ QueueApp)
     @Published var isBrowsingAsGuest = false
-
+    
+    // --- State ใหม่ (Library Booking System) ---
+    // R3: เก็บการจอง/คิว ได้แค่ 1 อย่าง (ถ้าค่าใดค่าหนึ่ง != nil แปลว่าจองอยู่)
+    @Published var activeReservation: (docID: String, data: Booking)? = nil
+    @Published var activeQueue: (docID: String, data: Booking)? = nil
+    
+    // R2, R4: State สำหรับ Timer นับถอยหลัง (Board Game)
+    @Published var queueTimeRemaining: TimeInterval = 180
+    @Published var showQueueAlert: Bool = false // R5: สำหรับแจ้งเตือน
+    
+    
+    // MARK: - 2. Firebase & Listeners
+    
     private let db = Firestore.firestore()
-    private var activityListeners: [UUID: ListenerRegistration] = [:]
+    private var activityListeners: [UUID: ListenerRegistration] = [:] // Listener คิว (ของเดิม)
+    private var bookingListener: ListenerRegistration? // 👈 Listener การจอง (ของใหม่)
+    private var timerSubscription: AnyCancellable?
 
+    
+    // MARK: - 3. Core Data Models
+    
     enum UserRole {
         case admin
         case student
     }
-
-    init() {
-        // Load activities from Firestore when AppState is initialized
-        loadActivities()
+    
+    // ⭐️ Data Model ใหม่สำหรับ Booking (ใช้คุยกับ Firestore)
+    struct Booking: Codable {
+        let userID: String // 👈 จะเก็บ studentID 11 หลัก
+        let serviceName: String
+        let bookingType: String // "reservation" หรือ "queue"
+        let details: String
+        let startTime: Timestamp // 👈 (สำหรับ Queue Timer)
     }
 
-    func logout() {
-        withAnimation(.easeInOut(duration: 0.3)) { // <<< เพิ่ม withAnimation ตรงนี้
-            isLoggedIn = false
-            currentUser = nil
-            isBrowsingAsGuest = false // 👈 2. เพิ่มบรรทัดนี้ (สำคัญมาก)
+    
+    // MARK: - 4. Core Booking Logic (Reservation & Queue)
+    
+    // เช็กว่ามีจอง/คิว อยู่ไหม
+    var hasActiveBooking: Bool {
+        activeReservation != nil || activeQueue != nil
+    }
+
+    // ⭐️ ฟังก์ชันนี้จะถูกเรียกตอน Login/Register สำเร็จ
+    func listenForActiveBooking() {
+        guard let userID = currentUser?.id else { return } // 👈 ดึง studentID
+        
+        if bookingListener != nil {
+            bookingListener?.remove() // ลบ Listener เก่า (ถ้ามี)
         }
-        // Optional: Sign out from Firebase Authentication
+        
+        print("Starting booking listener for user (studentID): \(userID)")
+        
+        // ⭐️ สร้าง Listener คอยดักฟัง collection "bookings"
+        // ที่มี "userID" ตรงกับ studentID 11 หลักของเรา
+        bookingListener = db.collection("bookings")
+            .whereField("userID", isEqualTo: userID)
+            .addSnapshotListener { [weak self] querySnapshot, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    print("Error listening for bookings: \(error.localizedDescription)")
+                    return
+                }
+                
+                // 1. ถ้าไม่เจอเอกสาร (จองเสร็จ/ยกเลิก/ไม่เคยจอง)
+                guard let document = querySnapshot?.documents.first else {
+                    // ถ้า state เก่าเรายังมีค่าค้างอยู่ ให้ล้างมันทิ้ง
+                    if self.activeReservation != nil || self.activeQueue != nil {
+                        self.cancelAllBookings(fromListener: true) // ล้างค่า local
+                    }
+                    return
+                }
+                
+                // 2. ถ้าเจอเอกสาร (แปลว่ามีการจอง/คิวอยู่)
+                do {
+                    let bookingData = try document.data(as: Booking.self)
+                    let docID = document.documentID
+                    
+                    if bookingData.bookingType == "reservation" {
+                        // ถ้าเป็นการจอง (Co-work, Netflix, Green)
+                        self.activeReservation = (docID, bookingData)
+                        self.activeQueue = nil
+                        self.stopQueueTimer()
+                    } else if bookingData.bookingType == "queue" {
+                        // ถ้าเป็นการเข้าคิว (Board Game)
+                        self.activeQueue = (docID, bookingData)
+                        self.activeReservation = nil
+                        self.startQueueTimer(startTime: bookingData.startTime.dateValue()) // 👈 เริ่มจับเวลา
+                    }
+                    
+                } catch {
+                    print("Failed to decode booking: \(error)")
+                }
+            }
+    }
+    
+    // ⭐️ หยุด Listener ตอน Logout
+    func stopListeningForBooking() {
+        print("Stopping booking listener.")
+        bookingListener?.remove()
+        bookingListener = nil
+        cancelAllBookings(fromListener: true) // ล้างค่า local ทั้งหมด
+    }
+
+    // ⭐️ ฟังก์ชันใหม่สำหรับ "สร้าง" การจอง (Co-work, Netflix, Green)
+    func createReservation(service: LibraryService, details: String) {
+        guard let userID = currentUser?.id else { return } // 👈 ดึง studentID
+        
+        let newBooking = Booking(
+            userID: userID, // 👈 บันทึก studentID ลง Firestore
+            serviceName: service.name,
+            bookingType: "reservation",
+            details: details,
+            startTime: Timestamp(date: Date())
+        )
+        
         do {
-            try Auth.auth().signOut()
+            // เพิ่มเอกสารใหม่ลง Firestore
+            // (เราไม่ต้องเซ็ต @Published var เอง, Listener จะเห็นและอัปเดต UI ให้)
+            try db.collection("bookings").addDocument(from: newBooking)
         } catch {
-            print("Error signing out: \(error.localizedDescription)")
+            print("Error creating reservation: \(error)")
+        }
+    }
+    
+    // ⭐️ ฟังก์ชันใหม่สำหรับ "เข้าคิว" (Board Game)
+    func joinQueue(service: LibraryService, table: Int, games: [String]) {
+        guard let userID = currentUser?.id else { return } // 👈 ดึง studentID
+        
+        let details = "Table \(table) (\(games.count) games)"
+        let newQueue = Booking(
+            userID: userID, // 👈 บันทึก studentID ลง Firestore
+            serviceName: service.name,
+            bookingType: "queue",
+            details: details,
+            startTime: Timestamp(date: Date()) // 👈 เวลาเริ่มคิว (สำคัญมาก)
+        )
+        
+        do {
+            try db.collection("bookings").addDocument(from: newQueue)
+            // (Listener จะเห็นเอกสารนี้ และสั่ง startQueueTimer อัตโนมัติ)
+        } catch {
+            print("Error joining queue: \(error)")
         }
     }
 
-    // Function to add an activity to Firestore
-    func addActivity(name: String) {
-        let newActivity = Activity(name: name)
-        activities.append(newActivity)
-
-        // Add the activity to Firestore
-        db.collection("activities").document(newActivity.id.uuidString).setData([
-            "name": newActivity.name,
-            "nextQueueNumber": newActivity.nextQueueNumber, // Save nextQueueNumber
-            "currentQueueNumber": newActivity.currentQueueNumber, // Save currentQueueNumber
-            "queueCount": newActivity.queueCount // Save queueCount
-        ]) { err in
-            if let err = err {
-                print("Error adding document: \(err)")
+    // ⭐️ ฟังก์ชันใหม่สำหรับ "ยกเลิก"
+    func cancelAllBookings(fromListener: Bool = false) {
+        
+        // A. ถ้าถูกเรียกจาก Listener (แปลว่าเอกสารมันหายไปเอง)
+        if fromListener {
+            DispatchQueue.main.async {
+                self.activeReservation = nil
+                self.activeQueue = nil
+                self.stopQueueTimer()
+            }
+            return
+        }
+        
+        // B. ถ้าผู้ใช้กด Cancel เอง (เราต้องไปลบเอกสาร)
+        let docIDToCancel = activeReservation?.docID ?? activeQueue?.docID
+        guard let docID = docIDToCancel else {
+            // ถ้าไม่มีอะไรให้ยกเลิก
+            activeReservation = nil
+            activeQueue = nil
+            stopQueueTimer()
+            return
+        }
+        
+        // สั่งลบเอกสารออกจาก Firestore
+        db.collection("bookings").document(docID).delete { error in
+            if let error = error {
+                print("Error cancelling booking: \(error)")
             } else {
-                print("Document added with ID: \(newActivity.id.uuidString)")
+                print("Booking cancelled successfully.")
+                // (Listener จะเห็นว่าเอกสารหายไป และล้างค่า local ให้เราเอง)
             }
         }
     }
 
-    // Function to load activities from Firestore
+    
+    // MARK: - 5. Timer Logic (for Queue)
+    
+    // (R2, R4) Timer ที่แม่นยำขึ้น
+    func startQueueTimer(startTime: Date) {
+        // คำนวณเวลาที่เหลือจากเวลาที่บันทึกใน Firestore
+        let elapsed = Date().timeIntervalSince(startTime)
+        let remaining = max(0, 180 - elapsed) // 180 วิ = 3 นาที
+        self.queueTimeRemaining = remaining
+
+        // ถ้าเวลาเหลือ 0 แล้ว ให้ Alert เลย
+        if remaining == 0 {
+            self.showQueueAlert = true
+            self.cancelAllBookings() // ลบออกจาก Firestore
+            return
+        }
+        
+        stopQueueTimer() // หยุดของเก่า (ถ้ามี)
+        
+        timerSubscription = Timer.publish(every: 1, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                guard let self = self, self.activeQueue != nil else { return }
+                
+                if self.queueTimeRemaining > 0 {
+                    self.queueTimeRemaining -= 1
+                } else {
+                    // R5: เวลาหมด!
+                    self.stopQueueTimer()
+                    self.showQueueAlert = true
+                    self.cancelAllBookings() // สั่งลบ
+                }
+            }
+    }
+    
+    func stopQueueTimer() {
+        timerSubscription?.cancel()
+        timerSubscription = nil
+    }
+
+    
+    // MARK: - 6. Authentication (Login/Register)
+    
+    func logout() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isLoggedIn = false
+            currentUser = nil
+            isBrowsingAsGuest = false
+            stopListeningForBooking() // 👈 หยุด Listener ตอน Logout
+        }
+        do { try Auth.auth().signOut() } catch { print("Error signing out: \(error.localizedDescription)") }
+    }
+
+    func register(name: String, studentID: String, email: String, password: String, role: UserRole, completion: @escaping (Bool, String?) -> Void) {
+        guard studentID.count == 11, studentID.allSatisfy({ $0.isNumber }) else {
+            completion(false, "รหัสนักศึกษาต้องมี 11 หลัก และเป็นตัวเลขเท่านั้น")
+            return
+        }
+        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+            if let error = error {
+                completion(false, error.localizedDescription)
+            } else if let user = authResult?.user {
+                let userData: [String: Any] = ["name": name, "studentID": studentID, "email": email, "role": role == .student ? "student" : "admin"]
+                
+                self.db.collection("users").document(user.uid).setData(userData) { error in
+                    if let error = error {
+                        completion(false, "Failed to save user data.")
+                    } else {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            self.currentUser = (role: role, name: name, id: studentID) // 👈 ใช้ studentID 11 หลัก
+                            self.isLoggedIn = true
+                            self.isBrowsingAsGuest = false
+                            self.listenForActiveBooking() // 👈 เริ่ม Listener
+                        }
+                        completion(true, nil)
+                    }
+                }
+            } else {
+                completion(false, "Failed to retrieve user information.")
+            }
+        }
+    }
+
+    func loginAsStudent(studentID: String, password: String, completion: @escaping (Bool, String?) -> Void) {
+        db.collection("users").whereField("studentID", isEqualTo: studentID).getDocuments { (querySnapshot, error) in
+            if let error = error {
+                completion(false, "Failed to retrieve user data.")
+                return
+            }
+            guard let document = querySnapshot?.documents.first else {
+                completion(false, "Invalid Student ID or Password.")
+                return
+            }
+            let data = document.data()
+            let email = data["email"] as? String ?? ""
+            let name = data["name"] as? String ?? ""
+            let role: UserRole = (data["role"] as? String ?? "student") == "admin" ? .admin : .student
+            
+            Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
+                if let error = error {
+                    completion(false, "Invalid Student ID or Password.")
+                } else {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        self.currentUser = (role: role, name: name, id: studentID) // 👈 ใช้ studentID 11 หลัก
+                        self.isLoggedIn = true
+                        self.isBrowsingAsGuest = false
+                        self.listenForActiveBooking() // 👈 เริ่ม Listener
+                    }
+                    completion(true, nil)
+                }
+            }
+        }
+    }
+    
+    
+    // MARK: - 7. Original QueueApp Logic (Activities)
+    // (โค้ดส่วนนี้ของคุณ ผมคัดลอกมาให้ครบถ้วน)
+    
+    func addActivity(name: String) {
+        let newActivity = Activity(name: name)
+        activities.append(newActivity)
+        db.collection("activities").document(newActivity.id.uuidString).setData([
+            "name": newActivity.name,
+            "nextQueueNumber": newActivity.nextQueueNumber,
+            "currentQueueNumber": newActivity.currentQueueNumber,
+            "queueCount": newActivity.queueCount
+        ]) { err in
+            if let err = err { print("Error adding document: \(err)") }
+            else { print("Document added with ID: \(newActivity.id.uuidString)") }
+        }
+    }
+    
     func loadActivities() {
         db.collection("activities").getDocuments() { [weak self] (querySnapshot, err) in
             guard let self = self else { return }
@@ -65,290 +334,143 @@ class AppState: ObservableObject {
                 self.activities = querySnapshot!.documents.compactMap { document in
                     let data = document.data()
                     let name = data["name"] as? String ?? ""
-                    let nextQueueNumber = data["nextQueueNumber"] as? Int ?? 1 // Load nextQueueNumber
-                    let currentQueueNumber = data["currentQueueNumber"] as? Int // Load currentQueueNumber
-                    let queueCount = data["queueCount"] as? Int ?? 0 // Load queueCount
-
-
-                    // Convert document ID to UUID
+                    let nextQueueNumber = data["nextQueueNumber"] as? Int ?? 1
+                    let currentQueueNumber = data["currentQueueNumber"] as? Int
+                    let queueCount = data["queueCount"] as? Int ?? 0
                     if let idString = document.documentID as String?, let id = UUID(uuidString: idString) {
                         let activity = Activity(id: id, name: name, nextQueueNumber: nextQueueNumber, currentQueueNumber: currentQueueNumber, queueCount: queueCount)
                         self.loadQueueItems(activity: activity) { queueItems in
                             activity.queues = queueItems
                         }
-                        return activity// Pass ID when loading data
-                    } else {
-                        return nil
-                    }
+                        return activity
+                    } else { return nil }
                 }
             }
         }
     }
 
-    // Function to update an activity in Firestore
     func updateActivity(activity: Activity) {
         db.collection("activities").document(activity.id.uuidString).setData([
             "name": activity.name,
-            "nextQueueNumber": activity.nextQueueNumber, // Update nextQueueNumber
-            "currentQueueNumber": activity.currentQueueNumber, // Update currentQueueNumber
-            "queueCount": activity.queueCount // Update queueCount
+            "nextQueueNumber": activity.nextQueueNumber,
+            "currentQueueNumber": activity.currentQueueNumber,
+            "queueCount": activity.queueCount
         ]) { err in
-            if let err = err {
-                print("Error updating document: \(err)")
-            } else {
-                print("Document updated with ID: \(activity.id.uuidString)")
-            }
+            if let err = err { print("Error updating document: \(err)") }
+            else { print("Document updated with ID: \(activity.id.uuidString)") }
         }
     }
 
-    // Function to delete an activity from Firestore
     func deleteActivity(activity: Activity) {
         db.collection("activities").document(activity.id.uuidString).delete() { err in
-            if let err = err {
-                print("Error removing document: \(err)")
-            } else {
-                print("Document successfully removed!")
-            }
+            if let err = err { print("Error removing document: \(err)") }
+            else { print("Document successfully removed!") }
         }
     }
 
-    // Function to add a queue item to Firestore
     func addQueueItem(activity: Activity, queueItem: QueueItem) {
-        db.collection("activities")
-            .document(activity.id.uuidString)
-            .collection("queues")
-            .document(queueItem.id.uuidString)
-            .setData([
-                "studentName": queueItem.studentName,
-                "number": queueItem.number,
-                "studentId": queueItem.studentId,
-                "status": queueItem.status // Save status
-            ]) { err in
-                if let err = err {
-                    print("Error adding queue item: \(err)")
-                } else {
-                    print("Queue item added for activity \(activity.name)")
-                    // Update queue count in Activity
-                    self.updateQueueCount(activity: activity, increment: true)
-                    self.loadActivities()
-                }
-            }
-    }
-
-    // Function to load queue items from Firestore
-    func loadQueueItems(activity: Activity, completion: @escaping ([QueueItem]) -> Void) {
-        db.collection("activities")
-            .document(activity.id.uuidString)
-            .collection("queues")
-            .order(by: "number") // Add this line to order by queue number
-            .getDocuments { (querySnapshot, err) in
-                if let err = err {
-                    print("Error getting queue items: \(err)")
-                    completion([])
-                } else {
-                    let queueItems = querySnapshot!.documents.compactMap { document in
-                        let data = document.data()
-                        let studentName = data["studentName"] as? String ?? ""
-                        let number = data["number"] as? Int ?? 0
-                        let studentId = data["studentId"] as? String ?? ""
-                        let status = data["status"] as? String // Load status
-                        if let idString = document.documentID as String?, let id = UUID(uuidString: idString) {
-                            return QueueItem(id: id, studentId: studentId, studentName: studentName, number: number, status: status)
-                        } else {
-                            return nil
-                        }
-                    }.filter { item in
-                        item.status == nil // Keep only items without a status (nil status)
-                    }
-                    completion(queueItems)
-                }
-            }
-    }
-
-
-    // Function to update queue item status in Firestore
-    func updateQueueItemStatus(activity: Activity, queueItem: QueueItem, status: String) {
-        db.collection("activities")
-            .document(activity.id.uuidString)
-            .collection("queues")
-            .document(queueItem.id.uuidString)
-            .updateData([
-                "status": status
-            ]) { err in
-                if let err = err {
-                    print("Error updating queue item status: \(err)")
-                } else {
-                    print("Queue item status updated for \(queueItem.studentName)")
-                    // Update current queue number in Activity when status is updated
-                    self.updateCurrentQueueNumber(activity: activity, queueItem: queueItem)
-                    self.loadActivities()
-                }
-            }
-    }
-
-    // Function to delete a queue item from Firestore (we will not use this anymore)
-    func deleteQueueItem(activity: Activity, queueItem: QueueItem) {
-           // No longer deleting, just updating status
-       }
-
-    // Function to register a new user with Firebase Authentication and store additional user data in Firestore
-    func register(name: String, studentID: String, email: String, password: String, role: UserRole, completion: @escaping (Bool, String?) -> Void) {
-        // Check if studentID has 11 digits
-        guard studentID.count == 11, studentID.allSatisfy({ $0.isNumber }) else {
-            completion(false, "รหัสนักศึกษาต้องมี 11 หลัก และเป็นตัวเลขเท่านั้น")
-            return
-        }
-        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
-            if let error = error {
-                print("Error creating user: \(error.localizedDescription)")
-                completion(false, error.localizedDescription)
+        db.collection("activities").document(activity.id.uuidString).collection("queues").document(queueItem.id.uuidString).setData([
+            "studentName": queueItem.studentName,
+            "number": queueItem.number,
+            "studentId": queueItem.studentId,
+            "status": queueItem.status
+        ]) { err in
+            if let err = err {
+                print("Error adding queue item: \(err)")
             } else {
-                // User registration successful
-                if let user = authResult?.user {
-                    // Store additional user data in Firestore
-                    let userData: [String: Any] = [
-                        "name": name,
-                        "studentID": studentID,
-                        "email": email,
-                        "role": role == .student ? "student" : "admin" // Store "admin" for admin role
-                    ]
-
-                    self.db.collection("users").document(user.uid).setData(userData) { error in
-                        if let error = error {
-                            print("Error adding user data to Firestore: \(error.localizedDescription)")
-                            completion(false, "Failed to save user data.")
-                        } else {
-                            print("User data saved to Firestore")
-                            withAnimation(.easeInOut(duration: 0.3)) { // <<< เพิ่ม withAnimation ตรงนี้
-                                self.currentUser = (role: role, name: name, id: studentID)
-                                self.isLoggedIn = true
-                                self.isBrowsingAsGuest = false // ตั้งค่าให้ไม่เป็น Guest เมื่อ Login สำเร็จ
-                            }
-                            completion(true, nil)
-                        }
-                    }
-                } else {
-                    completion(false, "Failed to retrieve user information.")
-                }
+                print("Queue item added for activity \(activity.name)")
+                self.updateQueueCount(activity: activity, increment: true)
+                self.loadActivities()
             }
         }
-    }
-
-    func loginAsStudent(studentID: String, password: String, completion: @escaping (Bool, String?) -> Void) {
-        // 1. Query Firestore to get the user's email based on studentID
-        db.collection("users")
-            .whereField("studentID", isEqualTo: studentID)
-            .getDocuments { (querySnapshot, error) in
-                if let error = error {
-                    print("Error getting documents: \(error)")
-                    completion(false, "Failed to retrieve user data.")
-                    return
-                }
-
-                guard let document = querySnapshot?.documents.first else {
-                    print("Student ID not found")
-                    completion(false, "Invalid Student ID or Password.")
-                    return
-                }
-
-                let data = document.data()
-                let email = data["email"] as? String ?? ""
-                let name = data["name"] as? String ?? ""
-                let roleString = data["role"] as? String ?? "student"
-                let role: UserRole = roleString == "admin" ? .admin : .student
-
-                // 2. Use the email and password to sign in with Firebase Authentication
-                Auth.auth().signIn(withEmail: email, password: password) { authResult, error in
-                    if let error = error {
-                        print("Error signing in: \(error.localizedDescription)")
-                        completion(false, "Invalid Student ID or Password.")
-                        return
-                    } else {
-                        // Sign in successful
-                        withAnimation(.easeInOut(duration: 0.3)) { // <<< เพิ่ม withAnimation ตรงนี้
-                            self.currentUser = (role: role, name: name, id: studentID)
-                            self.isLoggedIn = true
-                            self.isBrowsingAsGuest = false // ตั้งค่าให้ไม่เป็น Guest เมื่อ Login สำเร็จ
-                        }
-                        completion(true, nil)
-                    }
-                }
-            }
     }
     
-    // Function to update current queue number in Activity
-    func updateCurrentQueueNumber(activity: Activity, queueItem: QueueItem) {
-        db.collection("activities")
-            .document(activity.id.uuidString)
-            .updateData([
-                "currentQueueNumber": queueItem.number // Set currentQueueNumber to the called queue number
-            ]) { err in
-                if let err = err {
-                    print("Error updating current queue number: \(err)")
-                } else {
-                    print("Current queue number updated for activity \(activity.name)")
-                    activity.currentQueueNumber = queueItem.number
+    func loadQueueItems(activity: Activity, completion: @escaping ([QueueItem]) -> Void) {
+        db.collection("activities").document(activity.id.uuidString).collection("queues").order(by: "number").getDocuments { (querySnapshot, err) in
+            if let err = err {
+                print("Error getting queue items: \(err)")
+                completion([])
+            } else {
+                let queueItems = querySnapshot!.documents.compactMap { document in
+                    let data = document.data()
+                    let studentName = data["studentName"] as? String ?? ""
+                    let number = data["number"] as? Int ?? 0
+                    let studentId = data["studentId"] as? String ?? ""
+                    let status = data["status"] as? String
+                    if let idString = document.documentID as String?, let id = UUID(uuidString: idString) {
+                        return QueueItem(id: id, studentId: studentId, studentName: studentName, number: number, status: status)
+                    } else { return nil }
+                }.filter { item in
+                    item.status == nil
                 }
+                completion(queueItems)
             }
+        }
     }
 
-    // Function to update queue count in Activity
+    func updateQueueItemStatus(activity: Activity, queueItem: QueueItem, status: String) {
+        db.collection("activities").document(activity.id.uuidString).collection("queues").document(queueItem.id.uuidString).updateData([
+            "status": status
+        ]) { err in
+            if let err = err {
+                print("Error updating queue item status: \(err)")
+            } else {
+                print("Queue item status updated for \(queueItem.studentName)")
+                self.updateCurrentQueueNumber(activity: activity, queueItem: queueItem)
+                self.loadActivities()
+            }
+        }
+    }
+
+    func deleteQueueItem(activity: Activity, queueItem: QueueItem) { }
+
+    func updateCurrentQueueNumber(activity: Activity, queueItem: QueueItem) {
+        db.collection("activities").document(activity.id.uuidString).updateData([
+            "currentQueueNumber": queueItem.number
+        ]) { err in
+            if let err = err { print("Error updating current queue number: \(err)") }
+            else { print("Current queue number updated for activity \(activity.name)"); activity.currentQueueNumber = queueItem.number }
+        }
+    }
+
     func updateQueueCount(activity: Activity, increment: Bool) {
         let change = increment ? 1 : -1
-        let newCount = max(0, activity.queueCount + change) // Ensure count doesn't go below 0
-
-        db.collection("activities")
-            .document(activity.id.uuidString)
-            .updateData([
-                "queueCount": newCount
-            ]) { err in
-                if let err = err {
-                    print("Error updating queue count: \(err)")
-                } else {
-                    print("Queue count updated for activity \(activity.name)")
-                    activity.queueCount = newCount
-                }
-            }
+        let newCount = max(0, activity.queueCount + change)
+        db.collection("activities").document(activity.id.uuidString).updateData([
+            "queueCount": newCount
+        ]) { err in
+            if let err = err { print("Error updating queue count: \(err)") }
+            else { print("Queue count updated for activity \(activity.name)"); activity.queueCount = newCount }
+        }
     }
 
-    // Function to start listening for queue item changes
     func startListening(to activity: Activity) {
-           guard activityListeners[activity.id] == nil else { return }
+        guard activityListeners[activity.id] == nil else { return }
+        let listener = db.collection("activities").document(activity.id.uuidString).collection("queues").addSnapshotListener { [weak self] querySnapshot, error in
+            guard let self = self else { return }
+            guard let documents = querySnapshot?.documents else {
+                print("Error fetching documents: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+            let queueItems = documents.compactMap { document in
+                let data = document.data()
+                let studentName = data["studentName"] as? String ?? ""
+                let number = data["number"] as? Int ?? 0
+                let studentId = data["studentId"] as? String ?? ""
+                let status = data["status"] as? String
+                if let idString = document.documentID as String?, let id = UUID(uuidString: idString) {
+                    return QueueItem(id: id, studentId: studentId, studentName: studentName, number: number, status: status)
+                } else { return nil }
+            }.filter { item in
+                item.status == nil
+            }
+            DispatchQueue.main.async {
+                activity.queues = queueItems
+            }
+        }
+        activityListeners[activity.id] = listener
+    }
 
-           let listener = db.collection("activities")
-               .document(activity.id.uuidString)
-               .collection("queues")
-               .addSnapshotListener { [weak self] querySnapshot, error in
-                   guard let self = self else { return }
-                   guard let documents = querySnapshot?.documents else {
-                       print("Error fetching documents: \(error?.localizedDescription ?? "Unknown error")")
-                       return
-                   }
-
-                   let queueItems = documents.compactMap { document in
-                       let data = document.data()
-                       let studentName = data["studentName"] as? String ?? ""
-                       let number = data["number"] as? Int ?? 0
-                       let studentId = data["studentId"] as? String ?? ""
-                       let status = data["status"] as? String // Load status
-                       if let idString = document.documentID as String?, let id = UUID(uuidString: idString) {
-                           return QueueItem(id: id, studentId: studentId, studentName: studentName, number: number, status: status)
-                       } else {
-                           return nil
-                       }
-                   }.filter { item in
-                       item.status == nil // Keep only items without a status (nil status)
-                   }
-
-                   DispatchQueue.main.async {
-                       activity.queues = queueItems
-                   }
-               }
-
-           activityListeners[activity.id] = listener
-       }
-
-    // Function to stop listening for queue item changes
     func stopListening(to activity: Activity) {
         if let listener = activityListeners[activity.id] {
             listener.remove()
