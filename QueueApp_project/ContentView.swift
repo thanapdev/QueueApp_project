@@ -1,59 +1,51 @@
-//
-//  AppState.swift
-//  term_projecct
-//
-//  Created by Thanapong Yamkamol on 7/11/2568 BE.
-//
-
 import SwiftUI
 
 struct ContentView: View {
     @StateObject private var appState = AppState()
 
     var body: some View {
-        // เพิ่ม print statement ที่นี่เพื่อดูสถานะปัจจุบัน
-        let _ = print("ContentView: Body re-evaluated. isLoggedIn: \(appState.isLoggedIn), isBrowsingAsGuest: \(appState.isBrowsingAsGuest)")
-
-        // ใช้ Group เพื่อรวม View ที่มีการแสดงผลแบบมีเงื่อนไข
-        // และใช้ .animation และ .transition กับ Group นี้
+        
         Group {
             if appState.isLoggedIn {
-                let _ = print("ContentView: แสดง View สำหรับผู้ใช้ที่ Login แล้ว.")
-                if let user = appState.currentUser {
-                    if user.role == .admin {
-                        NavigationStack {
-                            ActivityListView()
-                                .environmentObject(appState)
-                        }
-                    } else {
-                        NavigationStack {
-                            StudentActivityListView()
-                                .environmentObject(appState)
-                        }
-                    }
-                } else {
-                    // Handle the case where isLoggedIn is true but currentUser is nil
-                    Text("Error: No user data found.") // Show an error message
-                }
-            } else if appState.isBrowsingAsGuest {
-                let _ = print("ContentView: แสดง GuestActivityListView.")
+                // --- 1. ผู้ใช้ Login แล้ว ---
+                loggedInDestinationView()
+                    .environmentObject(appState)
+                
+            } else {
+                // --- 2. สถานะเริ่มต้น (ยังไม่ Login) ---
+                // ให้เริ่มที่ WelcomeView เสมอ
+                // WelcomeView จะมี NavigationStack ของตัวเอง
+                // เพื่อจัดการ Flow ของ Guest (Welcome -> Login -> Service)
+                WelcomeView()
+                    .environmentObject(appState)
+            }
+        }
+        .transition(.opacity) // แอนิเมชันตอนสลับหน้าจอ
+        .animation(.easeInOut(duration: 0.4), value: appState.isLoggedIn)
+    }
+    
+    // Helper ViewBuilder สำหรับแยก Logic ของคน Login แล้ว
+    @ViewBuilder
+    private func loggedInDestinationView() -> some View {
+        // ตรวจสอบ currentUser เผื่อไว้
+        if let user = appState.currentUser {
+            if user.role == .admin {
+                // Admin: ไปหน้า Activity List
                 NavigationStack {
-                    GuestActivityListView()
+                    ActivityListView() // <--- ต้องมี View นี้
                         .environmentObject(appState)
                 }
             } else {
-                let _ = print("ContentView: แสดง ServiceView (หน้า Login).")
+                // Student: ไปหน้า ServiceView
                 NavigationStack {
                     ServiceView()
                         .environmentObject(appState)
                 }
             }
+        } else {
+            // กรณี Error (ไม่ควรเกิด)
+            // อาจจะแสดงหน้า Loading หรือ LoginView ไปเลยก็ได้
+            Text("Error: Logged in but no user data.")
         }
-        // เพิ่ม modifier .animation และ .transition ที่นี่
-        // .transition(.opacity) จะทำให้ View ค่อยๆ จางหายไป/ปรากฏขึ้นมา
-        // .animation จะบอกว่าให้แอนิเมตอย่างไรเมื่อค่าที่ติดตาม (value) มีการเปลี่ยนแปลง
-        .transition(.opacity)
-        .animation(.easeInOut(duration: 0.4), value: appState.isLoggedIn) // แอนิเมตเมื่อ isLoggedIn เปลี่ยน
-        .animation(.easeInOut(duration: 0.4), value: appState.isBrowsingAsGuest) // แอนิเมตเมื่อ isBrowsingAsGuest เปลี่ยน
     }
 }
