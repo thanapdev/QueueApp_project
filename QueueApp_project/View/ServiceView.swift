@@ -64,7 +64,7 @@ struct ServiceView: View {
                     }
                 }
             
-                 NavigationLink(destination: StudentActivityListView(), isActive: $showActivityEvent) {
+                 NavigationLink(destination: GuestActivityListView(), isActive: $showActivityEvent) {
                 EmptyView()
             }
             NavigationLink(destination: BookingView(), isActive: $showBookingSpace) {

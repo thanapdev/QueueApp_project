@@ -352,9 +352,9 @@ struct CountdownModal: View {
     }
 }
 
-#Preview {
-    @State var activity: Activity = Activity(name: "ตัวอย่างกิจกรรม", queues: [
-        QueueItem(id: UUID(), studentId: "654231001", studentName: "สมปอง", number: 1)
-    ])
-     QueueView(activity: $activity)
-}
+//#Preview {
+//    @State var activity: Activity = Activity(name: "ตัวอย่างกิจกรรม", queues: [
+//        QueueItem(id: UUID(), studentId: "654231001", studentName: "สมปอง", number: 1)
+//    ])
+//     QueueView(activity: $activity)
+//}
