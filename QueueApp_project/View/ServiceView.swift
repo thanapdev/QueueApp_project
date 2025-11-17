@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ServiceView: View {
+    @EnvironmentObject var appState: AppState
+
     @State private var showActivityEvent = false
     @State private var showBookingSpace = false
 
@@ -9,7 +11,8 @@ struct ServiceView: View {
     let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
 
     var body: some View {
-        NavigationView {
+        // <<< ลบ NavigationView ออก >>>
+        // NavigationView { // เดิม
             ZStack {
                 // Background (Gradient จาก LoginView.swift)
                 LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
@@ -37,7 +40,8 @@ struct ServiceView: View {
                         .padding(.bottom, 20)
 
                     Button(action: {
-                        showActivityEvent = true
+                        print("ServiceView: 'Activity / Event' button pressed. Setting isBrowsingAsGuest to true.")
+                        appState.isBrowsingAsGuest = true
                     }) {
                         ServiceCard(title: "Activity / Event", description: "ดูกิจกรรมและอีเว้นท์", backgroundColor: swuRed)
                     }
@@ -53,10 +57,10 @@ struct ServiceView: View {
                     Spacer()
                 }
                 .padding()
-//                .navigationTitle("Services")
+                // .navigationTitle("Services") // NavigationTitle ควรอยู่ข้างใน NavigationStack
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        NavigationLink(destination: LoginView()) {
+                        NavigationLink(destination: LoginView().environmentObject(appState)) {
                             Image(systemName: "person.crop.circle")
                                 .font(.title2)
                                 .foregroundColor(.black)
@@ -64,17 +68,19 @@ struct ServiceView: View {
                     }
                 }
             
-                 NavigationLink(destination: GuestActivityListView(), isActive: $showActivityEvent) {
-                EmptyView()
+                // ยังคง NavigationLink สำหรับ BookingView ไว้
+                NavigationLink(destination: BookingView().environmentObject(appState), isActive: $showBookingSpace) {
+                    EmptyView()
+                }
+            } // ปิด ZStack
+            .onAppear {
+                print("ServiceView ปรากฏขึ้น. isLoggedIn: \(appState.isLoggedIn), isBrowsingAsGuest: \(appState.isBrowsingAsGuest)")
             }
-            NavigationLink(destination: BookingView(), isActive: $showBookingSpace) {
-                EmptyView()
-            }
-            }
-        }
+        // } // ลบวงเล็บปิดของ NavigationView ที่ถูกลบออกไป
     }
 }
 
+// ServiceCard struct ไม่มีการเปลี่ยนแปลง
 struct ServiceCard: View {
     let title: String
     let description: String
@@ -101,5 +107,5 @@ struct ServiceCard: View {
 }
 
 #Preview {
-    ServiceView()
+    ServiceView().environmentObject(AppState())
 }

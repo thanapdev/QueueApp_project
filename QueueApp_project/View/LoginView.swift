@@ -5,7 +5,6 @@ struct LoginView: View {
     @EnvironmentObject var appState: AppState
     @State private var studentID = "" // Use studentID for both
     @State private var password = ""
-    //@State private var isLoggedIn = false // Remove this line
     @State private var showAlert = false
     @State private var errorMessage = ""
     
@@ -14,7 +13,8 @@ struct LoginView: View {
     let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
     
     var body: some View {
-        NavigationView {
+        // <<< ลบ NavigationView ออก >>>
+        // NavigationView { // เดิม
             ZStack {
                 // Background
                 LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
@@ -74,7 +74,8 @@ struct LoginView: View {
                     .shadow(radius: 5)
                     
                     // Register Link
-                    NavigationLink(destination: RegisterView()) {
+                    // ส่ง appState ไปยัง RegisterView ด้วย
+                    NavigationLink(destination: RegisterView().environmentObject(appState)) {
                         Text("Don't have an account? Register")
                             .foregroundColor(.blue)
                     }
@@ -86,18 +87,21 @@ struct LoginView: View {
                 .alert(isPresented: $showAlert) {
                     Alert(title: Text("Login Failed"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
                 }
-            }
-            .fullScreenCover(isPresented: $appState.isLoggedIn, content: { // Use appState.isLoggedIn
+            } // ปิด ZStack
+            .fullScreenCover(isPresented: $appState.isLoggedIn, content: {
                 destinationView()
             })
-        }
+            .onAppear { // <<< เพิ่ม print statement ตรงนี้
+                print("LoginView ปรากฏขึ้น. isLoggedIn: \(appState.isLoggedIn)")
+            }
+        // } // ลบวงเล็บปิดของ NavigationView ที่ถูกลบออกไป
     }
     
     func login() {
         appState.loginAsStudent(studentID: studentID, password: password) { success, message in
             if success {
                 withAnimation {
-                    //isLoggedIn = true // Remove this line
+                    // isLoggedIn จะถูกจัดการโดย appState.isLoggedIn ซึ่ง ContentView คอยดูอยู่
                 }
             } else {
                 errorMessage = message ?? "Invalid credentials. Please try again."
@@ -110,8 +114,10 @@ struct LoginView: View {
     private func destinationView() -> some View {
         if appState.currentUser?.role == .admin {
             ActivityListView()
+                .environmentObject(appState) // ส่ง appState ไปด้วย
         } else {
             StudentActivityListView()
+                .environmentObject(appState) // ส่ง appState ไปด้วย
         }
     }
 }

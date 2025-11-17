@@ -21,7 +21,8 @@ struct GuestActivityListView: View {
     let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
     
     var body: some View {
-        NavigationView {
+        // <<< ลบ NavigationView ที่ครอบ View ทั้งหมดออก เพราะ ContentView เป็นผู้ให้ NavigationStack แล้ว >>>
+        // NavigationView {
             ZStack {
                 // Background
                 LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
@@ -58,9 +59,10 @@ struct GuestActivityListView: View {
                         
                         // Login Button
                         Button(action: {
-                            // ✅ สั่งให้ AppState กลับไปหน้า Login
-                            // (ใช้ .logout() เพราะมักจะเป็นตัวเคลียร์ค่าและเด้งกลับหน้า Login)
+                            print("GuestActivityListView: ปุ่ม Login ที่ Top Bar ถูกกด.")
                             appState.isBrowsingAsGuest = false
+                            print("GuestActivityListView: appState.isBrowsingAsGuest เปลี่ยนเป็น \(appState.isBrowsingAsGuest)")
+                            print("GuestActivityListView: สถานะปัจจุบัน appState.isLoggedIn คือ \(appState.isLoggedIn)")
                         }) {
                             Text("Login")
                                 .font(.headline)
@@ -126,7 +128,10 @@ struct GuestActivityListView: View {
                     
                     Spacer() // Push content to the top
                 }
+                .contentShape(Rectangle()) // ยังคง modifier นี้ไว้เพื่อการรับการแตะที่ดีขึ้น
+                .background(.clear) // ยังคง modifier นี้ไว้
             }
+            // <<< Modifier ที่เกี่ยวกับ Navigation Bar จะอยู่ตรงนี้ >>>
             .navigationTitle("กิจกรรม")
             .navigationBarTitleDisplayMode(.inline)
             // ✅ เพิ่ม .alert เพื่อแจ้งเตือนเมื่อ guest กดที่กิจกรรม
@@ -136,7 +141,10 @@ struct GuestActivityListView: View {
                     message: Text("คุณต้องเข้าสู่ระบบเพื่อเข้าร่วมคิว"),
                     primaryButton: .default(Text("Login"), action: {
                         // กดปุ่ม "Login" ใน Alert
+                        print("GuestActivityListView: ปุ่ม 'Login' ใน Alert ถูกกด.")
                         appState.isBrowsingAsGuest = false
+                        print("GuestActivityListView: appState.isBrowsingAsGuest เปลี่ยนเป็น \(appState.isBrowsingAsGuest)")
+                        print("GuestActivityListView: สถานะปัจจุบัน appState.isLoggedIn คือ \(appState.isLoggedIn)")
                     }),
                     secondaryButton: .cancel(Text("ยกเลิก"))
                 )
@@ -144,13 +152,8 @@ struct GuestActivityListView: View {
             // Moved .onAppear here, chained with the NavigationView modifiers
             .onAppear {
                 appState.loadActivities()
+                print("GuestActivityListView ปรากฏขึ้น. isBrowsingAsGuest: \(appState.isBrowsingAsGuest), isLoggedIn: \(appState.isLoggedIn)")
             }
-        }
+        // } // ลบวงเล็บปิดของ NavigationView ที่ถูกลบออกไป
     }
-}// Added the missing closing brace for the struct
-
-// ✅ อัปเดต Preview ให้ใช้ GuestActivityListView
-//#Preview {
-//    GuestActivityListView()
-//        .environmentObject(AppState())
-//}
+}
