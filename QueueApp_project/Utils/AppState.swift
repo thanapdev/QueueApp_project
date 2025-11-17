@@ -22,16 +22,18 @@ class AppState: ObservableObject {
     }
 
     func logout() {
+        withAnimation(.easeInOut(duration: 0.3)) { // <<< เพิ่ม withAnimation ตรงนี้
             isLoggedIn = false
             currentUser = nil
             isBrowsingAsGuest = false // 👈 2. เพิ่มบรรทัดนี้ (สำคัญมาก)
-            // Optional: Sign out from Firebase Authentication
-            do {
-                try Auth.auth().signOut()
-            } catch {
-                print("Error signing out: \(error.localizedDescription)")
-            }
         }
+        // Optional: Sign out from Firebase Authentication
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            print("Error signing out: \(error.localizedDescription)")
+        }
+    }
 
     // Function to add an activity to Firestore
     func addActivity(name: String) {
@@ -217,8 +219,11 @@ class AppState: ObservableObject {
                             completion(false, "Failed to save user data.")
                         } else {
                             print("User data saved to Firestore")
-                            self.currentUser = (role: role, name: name, id: studentID)
-                            self.isLoggedIn = true
+                            withAnimation(.easeInOut(duration: 0.3)) { // <<< เพิ่ม withAnimation ตรงนี้
+                                self.currentUser = (role: role, name: name, id: studentID)
+                                self.isLoggedIn = true
+                                self.isBrowsingAsGuest = false // ตั้งค่าให้ไม่เป็น Guest เมื่อ Login สำเร็จ
+                            }
                             completion(true, nil)
                         }
                     }
@@ -260,8 +265,11 @@ class AppState: ObservableObject {
                         return
                     } else {
                         // Sign in successful
-                        self.currentUser = (role: role, name: name, id: studentID)
-                        self.isLoggedIn = true
+                        withAnimation(.easeInOut(duration: 0.3)) { // <<< เพิ่ม withAnimation ตรงนี้
+                            self.currentUser = (role: role, name: name, id: studentID)
+                            self.isLoggedIn = true
+                            self.isBrowsingAsGuest = false // ตั้งค่าให้ไม่เป็น Guest เมื่อ Login สำเร็จ
+                        }
                         completion(true, nil)
                     }
                 }

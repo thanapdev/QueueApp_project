@@ -14,39 +14,46 @@ struct ContentView: View {
         // เพิ่ม print statement ที่นี่เพื่อดูสถานะปัจจุบัน
         let _ = print("ContentView: Body re-evaluated. isLoggedIn: \(appState.isLoggedIn), isBrowsingAsGuest: \(appState.isBrowsingAsGuest)")
 
-        if appState.isLoggedIn {
-            let _ = print("ContentView: แสดง View สำหรับผู้ใช้ที่ Login แล้ว.")
-            if let user = appState.currentUser {
-                if user.role == .admin {
-                    NavigationStack {
-                        ActivityListView()
-                            .environmentObject(appState)
+        // ใช้ Group เพื่อรวม View ที่มีการแสดงผลแบบมีเงื่อนไข
+        // และใช้ .animation และ .transition กับ Group นี้
+        Group {
+            if appState.isLoggedIn {
+                let _ = print("ContentView: แสดง View สำหรับผู้ใช้ที่ Login แล้ว.")
+                if let user = appState.currentUser {
+                    if user.role == .admin {
+                        NavigationStack {
+                            ActivityListView()
+                                .environmentObject(appState)
+                        }
+                    } else {
+                        NavigationStack {
+                            StudentActivityListView()
+                                .environmentObject(appState)
+                        }
                     }
                 } else {
-                    NavigationStack {
-                        StudentActivityListView()
-                            .environmentObject(appState)
-                    }
+                    // Handle the case where isLoggedIn is true but currentUser is nil
+                    Text("Error: No user data found.") // Show an error message
+                }
+            } else if appState.isBrowsingAsGuest {
+                let _ = print("ContentView: แสดง GuestActivityListView.")
+                NavigationStack {
+                    GuestActivityListView()
+                        .environmentObject(appState)
                 }
             } else {
-                // Handle the case where isLoggedIn is true but currentUser is nil
-                Text("Error: No user data found.") // Show an error message
-            }
-        } else if appState.isBrowsingAsGuest {
-            let _ = print("ContentView: แสดง GuestActivityListView.")
-            // 👈 1. เพิ่ม NavigationStack ที่นี่เพื่อให้ GuestActivityListView มี Navigation Bar และ Title ได้
-            NavigationStack { // <<< เพิ่ม NavigationStack ตรงนี้
-                GuestActivityListView()
-                    .environmentObject(appState)
-            }
-        } else {
-            let _ = print("ContentView: แสดง ServiceView (หน้า Login).")
-            // 👈 2. ถ้าไม่ Login และไม่ Guest = อยู่หน้า Service (Login)
-            NavigationStack {
-                ServiceView() // (นี่คือหน้า Login/Guest ของคุณ)
-                    .environmentObject(appState)
+                let _ = print("ContentView: แสดง ServiceView (หน้า Login).")
+                NavigationStack {
+                    ServiceView()
+                        .environmentObject(appState)
+                }
             }
         }
+        // เพิ่ม modifier .animation และ .transition ที่นี่
+        // .transition(.opacity) จะทำให้ View ค่อยๆ จางหายไป/ปรากฏขึ้นมา
+        // .animation จะบอกว่าให้แอนิเมตอย่างไรเมื่อค่าที่ติดตาม (value) มีการเปลี่ยนแปลง
+        .transition(.opacity)
+        .animation(.easeInOut(duration: 0.4), value: appState.isLoggedIn) // แอนิเมตเมื่อ isLoggedIn เปลี่ยน
+        .animation(.easeInOut(duration: 0.4), value: appState.isBrowsingAsGuest) // แอนิเมตเมื่อ isBrowsingAsGuest เปลี่ยน
     }
 }
-
