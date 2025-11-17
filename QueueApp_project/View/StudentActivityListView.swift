@@ -8,7 +8,8 @@ struct StudentActivityListView: View {
     let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
 
     var body: some View {
-        NavigationView {
+        // <<< ลบ NavigationView ที่ครอบ View ทั้งหมดออก >>>
+        // NavigationView { // เดิม
             ZStack {
                 // Background (Gradient From LoginView.swift)
                 LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
@@ -38,13 +39,14 @@ struct StudentActivityListView: View {
                             Text("สวัสดี, \(appState.currentUser?.name ?? "นักศึกษา")")
                                 .font(.headline)
                                 .fontWeight(.bold)
-                                .foregroundColor(.black) // Adjusted color
+                                .foregroundColor(.black)
                         }
 
                         Spacer()
 
                         // Logout Button (SF Symbol)
                         Button(action: {
+                            print("StudentActivityListView: Logout button pressed.")
                             appState.logout()
                         }) {
                             Image(systemName: "arrow.right.square.fill")
@@ -110,10 +112,11 @@ struct StudentActivityListView: View {
                 }
             }
             .navigationTitle("กิจกรรม")
-            .navigationBarTitleDisplayMode(.inline) // Ensure title is inline
-        }
+            .navigationBarTitleDisplayMode(.inline)
+        // } // ลบวงเล็บปิดของ NavigationView
         .onAppear {
             appState.loadActivities()
+            print("StudentActivityListView ปรากฏขึ้น. isLoggedIn: \(appState.isLoggedIn)")
         }
     }
 }
