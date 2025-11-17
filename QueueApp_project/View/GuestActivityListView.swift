@@ -15,31 +15,31 @@ struct GuestActivityListView: View {
     
     // ✅ State สำหรับควบคุมการแสดง Alert
     @State private var showLoginAlert = false
-
+    
     // SWU Colors (From LoginView.swift)
     let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
     let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
-
+    
     var body: some View {
         NavigationView {
             ZStack {
                 // Background
                 LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
                     .edgesIgnoringSafeArea(.all)
-
+                
                 // Shape Background
                 GeometryReader { geometry in
                     Circle()
                         .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
                         .frame(width: 200, height: 200)
                         .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
-
+                    
                     Circle()
                         .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
                         .frame(width: 200, height: 200)
                         .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
                 }
-
+                
                 VStack {
                     // ✅ Top Bar (สำหรับ Guest)
                     HStack {
@@ -53,16 +53,14 @@ struct GuestActivityListView: View {
                                 .fontWeight(.bold)
                                 .foregroundColor(.black)
                         }
-
+                        
                         Spacer()
-
+                        
                         // Login Button
                         Button(action: {
                             // ✅ สั่งให้ AppState กลับไปหน้า Login
                             // (ใช้ .logout() เพราะมักจะเป็นตัวเคลียร์ค่าและเด้งกลับหน้า Login)
-                            Task { // <== ADDED Task BLOCK HERE
-                                await appState.logout()
-                            }
+                            appState.isBrowsingAsGuest = false
                         }) {
                             Text("Login")
                                 .font(.headline)
@@ -78,7 +76,7 @@ struct GuestActivityListView: View {
                     .cornerRadius(10)
                     .padding(.horizontal)
                     .padding(.top)
-
+                    
                     // Activities List
                     if appState.activities.isEmpty {
                         // "No Activities" Message (เหมือนเดิม)
@@ -125,7 +123,7 @@ struct GuestActivityListView: View {
                             .padding()
                         }
                     }
-
+                    
                     Spacer() // Push content to the top
                 }
             }
@@ -138,22 +136,21 @@ struct GuestActivityListView: View {
                     message: Text("คุณต้องเข้าสู่ระบบเพื่อเข้าร่วมคิว"),
                     primaryButton: .default(Text("Login"), action: {
                         // กดปุ่ม "Login" ใน Alert
-                        Task { // <== ADDED Task BLOCK HERE
-                            await appState.logout() // กลับไปหน้า Login
-                        }
+                        appState.isBrowsingAsGuest = false
                     }),
                     secondaryButton: .cancel(Text("ยกเลิก"))
                 )
             }
-        }
-        .onAppear {
-            appState.loadActivities()
+            // Moved .onAppear here, chained with the NavigationView modifiers
+            .onAppear {
+                appState.loadActivities()
+            }
         }
     }
-}
+}// Added the missing closing brace for the struct
 
 // ✅ อัปเดต Preview ให้ใช้ GuestActivityListView
-#Preview {
-    GuestActivityListView()
-        .environmentObject(AppState())
-}
+//#Preview {
+//    GuestActivityListView()
+//        .environmentObject(AppState())
+//}

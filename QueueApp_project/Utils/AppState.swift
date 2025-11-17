@@ -6,6 +6,7 @@ class AppState: ObservableObject {
     @Published var isLoggedIn = false
     @Published var currentUser: (role: UserRole, name: String, id: String)?
     @Published var activities: [Activity] = []
+    @Published var isBrowsingAsGuest = false
 
     private let db = Firestore.firestore()
     private var activityListeners: [UUID: ListenerRegistration] = [:]
@@ -21,15 +22,16 @@ class AppState: ObservableObject {
     }
 
     func logout() {
-        isLoggedIn = false
-        currentUser = nil
-        // Optional: Sign out from Firebase Authentication
-        do {
-            try Auth.auth().signOut()
-        } catch {
-            print("Error signing out: \(error.localizedDescription)")
+            isLoggedIn = false
+            currentUser = nil
+            isBrowsingAsGuest = false // 👈 2. เพิ่มบรรทัดนี้ (สำคัญมาก)
+            // Optional: Sign out from Firebase Authentication
+            do {
+                try Auth.auth().signOut()
+            } catch {
+                print("Error signing out: \(error.localizedDescription)")
+            }
         }
-    }
 
     // Function to add an activity to Firestore
     func addActivity(name: String) {

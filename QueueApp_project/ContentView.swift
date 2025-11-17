@@ -28,11 +28,18 @@ struct ContentView: View {
                 // Handle the case where isLoggedIn is true but currentUser is nil
                 Text("Error: No user data found.") // Show an error message
             }
-        } else {
-            NavigationStack {
-                ServiceView()
-                    .environmentObject(appState)
+            // 🚨 แก้ไขตรงส่วน else นี้ทั้งหมด 🚨
+                    } else if appState.isBrowsingAsGuest {
+                        // 👈 1. เพิ่ม else if: ถ้าดูแบบ Guest ให้ไปหน้า Guest
+                        GuestActivityListView()
+                            .environmentObject(appState)
+                        
+                    } else {
+                        // 👈 2. ถ้าไม่ Login และไม่ Guest = อยู่หน้า Service (Login)
+                        NavigationStack {
+                            ServiceView() // (นี่คือหน้า Login/Guest ของคุณ)
+                                .environmentObject(appState)
+                        }
+                    }
+                }
             }
-        }
-    }
-}
