@@ -54,7 +54,7 @@ struct MyBookingBannerView: View {
                             .font(.headline).fontWeight(.bold)
                     }
                     Spacer()
-                    Button("Cancel") { appState.cancelAllBookings() } // 👈 เรียก AppState
+                    Button("Cancel") { appState.cancelActiveBooking() } // 👈 เรียก AppState
                         .buttonStyle(.bordered).tint(.white.opacity(0.5))
                 }
             
@@ -69,7 +69,7 @@ struct MyBookingBannerView: View {
                             .font(.headline).fontWeight(.bold)
                     }
                     Spacer()
-                    Button("Cancel") { appState.cancelAllBookings() } // 👈 เรียก AppState
+                    Button("Cancel") { appState.cancelActiveBooking() } // 👈 เรียก AppState
                         .buttonStyle(.bordered).tint(.white.opacity(0.5))
                 }
             }
@@ -117,7 +117,7 @@ struct AlreadyBookedView: View {
             }
             
             Button("Cancel Booking") {
-                appState.cancelAllBookings() // 👈 เรียก AppState
+                appState.cancelActiveBooking() // 👈 เรียก AppState
             }
             .buttonStyle(.borderedProminent).tint(.red).padding(.top)
         }

@@ -8,11 +8,10 @@
 
 import SwiftUI
 
-// MARK: - 1. BoardGameBookingView
 struct BoardGameBookingView: View {
     
     // MARK: - Properties
-    @EnvironmentObject var appState: AppState // 👈 รับ "สมอง"
+    @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
     let service: LibraryService
     
@@ -20,12 +19,10 @@ struct BoardGameBookingView: View {
     
     // MARK: - State
     @State private var mockGames = ["Catan", "Monopoly", "Clue", "Risk", "Uno", "Jenga", "Exploding Kittens"]
-    @State private var bookedTables: Set<Int> = [2, 5] // (จำลอง)
+    // ⭐️ (R1) ลบ @State private var bookedTables ทิ้ง
     @State private var selectedTable: Int? = nil
     @State private var selectedGames: Set<String> = []
     
-    // MARK: - Computed Properties
-    // R1: (1 โต๊ะ และ 1-3 เกม)
     var isSelectionValid: Bool {
         selectedTable != nil && (1...3).contains(selectedGames.count)
     }
@@ -35,19 +32,20 @@ struct BoardGameBookingView: View {
         VStack {
             ScrollView {
                 VStack(alignment: .leading) {
-                    
-                    // --- 1. เลือกโต๊ะ ---
                     Text("1. Select a Table (1)").font(.title2).fontWeight(.bold).padding([.top, .horizontal])
                     LazyVGrid(columns: tableColumns, spacing: 10) {
                         ForEach(1...6, id: \.self) { tableNum in
-                            BoardGameTableView(tableNumber: tableNum, selectedTable: $selectedTable, bookedTables: bookedTables, themeColor: service.themeColor)
+                            BoardGameTableView(
+                                tableNumber: tableNum,
+                                selectedTable: $selectedTable,
+                                // ⭐️ (R1) ส่ง Set ของช่องที่จองแล้ว (จาก AppState)
+                                bookedSlots: appState.currentServiceBookedSlots,
+                                themeColor: service.themeColor
+                            )
                         }
                     }
                     .padding(.horizontal)
-                    
                     Divider().padding()
-                    
-                    // --- 2. เลือกเกม ---
                     Text("2. Select Games (1-3)").font(.title2).fontWeight(.bold).padding(.horizontal)
                     Text("Selected: \(selectedGames.count)").font(.caption).padding(.horizontal)
                     List(mockGames, id: \.self) { game in
@@ -59,7 +57,6 @@ struct BoardGameBookingView: View {
                         }
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            // R1: Logic เลือกได้ไม่เกิน 3 เกม
                             if selectedGames.contains(game) {
                                 selectedGames.remove(game)
                             } else if selectedGames.count < 3 {
@@ -78,33 +75,49 @@ struct BoardGameBookingView: View {
             // MARK: - Action Button
             Button(action: {
                 guard let table = selectedTable else { return }
-                // ⭐️ สั่ง AppState ให้ "เข้าคิว" (ไม่ใช่จอง)
-                appState.joinQueue(service: service, table: table, games: Array(selectedGames))
+                let slotID = "Table \(table)"
+                let games = Array(selectedGames)
+                
+                // ⭐️ (R1) สั่ง AppState ให้ "เข้าคิว"
+                appState.joinQueue(
+                    service: service,
+                    slotID: slotID, // 👈 ส่ง slotID
+                    items: games    // 👈 ส่ง games
+                )
                 dismiss()
             }) {
                 Text("Join Queue")
                     .font(.headline).fontWeight(.bold).foregroundColor(.white)
                     .frame(maxWidth: .infinity).padding()
-                    .background(isSelectionValid ? Color.green : Color.gray) // 👈 เช็ก isSelectionValid
+                    .background(isSelectionValid ? Color.green : Color.gray)
                     .cornerRadius(12)
             }
             .disabled(!isSelectionValid)
             .padding()
         }
         .navigationTitle(service.name)
+        // ⭐️ (R1) เริ่ม/หยุด Listener ส่วนรวม
+        .onAppear {
+            appState.listenToServiceBookings(service: service.name, timeSlot: nil)
+        }
+        .onDisappear {
+            appState.stopListeningToServiceBookings()
+        }
     }
 }
 
-// MARK: - 2. BoardGameTableView
-// (ปุ่ม "โต๊ะ" ที่ใช้เฉพาะใน Board Game)
 struct BoardGameTableView: View {
     let tableNumber: Int
     @Binding var selectedTable: Int?
-    let bookedTables: Set<Int>
+    let bookedSlots: Set<String> // 👈 (R1) รับ Set<String>
     let themeColor: Color
     
-    var isBooked: Bool { bookedTables.contains(tableNumber) }
+    private var slotID: String { "Table \(tableNumber)" } // 👈 (R1)
+    
+    // ⭐️ (R1) แก้ Logic isBooked
+    var isBooked: Bool { bookedSlots.contains(slotID) }
     var isSelected: Bool { selectedTable == tableNumber }
+    
     var seatColor: Color {
         if isBooked { return .gray }
         if isSelected { return .green }
@@ -119,7 +132,7 @@ struct BoardGameTableView: View {
         Button(action: { selectedTable = tableNumber }) {
             VStack {
                 Image(systemName: "gamecontroller.fill")
-                Text("Table \(tableNumber)")
+                Text(slotID)
             }
             .padding(10)
             .frame(maxWidth: .infinity, minHeight: 70)

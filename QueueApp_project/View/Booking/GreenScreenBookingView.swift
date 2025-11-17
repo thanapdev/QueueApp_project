@@ -5,31 +5,27 @@
 //  Created by Thanapong Yamkamol on 17/11/2568 BE.
 //
 
-
 import SwiftUI
 
-// MARK: - 1. GreenScreenBookingView
 struct GreenScreenBookingView: View {
     
     // MARK: - Properties
-    @EnvironmentObject var appState: AppState // 👈 รับ "สมอง"
+    @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
     let service: LibraryService
     
-    // Layouts
-    let roomColumns = [GridItem(.flexible()), GridItem(.flexible())] // 2 ห้อง
-    let slotColumns = [GridItem(.flexible()), GridItem(.flexible())] // รอบเวลา
+    let roomColumns = [GridItem(.flexible()), GridItem(.flexible())]
+    let slotColumns = [GridItem(.flexible()), GridItem(.flexible())]
     
     // MARK: - State
     @State private var mockEquipment = ["Camera (Sony A7)", "Tripod", "LED Light Panel", "Microphone (Rode)"]
-    @State private var bookedRooms: Set<Int> = [2] // (จำลอง)
+    // ⭐️ (R1) ลบ @State private var bookedRooms ทิ้ง
     @State private var timeSlots: [TimeSlot] = []
     
     @State private var selectedRoom: Int? = nil
     @State private var selectedSlot: TimeSlot? = nil
     @State private var selectedEquipment: Set<String> = []
     
-    // เช็กว่าพร้อมจองไหม (แค่ห้อง + เวลา)
     var isSelectionValid: Bool {
         selectedRoom != nil && selectedSlot != nil
     }
@@ -40,31 +36,38 @@ struct GreenScreenBookingView: View {
             ScrollView {
                 VStack(alignment: .leading) {
                     
-                    // --- 1. เลือกห้อง ---
-                    Text("1. Select a Room")
+                    // --- 1. เลือกรอบเวลา (ย้ายมาไว้ข้างบน) ---
+                    Text("1. Select a Time Slot")
                         .font(.title2).fontWeight(.bold).padding([.top, .horizontal])
-                    LegendView(service: service).padding(.horizontal)
-                    LazyVGrid(columns: roomColumns, spacing: 10) {
-                        ForEach(1...2, id: \.self) { roomNum in
-                            GreenScreenRoomView(roomNumber: roomNum, selectedRoom: $selectedRoom, bookedRooms: bookedRooms, themeColor: service.themeColor)
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    Divider().padding()
-
-                    // --- 2. เลือกรอบเวลา ---
-                    Text("2. Select a Time Slot")
-                        .font(.title2).fontWeight(.bold).padding(.horizontal)
                     LazyVGrid(columns: slotColumns, spacing: 10) {
                         ForEach(timeSlots) { slot in
-                            // ⭐️ ใช้ TimeSlotView (จาก BookingSharedViews.swift)
                             TimeSlotView(slot: slot, selectedSlot: $selectedSlot, themeColor: service.themeColor)
                         }
                     }
                     .padding(.horizontal)
 
                     Divider().padding()
+
+                    // --- 2. เลือกห้อง ---
+                    if selectedSlot != nil {
+                        Text("2. Select a Room")
+                            .font(.title2).fontWeight(.bold).padding(.horizontal)
+                        LegendView(service: service).padding(.horizontal)
+                        LazyVGrid(columns: roomColumns, spacing: 10) {
+                            ForEach(1...2, id: \.self) { roomNum in
+                                GreenScreenRoomView(
+                                    roomNumber: roomNum,
+                                    selectedRoom: $selectedRoom,
+                                    // ⭐️ (R1) ส่ง Set ของช่องที่จองแล้ว (จาก AppState)
+                                    bookedSlots: appState.currentServiceBookedSlots,
+                                    themeColor: service.themeColor
+                                )
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        Divider().padding()
+                    }
 
                     // --- 3. เลือกอุปกรณ์ (Optional) ---
                     Text("3. Select Equipment (Optional)")
@@ -80,7 +83,6 @@ struct GreenScreenBookingView: View {
                         }
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            // Logic เลือก/ยกเลิก (ไม่จำกัดจำนวน)
                             if selectedEquipment.contains(item) {
                                 selectedEquipment.remove(item)
                             } else {
@@ -93,20 +95,24 @@ struct GreenScreenBookingView: View {
                     .cornerRadius(10)
                     .padding(.horizontal)
                 }
-            } // End ScrollView
-            
+            }
             Spacer()
             
             // MARK: - Action Button
             Button(action: {
                 guard let room = selectedRoom, let slot = selectedSlot else { return }
                 
-                // สร้างรายละเอียดการจอง (รวมอุปกรณ์)
-                let details = "Room \(room) @ \(slot.time) (\(selectedEquipment.count) items)"
+                let slotID = "Room \(room)"
+                let items = Array(selectedEquipment)
                 
-                // ⭐️ สั่ง AppState ให้สร้างการจอง
-                appState.createReservation(service: service, details: details)
-                dismiss() // ปิดหน้า
+                // ⭐️ (R1) สั่ง AppState ให้สร้างการจอง
+                appState.createReservation(
+                    service: service,
+                    slotID: slotID,   // 👈 ส่ง slotID
+                    timeSlot: slot.time, // 👈 ส่ง timeSlot
+                    items: items.isEmpty ? nil : items // 👈 ส่ง items
+                )
+                dismiss()
                 
             }) {
                 Text("Confirm Booking")
@@ -115,14 +121,26 @@ struct GreenScreenBookingView: View {
                     .background(isSelectionValid ? Color.green : Color.gray)
                     .cornerRadius(12)
             }
-            .disabled(!isSelectionValid) // ⭐️ เช็กแค่ ห้อง + เวลา
+            .disabled(!isSelectionValid)
             .padding()
         }
         .navigationTitle(service.name)
         .onAppear { loadMockTimeSlots() }
+        .onDisappear {
+            // ⭐️ (R1) หยุด Listener เมื่อออกจากหน้า
+            appState.stopListeningToServiceBookings()
+        }
+        // ⭐️ (R1) เมื่อ "รอบเวลา" เปลี่ยน ให้เริ่ม Listener ใหม่
+        .onChange(of: selectedSlot) { newSlot in
+            if let slot = newSlot {
+                selectedRoom = nil
+                appState.listenToServiceBookings(service: service.name, timeSlot: slot.time)
+            } else {
+                appState.stopListeningToServiceBookings()
+            }
+        }
     }
     
-    // MARK: - Helper Functions
     // (จำลองการโหลดรอบเวลา)
     func loadMockTimeSlots() {
         self.timeSlots = [
@@ -134,16 +152,18 @@ struct GreenScreenBookingView: View {
     }
 }
 
-// MARK: - 2. GreenScreenRoomView
-// (ปุ่ม "ห้อง Green-Screen")
 struct GreenScreenRoomView: View {
     let roomNumber: Int
     @Binding var selectedRoom: Int?
-    let bookedRooms: Set<Int>
-    let themeColor: Color // สีเขียว
+    let bookedSlots: Set<String> // 👈 (R1) รับ Set<String>
+    let themeColor: Color
     
-    var isBooked: Bool { bookedRooms.contains(roomNumber) }
+    private var slotID: String { "Room \(roomNumber)" } // 👈 (R1)
+    
+    // ⭐️ (R1) แก้ Logic isBooked
+    var isBooked: Bool { bookedSlots.contains(slotID) }
     var isSelected: Bool { selectedRoom == roomNumber }
+    
     var seatColor: Color {
         if isBooked { return .gray }
         if isSelected { return .green }
@@ -158,8 +178,8 @@ struct GreenScreenRoomView: View {
     var body: some View {
         Button(action: { selectedRoom = roomNumber }) {
             VStack {
-                Image(systemName: "camera.fill") // ⭐️ ไอคอนกล้อง
-                Text("Room \(roomNumber)")
+                Image(systemName: "camera.fill")
+                Text(slotID)
             }
             .padding(10)
             .frame(maxWidth: .infinity, minHeight: 70)

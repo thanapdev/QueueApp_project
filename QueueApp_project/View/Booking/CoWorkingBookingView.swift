@@ -8,20 +8,19 @@
 
 import SwiftUI
 
-// MARK: - 1. CoWorkingBookingView
 struct CoWorkingBookingView: View {
     
     // MARK: - Properties
-    @EnvironmentObject var appState: AppState // 👈 รับ "สมอง"
-    @Environment(\.dismiss) var dismiss // 👈 (สำหรับปิดหน้าจอ)
+    @EnvironmentObject var appState: AppState
+    @Environment(\.dismiss) var dismiss
     let service: LibraryService
     
     let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
     
     // MARK: - State
-    @State private var selectedSeat: Int? = nil // 👈 เก็บ 1 ที่นั่ง
-    @State private var bookedSeats: Set<Int> = [3, 8] // (ข้อมูลจำลอง)
-
+    @State private var selectedSeat: Int? = nil
+    // ⭐️ (R1) ลบ @State private var bookedSeats ทิ้ง
+    
     // MARK: - Body
     var body: some View {
         VStack {
@@ -34,8 +33,9 @@ struct CoWorkingBookingView: View {
                         ForEach(1...15, id: \.self) { seatNumber in
                             SeatView(
                                 seatNumber: seatNumber,
-                                selectedSeat: $selectedSeat, // 👈 ส่ง Binding 1 ที่
-                                bookedSeats: bookedSeats,
+                                selectedSeat: $selectedSeat,
+                                // ⭐️ (R1) ส่ง Set ของช่องที่จองแล้ว (จาก AppState)
+                                bookedSlots: appState.currentServiceBookedSlots,
                                 themeColor: service.themeColor
                             )
                         }
@@ -48,9 +48,15 @@ struct CoWorkingBookingView: View {
             // MARK: - Action Button
             Button(action: {
                 if let seat = selectedSeat {
-                    // ⭐️ สั่ง AppState ให้สร้างการจอง
-                    appState.createReservation(service: service, details: "Slot \(seat)")
-                    dismiss() // ปิดหน้าจอ
+                    let slotID = "Slot \(seat)"
+                    // ⭐️ (R1) สั่ง AppState ให้สร้างการจอง (Reservation)
+                    appState.createReservation(
+                        service: service,
+                        slotID: slotID, // 👈 ส่ง slotID
+                        timeSlot: nil,
+                        items: nil
+                    )
+                    dismiss()
                 }
             }) {
                 Text("Confirm Booking")
@@ -63,20 +69,28 @@ struct CoWorkingBookingView: View {
             .padding()
         }
         .navigationTitle(service.name)
+        // ⭐️ (R1) เริ่ม/หยุด Listener ส่วนรวม
+        .onAppear {
+            appState.listenToServiceBookings(service: service.name, timeSlot: nil)
+        }
+        .onDisappear {
+            appState.stopListeningToServiceBookings()
+        }
     }
 }
 
-// MARK: - 2. SeatView
-// (ปุ่ม "ที่นั่ง" ที่ใช้เฉพาะใน CoWorking)
 struct SeatView: View {
     let seatNumber: Int
-    @Binding var selectedSeat: Int? // 👈 รับ Binding 1 ที่
-    let bookedSeats: Set<Int>
+    @Binding var selectedSeat: Int?
+    let bookedSlots: Set<String> // 👈 (R1) รับ Set<String> จาก AppState
     let themeColor: Color
     
-    // Logic การแสดงสี
-    var isBooked: Bool { bookedSeats.contains(seatNumber) }
-    var isSelected: Bool { selectedSeat == seatNumber } // 👈 Logic เลือก 1 ที่
+    private var slotID: String { "Slot \(seatNumber)" } // 👈 (R1)
+    
+    // ⭐️ (R1) แก้ Logic isBooked
+    var isBooked: Bool { bookedSlots.contains(slotID) }
+    var isSelected: Bool { selectedSeat == seatNumber }
+    
     var seatColor: Color {
         if isBooked { return .gray }
         if isSelected { return .green }
@@ -90,12 +104,11 @@ struct SeatView: View {
     
     var body: some View {
         Button(action: {
-            // Logic กดเลือก/ยกเลิก
             if isSelected { selectedSeat = nil } else { selectedSeat = seatNumber }
         }) {
             VStack {
                 Image(systemName: "chair.lounge.fill")
-                Text("Slot \(seatNumber)")
+                Text(slotID) // 👈 (R1)
             }
             .padding(10)
             .frame(maxWidth: .infinity, minHeight: 70)
@@ -104,6 +117,6 @@ struct SeatView: View {
             .cornerRadius(10)
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? .green : Color.clear, lineWidth: 2))
         }
-        .disabled(isBooked)
+        .disabled(isBooked) // ⭐️ (R1) ถ้า isBooked = true จะกดไม่ได้
     }
 }

@@ -6,13 +6,20 @@
 //
 
 
+//
+//  NetflixBookingView.swift
+//  QueueApp_project
+//
+//  Created by Thanapong Yamkamol on 17/11/2568 BE.
+//
+
 import SwiftUI
 
 // MARK: - 1. NetflixBookingView
 struct NetflixBookingView: View {
     
     // MARK: - Properties
-    @EnvironmentObject var appState: AppState // 👈 รับ "สมอง"
+    @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
     let service: LibraryService
     
@@ -21,7 +28,6 @@ struct NetflixBookingView: View {
     let slotColumns = [GridItem(.flexible()), GridItem(.flexible())]
     
     // MARK: - State
-    @State private var bookedRooms: Set<Int> = [3] // (จำลอง)
     @State private var timeSlots: [TimeSlot] = [] // (ข้อมูลรอบเวลา)
     @State private var selectedRoom: Int? = nil
     @State private var selectedSlot: TimeSlot? = nil
@@ -31,27 +37,39 @@ struct NetflixBookingView: View {
         VStack {
             ScrollView {
                 VStack {
-                    // --- 1. เลือกห้อง ---
-                    Text("1. Select a Room").font(.title2).fontWeight(.bold).padding(.top)
-                    LegendView(service: service).padding(.bottom, 5)
-                    LazyVGrid(columns: roomColumns, spacing: 15) {
-                        ForEach(1...6, id: \.self) { roomNumber in
-                            NetflixRoomView(roomNumber: roomNumber, selectedRoom: $selectedRoom, bookedRooms: bookedRooms, themeColor: service.themeColor)
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    Divider().padding()
-                    
-                    // --- 2. เลือกรอบเวลา ---
-                    Text("2. Select a Time Slot").font(.title2).fontWeight(.bold)
+                    // --- 1. เลือกรอบเวลา (ย้ายมาไว้ข้างบน) ---
+                    Text("1. Select a Time Slot").font(.title2).fontWeight(.bold).padding(.top)
                     LazyVGrid(columns: slotColumns, spacing: 10) {
                         ForEach(timeSlots) { slot in
-                            // ⭐️ ใช้ TimeSlotView (จาก BookingSharedViews.swift)
                             TimeSlotView(slot: slot, selectedSlot: $selectedSlot, themeColor: service.themeColor)
                         }
                     }
                     .padding(.horizontal)
+                        
+                    Divider().padding()
+                        
+                    // --- 2. เลือกห้อง (จะแสดงเมื่อเลือกรอบเวลาแล้ว) ---
+                    // ⭐️⭐️⭐️ (จุดแก้ไข) ⭐️⭐️⭐️
+                    // (เปลี่ยนจาก if selectedSlot != nil เป็น .disabled)
+                    VStack {
+                        Text("2. Select a Room").font(.title2).fontWeight(.bold)
+                        LegendView(service: service).padding(.bottom, 5)
+                        LazyVGrid(columns: roomColumns, spacing: 15) {
+                            ForEach(1...6, id: \.self) { roomNumber in
+                                NetflixRoomView(
+                                    roomNumber: roomNumber,
+                                    selectedRoom: $selectedRoom,
+                                    // (R1) ส่ง Set ของช่องที่จองแล้ว (จาก AppState)
+                                    bookedSlots: appState.currentServiceBookedSlots,
+                                    themeColor: service.themeColor
+                                )
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .opacity(selectedSlot == nil ? 0.5 : 1.0) // 👈 1. ทำให้จางลง
+                    .disabled(selectedSlot == nil) // 👈 2. ทำให้กดไม่ได้
+                    // ⭐️⭐️⭐️ (จบจุดแก้ไข) ⭐️⭐️⭐️
                 }
             }
             Spacer()
@@ -59,8 +77,14 @@ struct NetflixBookingView: View {
             // MARK: - Action Button
             Button(action: {
                 if let room = selectedRoom, let slot = selectedSlot {
-                    // ⭐️ สั่ง AppState ให้สร้างการจอง
-                    appState.createReservation(service: service, details: "Room \(room) @ \(slot.time)")
+                    let slotID = "Room \(room)"
+                    // (R1) สั่ง AppState ให้สร้างการจอง
+                    appState.createReservation(
+                        service: service,
+                        slotID: slotID, // 👈 ส่ง slotID
+                        timeSlot: slot.time, // 👈 ส่ง timeSlot
+                        items: nil
+                    )
                     dismiss()
                 }
             }) {
@@ -74,31 +98,48 @@ struct NetflixBookingView: View {
             .padding()
         }
         .navigationTitle(service.name)
-        .onAppear { loadMockTimeSlots() } // 👈 โหลดรอบเวลา (จำลอง)
+        .onAppear { loadMockTimeSlots() }
+        .onDisappear {
+            // (R1) หยุด Listener เมื่อออกจากหน้า
+            appState.stopListeningToServiceBookings()
+        }
+        // (R1) เมื่อ "รอบเวลา" เปลี่ยน ให้เริ่ม Listener ใหม่
+        .onChange(of: selectedSlot) { newSlot in
+            if let slot = newSlot {
+                // (ล้างค่าห้องที่เลือกไว้)
+                selectedRoom = nil
+                // (เริ่ม Listener ใหม่สำหรับรอบเวลานี้)
+                appState.listenToServiceBookings(service: service.name, timeSlot: slot.time)
+            } else {
+                appState.stopListeningToServiceBookings()
+            }
+        }
     }
     
-    // MARK: - Helper Functions
     // (จำลองการโหลดรอบเวลา)
     func loadMockTimeSlots() {
         self.timeSlots = [
             TimeSlot(time: "10:00 - 12:00", isBooked: false),
             TimeSlot(time: "12:00 - 14:00", isBooked: false),
             TimeSlot(time: "14:00 - 16:00", isBooked: false),
-            TimeSlot(time: "16:00 - 18:00", isBooked: true) // 4 โมงเต็ม
+            TimeSlot(time: "16:00 - 18:00", isBooked: false) // (isBooked นี้แค่ทำให้ปุ่มเทา แต่ R1 จะกันจองซ้ำ)
         ]
     }
 }
 
 // MARK: - 2. NetflixRoomView
-// (ปุ่ม "ห้องดูหนัง" ที่ใช้เฉพาะใน Netflix)
 struct NetflixRoomView: View {
     let roomNumber: Int
     @Binding var selectedRoom: Int?
-    let bookedRooms: Set<Int>
+    let bookedSlots: Set<String> // 👈 (R1) รับ Set<String> จาก AppState
     let themeColor: Color
     
-    var isBooked: Bool { bookedRooms.contains(roomNumber) }
+    private var slotID: String { "Room \(roomNumber)" } // 👈 (R1)
+    
+    // (R1) แก้ Logic isBooked
+    var isBooked: Bool { bookedSlots.contains(slotID) }
     var isSelected: Bool { selectedRoom == roomNumber }
+    
     var seatColor: Color {
         if isBooked { return .gray }
         if isSelected { return .green }
@@ -113,7 +154,7 @@ struct NetflixRoomView: View {
         Button(action: { selectedRoom = roomNumber }) {
             VStack {
                 Image(systemName: "play.tv.fill")
-                Text("Room \(roomNumber)")
+                Text(slotID)
             }
             .padding(10)
             .frame(maxWidth: .infinity, minHeight: 70)

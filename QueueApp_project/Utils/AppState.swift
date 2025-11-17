@@ -14,20 +14,30 @@ class AppState: ObservableObject {
     @Published var isBrowsingAsGuest = false
     
     // --- State ใหม่ (Library Booking System) ---
-    // R3: เก็บการจอง/คิว ได้แค่ 1 อย่าง (ถ้าค่าใดค่าหนึ่ง != nil แปลว่าจองอยู่)
+    
+    // R3: State สำหรับการจอง/คิว "ส่วนตัว" (ของ User นี้)
+    // (ถ้าค่าใดค่าหนึ่ง != nil แปลว่าจองอยู่)
     @Published var activeReservation: (docID: String, data: Booking)? = nil
     @Published var activeQueue: (docID: String, data: Booking)? = nil
     
-    // R2, R4: State สำหรับ Timer นับถอยหลัง (Board Game)
-    @Published var queueTimeRemaining: TimeInterval = 180
-    @Published var showQueueAlert: Bool = false // R5: สำหรับแจ้งเตือน
+    // R1: State สำหรับ "ช่อง" ที่ถูกจองไปแล้วทั้งหมด (สำหรับกันจองซ้ำ)
+    @Published var currentServiceBookedSlots: Set<String> = []
     
+    // R2: State สำหรับ Timer (Board Game)
+    @Published var queueTimeRemaining: TimeInterval = 180
+    @Published var showQueueAlert: Bool = false // 👈 นี่คือตัวที่แก้ Error
+    
+    // R2: State สำหรับ Admin Panel
+    @Published var allAdminBookings: [(docID: String, data: Booking)] = []
+
     
     // MARK: - 2. Firebase & Listeners
     
     private let db = Firestore.firestore()
     private var activityListeners: [UUID: ListenerRegistration] = [:] // Listener คิว (ของเดิม)
-    private var bookingListener: ListenerRegistration? // 👈 Listener การจอง (ของใหม่)
+    private var personalBookingListener: ListenerRegistration? // 👈 Listener ส่วนตัว
+    private var currentServiceListener: ListenerRegistration?  // 👈 Listener ส่วนรวม (R1)
+    private var adminListener: ListenerRegistration?           // 👈 Listener ของ Admin (R2)
     private var timerSubscription: AnyCancellable?
 
     
@@ -37,132 +47,139 @@ class AppState: ObservableObject {
         case admin
         case student
     }
-    
-    // ⭐️ Data Model ใหม่สำหรับ Booking (ใช้คุยกับ Firestore)
-    struct Booking: Codable {
-        let userID: String // 👈 จะเก็บ studentID 11 หลัก
+
+    // ⭐️⭐️⭐️ (R1, R2, R3) อัปเกรด Booking struct ⭐️⭐️⭐️
+    struct Booking: Codable, Identifiable {
+        @DocumentID var id: String? // Firestore จะ map ID ให้เอง
+        
+        let userID: String // 👈 studentID 11 หลัก
         let serviceName: String
-        let bookingType: String // "reservation" หรือ "queue"
-        let details: String
-        let startTime: Timestamp // 👈 (สำหรับ Queue Timer)
+        let bookingType: String // "Reservation" หรือ "Queue"
+        
+        // R2 & R3: สถานะ
+        var status: String // "Booked", "Queued", "In-Use", "Finished", "Cancelled"
+        
+        // R1: ข้อมูลช่องที่จอง
+        let slotID: String?      // e.g., "Slot 5", "Room 1", "Table 2"
+        let timeSlot: String?    // e.g., "10:00 - 12:00"
+        let items: [String]?     // e.g., ["Camera", "Tripod"]
+        
+        // R4: เวลา
+        let startTime: Timestamp // เวลาที่สร้าง (สำหรับ Queue)
+        
+        // (Helper)
+        var details: String {
+            var parts = [String]()
+            if let slotID = slotID { parts.append(slotID) }
+            if let timeSlot = timeSlot { parts.append("@ \(timeSlot)") }
+            if let items = items, !items.isEmpty { parts.append("(\(items.count) items)") }
+            return parts.joined(separator: " ")
+        }
     }
+    
+    // (สถานะที่ถือว่า Active)
+    private var activeStatuses = ["Booked", "Queued", "In-Use"]
 
     
-    // MARK: - 4. Core Booking Logic (Reservation & Queue)
+    // MARK: - 4. Personal Booking Logic (R3)
     
-    // เช็กว่ามีจอง/คิว อยู่ไหม
     var hasActiveBooking: Bool {
         activeReservation != nil || activeQueue != nil
     }
 
-    // ⭐️ ฟังก์ชันนี้จะถูกเรียกตอน Login/Register สำเร็จ
+    // ⭐️ (R3) Listener ส่วนตัว (ค้นหาเฉพาะ Status ที่ Active)
     func listenForActiveBooking() {
         guard let userID = currentUser?.id else { return } // 👈 ดึง studentID
         
-        if bookingListener != nil {
-            bookingListener?.remove() // ลบ Listener เก่า (ถ้ามี)
-        }
+        if personalBookingListener != nil { personalBookingListener?.remove() }
         
-        print("Starting booking listener for user (studentID): \(userID)")
+        print("Starting PERSONAL booking listener for user: \(userID)")
         
-        // ⭐️ สร้าง Listener คอยดักฟัง collection "bookings"
-        // ที่มี "userID" ตรงกับ studentID 11 หลักของเรา
-        bookingListener = db.collection("bookings")
+        personalBookingListener = db.collection("bookings")
             .whereField("userID", isEqualTo: userID)
+            .whereField("status", in: activeStatuses) // 👈 (R3) ค้นหาเฉพาะ 3 สถานะนี้
             .addSnapshotListener { [weak self] querySnapshot, error in
                 guard let self = self else { return }
                 
-                if let error = error {
-                    print("Error listening for bookings: \(error.localizedDescription)")
-                    return
-                }
+                if let error = error { print("Error listening for personal bookings: \(error.localizedDescription)"); return }
                 
-                // 1. ถ้าไม่เจอเอกสาร (จองเสร็จ/ยกเลิก/ไม่เคยจอง)
                 guard let document = querySnapshot?.documents.first else {
-                    // ถ้า state เก่าเรายังมีค่าค้างอยู่ ให้ล้างมันทิ้ง
+                    // ไม่เจอเอกสาร (แปลว่าไม่มีการจอง/คิว ที่ Active)
                     if self.activeReservation != nil || self.activeQueue != nil {
-                        self.cancelAllBookings(fromListener: true) // ล้างค่า local
+                        self.clearLocalBooking(fromListener: true)
                     }
                     return
                 }
                 
-                // 2. ถ้าเจอเอกสาร (แปลว่ามีการจอง/คิวอยู่)
                 do {
                     let bookingData = try document.data(as: Booking.self)
                     let docID = document.documentID
                     
-                    if bookingData.bookingType == "reservation" {
-                        // ถ้าเป็นการจอง (Co-work, Netflix, Green)
+                    if bookingData.bookingType == "Reservation" {
                         self.activeReservation = (docID, bookingData)
                         self.activeQueue = nil
                         self.stopQueueTimer()
-                    } else if bookingData.bookingType == "queue" {
-                        // ถ้าเป็นการเข้าคิว (Board Game)
+                    } else if bookingData.bookingType == "Queue" {
                         self.activeQueue = (docID, bookingData)
                         self.activeReservation = nil
-                        self.startQueueTimer(startTime: bookingData.startTime.dateValue()) // 👈 เริ่มจับเวลา
+                        self.startQueueTimer(startTime: bookingData.startTime.dateValue())
                     }
                     
                 } catch {
-                    print("Failed to decode booking: \(error)")
+                    print("Failed to decode personal booking: \(error)")
                 }
             }
     }
     
-    // ⭐️ หยุด Listener ตอน Logout
+    // ⭐️ หยุด Listener ส่วนตัว (ตอน Logout)
     func stopListeningForBooking() {
-        print("Stopping booking listener.")
-        bookingListener?.remove()
-        bookingListener = nil
-        cancelAllBookings(fromListener: true) // ล้างค่า local ทั้งหมด
+        print("Stopping personal booking listener.")
+        personalBookingListener?.remove()
+        personalBookingListener = nil
+        clearLocalBooking(fromListener: true)
     }
 
-    // ⭐️ ฟังก์ชันใหม่สำหรับ "สร้าง" การจอง (Co-work, Netflix, Green)
-    func createReservation(service: LibraryService, details: String) {
+    // ⭐️ (R3) ฟังก์ชัน "สร้าง" การจอง (เขียน Status: Booked)
+    func createReservation(service: LibraryService, slotID: String, timeSlot: String?, items: [String]?) {
         guard let userID = currentUser?.id else { return } // 👈 ดึง studentID
         
         let newBooking = Booking(
             userID: userID, // 👈 บันทึก studentID ลง Firestore
             serviceName: service.name,
-            bookingType: "reservation",
-            details: details,
+            bookingType: "Reservation",
+            status: "Booked", // 👈 R2
+            slotID: slotID,   // 👈 R1
+            timeSlot: timeSlot, // 👈 R1
+            items: items,       // 👈 R1
             startTime: Timestamp(date: Date())
         )
-        
         do {
-            // เพิ่มเอกสารใหม่ลง Firestore
-            // (เราไม่ต้องเซ็ต @Published var เอง, Listener จะเห็นและอัปเดต UI ให้)
             try db.collection("bookings").addDocument(from: newBooking)
-        } catch {
-            print("Error creating reservation: \(error)")
-        }
+        } catch { print("Error creating reservation: \(error)") }
     }
     
-    // ⭐️ ฟังก์ชันใหม่สำหรับ "เข้าคิว" (Board Game)
-    func joinQueue(service: LibraryService, table: Int, games: [String]) {
+    // ⭐️ (R3) ฟังก์ชัน "เข้าคิว" (เขียน Status: Queued)
+    func joinQueue(service: LibraryService, slotID: String, items: [String]?) {
         guard let userID = currentUser?.id else { return } // 👈 ดึง studentID
         
-        let details = "Table \(table) (\(games.count) games)"
         let newQueue = Booking(
             userID: userID, // 👈 บันทึก studentID ลง Firestore
             serviceName: service.name,
-            bookingType: "queue",
-            details: details,
-            startTime: Timestamp(date: Date()) // 👈 เวลาเริ่มคิว (สำคัญมาก)
+            bookingType: "Queue",
+            status: "Queued", // 👈 R2
+            slotID: slotID,   // 👈 R1
+            timeSlot: nil,
+            items: items,       // 👈 R1
+            startTime: Timestamp(date: Date()) // 👈 R4
         )
-        
         do {
             try db.collection("bookings").addDocument(from: newQueue)
-            // (Listener จะเห็นเอกสารนี้ และสั่ง startQueueTimer อัตโนมัติ)
-        } catch {
-            print("Error joining queue: \(error)")
-        }
+        } catch { print("Error joining queue: \(error)") }
     }
 
-    // ⭐️ ฟังก์ชันใหม่สำหรับ "ยกเลิก"
-    func cancelAllBookings(fromListener: Bool = false) {
-        
-        // A. ถ้าถูกเรียกจาก Listener (แปลว่าเอกสารมันหายไปเอง)
+    // ⭐️ (R3) แก้ไข: เปลี่ยนจาก "ลบ" เป็น "อัปเดต"
+    // (นี่คือฟังก์ชันที่แก้ Error 3)
+    func cancelActiveBooking(fromListener: Bool = false) {
         if fromListener {
             DispatchQueue.main.async {
                 self.activeReservation = nil
@@ -172,45 +189,145 @@ class AppState: ObservableObject {
             return
         }
         
-        // B. ถ้าผู้ใช้กด Cancel เอง (เราต้องไปลบเอกสาร)
         let docIDToCancel = activeReservation?.docID ?? activeQueue?.docID
         guard let docID = docIDToCancel else {
-            // ถ้าไม่มีอะไรให้ยกเลิก
-            activeReservation = nil
-            activeQueue = nil
-            stopQueueTimer()
+            clearLocalBooking(fromListener: true)
             return
         }
         
-        // สั่งลบเอกสารออกจาก Firestore
-        db.collection("bookings").document(docID).delete { error in
-            if let error = error {
-                print("Error cancelling booking: \(error)")
-            } else {
-                print("Booking cancelled successfully.")
-                // (Listener จะเห็นว่าเอกสารหายไป และล้างค่า local ให้เราเอง)
+        // ⭐️ R3: อัปเดตสถานะเป็น "Cancelled" แทนการลบ
+        db.collection("bookings").document(docID).updateData([
+            "status": "Cancelled"
+        ]) { error in
+            if let error = error { print("Error cancelling booking: \(error)") }
+            else { print("Booking status set to Cancelled.") }
+            // (Listener ส่วนตัว จะเห็นการเปลี่ยนแปลงนี้ และล้างค่า local ให้อัตโนมัติ)
+        }
+    }
+    
+    // (Helper function)
+    private func clearLocalBooking(fromListener: Bool = false) {
+        if fromListener {
+            DispatchQueue.main.async {
+                self.activeReservation = nil
+                self.activeQueue = nil
+                self.stopQueueTimer()
             }
         }
     }
 
     
-    // MARK: - 5. Timer Logic (for Queue)
+    // MARK: - 5. Global Booking Logic (R1 - Real-time Status)
+    
+    // ⭐️ (R1) Listener ส่วนรวม (ถูกเรียกจาก .onAppear ของ View)
+    func listenToServiceBookings(service: String, timeSlot: String?) {
+        stopListeningToServiceBookings() // หยุด Listener เก่าก่อน
+        print("Starting GLOBAL listener for: \(service) @ \(timeSlot ?? "N/A")")
+        
+        var query: Query = db.collection("bookings")
+            .whereField("serviceName", isEqualTo: service)
+            .whereField("status", in: activeStatuses) // 👈 R1: ดึงเฉพาะที่ยัง Active
+        
+        if let timeSlot = timeSlot {
+            query = query.whereField("timeSlot", isEqualTo: timeSlot)
+        }
+
+        currentServiceListener = query.addSnapshotListener { [weak self] querySnapshot, error in
+            guard let self = self else { return }
+            if let error = error { print("Error listening to service bookings: \(error)"); return }
+            
+            guard let documents = querySnapshot?.documents else { return }
+            
+            let bookedSlots = documents.compactMap { $0.data()["slotID"] as? String }
+            
+            DispatchQueue.main.async {
+                self.currentServiceBookedSlots = Set(bookedSlots)
+                print("Updated booked slots: \(self.currentServiceBookedSlots)")
+            }
+        }
+    }
+    
+    // ⭐️ (R1) หยุด Listener ส่วนรวม
+    func stopListeningToServiceBookings() {
+        currentServiceListener?.remove()
+        currentServiceListener = nil
+        DispatchQueue.main.async {
+            self.currentServiceBookedSlots = []
+        }
+    }
+    
+    
+    // MARK: - 6. Admin Logic (R2)
+    
+    // ⭐️ (R2) Listener สำหรับ Admin Panel
+    func listenToAdminBookings() {
+        if adminListener != nil { adminListener?.remove() }
+        print("Starting ADMIN listener...")
+
+        adminListener = db.collection("bookings")
+            .whereField("status", in: activeStatuses) // 👈 ดึงทุกคิวที่ Active
+            .order(by: "startTime", descending: true)
+            .addSnapshotListener { [weak self] querySnapshot, error in
+                guard let self = self else { return }
+                if let error = error { print("Error listening for admin: \(error)"); return }
+                
+                guard let documents = querySnapshot?.documents else { return }
+                
+                let bookings = documents.compactMap { doc -> (docID: String, data: Booking)? in
+                    do {
+                        let bookingData = try doc.data(as: Booking.self)
+                        return (doc.documentID, bookingData)
+                    } catch {
+                        print("Admin failed to decode booking: \(error)")
+                        return nil
+                    }
+                }
+                
+                DispatchQueue.main.async {
+                    self.allAdminBookings = bookings
+                }
+            }
+    }
+    
+    // ⭐️ (R2) หยุด Listener Admin
+    func stopListeningToAdminBookings() {
+        adminListener?.remove()
+        adminListener = nil
+        DispatchQueue.main.async {
+            self.allAdminBookings = []
+        }
+    }
+    
+    // ⭐️ (R2) ฟังก์ชัน "Check-in"
+    func checkInBooking(docID: String) {
+        db.collection("bookings").document(docID).updateData([
+            "status": "In-Use"
+        ])
+    }
+    
+    // ⭐️ (R2) ฟังก์ชัน "Check-out"
+    func finishBooking(docID: String) {
+        db.collection("bookings").document(docID).updateData([
+            "status": "Finished"
+        ])
+    }
+    
+
+    // MARK: - 7. Timer Logic (for Queue)
     
     // (R2, R4) Timer ที่แม่นยำขึ้น
     func startQueueTimer(startTime: Date) {
-        // คำนวณเวลาที่เหลือจากเวลาที่บันทึกใน Firestore
         let elapsed = Date().timeIntervalSince(startTime)
-        let remaining = max(0, 180 - elapsed) // 180 วิ = 3 นาที
+        let remaining = max(0, 180 - elapsed)
         self.queueTimeRemaining = remaining
 
-        // ถ้าเวลาเหลือ 0 แล้ว ให้ Alert เลย
         if remaining == 0 {
             self.showQueueAlert = true
-            self.cancelAllBookings() // ลบออกจาก Firestore
+            self.cancelActiveBooking() // 👈 เปลี่ยนเป็น cancel (อัปเดต status)
             return
         }
         
-        stopQueueTimer() // หยุดของเก่า (ถ้ามี)
+        stopQueueTimer()
         
         timerSubscription = Timer.publish(every: 1, on: .main, in: .common)
             .autoconnect()
@@ -220,10 +337,9 @@ class AppState: ObservableObject {
                 if self.queueTimeRemaining > 0 {
                     self.queueTimeRemaining -= 1
                 } else {
-                    // R5: เวลาหมด!
                     self.stopQueueTimer()
                     self.showQueueAlert = true
-                    self.cancelAllBookings() // สั่งลบ
+                    self.cancelActiveBooking() // 👈 เปลี่ยนเป็น cancel (อัปเดต status)
                 }
             }
     }
@@ -234,14 +350,17 @@ class AppState: ObservableObject {
     }
 
     
-    // MARK: - 6. Authentication (Login/Register)
+    // MARK: - 8. Authentication (Login/Register)
+    // (โค้ดส่วนนี้คือเวอร์ชันที่ใช้ studentID 11 หลัก)
     
     func logout() {
         withAnimation(.easeInOut(duration: 0.3)) {
             isLoggedIn = false
             currentUser = nil
             isBrowsingAsGuest = false
-            stopListeningForBooking() // 👈 หยุด Listener ตอน Logout
+            stopListeningForBooking() // 👈 หยุด Listener ส่วนตัว
+            stopListeningToAdminBookings() // 👈 หยุด Listener Admin
+            stopListeningToServiceBookings() // 👈 หยุด Listener Service
         }
         do { try Auth.auth().signOut() } catch { print("Error signing out: \(error.localizedDescription)") }
     }
@@ -265,7 +384,7 @@ class AppState: ObservableObject {
                             self.currentUser = (role: role, name: name, id: studentID) // 👈 ใช้ studentID 11 หลัก
                             self.isLoggedIn = true
                             self.isBrowsingAsGuest = false
-                            self.listenForActiveBooking() // 👈 เริ่ม Listener
+                            self.listenForActiveBooking() // 👈 เริ่ม Listener ส่วนตัว
                         }
                         completion(true, nil)
                     }
@@ -299,7 +418,7 @@ class AppState: ObservableObject {
                         self.currentUser = (role: role, name: name, id: studentID) // 👈 ใช้ studentID 11 หลัก
                         self.isLoggedIn = true
                         self.isBrowsingAsGuest = false
-                        self.listenForActiveBooking() // 👈 เริ่ม Listener
+                        self.listenForActiveBooking() // 👈 เริ่ม Listener ส่วนตัว
                     }
                     completion(true, nil)
                 }
@@ -308,7 +427,7 @@ class AppState: ObservableObject {
     }
     
     
-    // MARK: - 7. Original QueueApp Logic (Activities)
+    // MARK: - 9. Original QueueApp Logic (Activities)
     // (โค้ดส่วนนี้ของคุณ ผมคัดลอกมาให้ครบถ้วน)
     
     func addActivity(name: String) {
