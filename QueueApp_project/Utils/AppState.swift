@@ -495,18 +495,43 @@ class AppState: ObservableObject {
     }
 
     func addQueueItem(activity: Activity, queueItem: QueueItem) {
-        // Use setData(from:) because QueueItem is Codable
-        do {
-            try db.collection("activities").document(activity.id.uuidString)
-                .collection("queues").document(queueItem.id.uuidString)
-                .setData(from: queueItem) { _ in
-                    self.updateQueueCount(activity: activity, increment: true)
-                    // loadActivities() might be too broad; consider only updating the specific activity
+            // 1. บันทึก "ตั๋วคิว" ลงใน Collection queues
+            db.collection("activities")
+                .document(activity.id.uuidString)
+                .collection("queues")
+                .document(queueItem.id.uuidString)
+                .setData([
+                    "studentName": queueItem.studentName,
+                    "number": queueItem.number,
+                    "studentId": queueItem.studentId,
+                    "status": queueItem.status ?? "waiting" // กันไว้เผื่อเป็น nil
+                ]) { err in
+                    if let err = err {
+                        print("Error adding queue item: \(err)")
+                    } else {
+                        print("Queue item added: \(queueItem.number)")
+                        
+                        // ⭐️⭐️⭐️ จุดที่แก้ไข (สำคัญมาก) ⭐️⭐️⭐️
+                        // เราต้องอัปเดตทั้ง "จำนวนคิว (queueCount)" และ "เลขคิวถัดไป (nextQueueNumber)"
+                        
+                        let newQueueCount = activity.queueCount + 1
+                        let newNextQueueNumber = activity.nextQueueNumber + 1 // 👈 บวกเพิ่มไปเลย
+                        
+                        self.db.collection("activities").document(activity.id.uuidString).updateData([
+                            "queueCount": newQueueCount,
+                            "nextQueueNumber": newNextQueueNumber // 👈 บันทึกค่าใหม่ลง Firebase
+                        ]) { _ in
+                            // อัปเดตค่าในเครื่องให้ตรงกันทันที (UI จะได้ไม่กระตุก)
+                            if let index = self.activities.firstIndex(where: { $0.id == activity.id }) {
+                                DispatchQueue.main.async {
+                                    self.activities[index].queueCount = newQueueCount
+                                    self.activities[index].nextQueueNumber = newNextQueueNumber
+                                }
+                            }
+                        }
+                    }
                 }
-        } catch {
-            print("Error adding queue item: \(error)")
         }
-    }
 
     func loadQueueItems(activity: Activity, completion: @escaping ([QueueItem]) -> Void) {
         db.collection("activities").document(activity.id.uuidString).collection("queues")
