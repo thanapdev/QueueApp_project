@@ -1,3 +1,10 @@
+//
+//  ServiceView.swift
+//  QueueApp_project
+//
+//  Created by Thanapong Yamkamol on 17/11/2568 BE.
+//
+
 import SwiftUI
 
 struct ServiceView: View {
@@ -118,14 +125,15 @@ struct ServiceView: View {
                                     )
                                 }
                                 
-                                // (Optional) 3. Map (Example for future)
-                                ServiceCardNew(
-                                    icon: "map.fill",
-                                    title: "Campus Map",
-                                    subtitle: "แผนที่มหาลัย",
-                                    color: Color.gray.opacity(0.5)
-                                )
-                                .opacity(0.6) // ทำให้ดูเป็น Disabled
+                                // 3. Campus Map Button (✅ แก้ไข: ใส่ NavigationLink ให้แล้ว)
+                                NavigationLink(destination: CampusMapView()) {
+                                    ServiceCardNew(
+                                        icon: "map.fill",
+                                        title: "Campus Map",
+                                        subtitle: "แผนที่มหาลัย",
+                                        color: Color.green // ปรับสีให้สดใส (สีเขียวสื่อถึง Map ได้ดี)
+                                    )
+                                }
                                 
                                 // (Optional) 4. Profile (Example)
                                 ServiceCardNew(
@@ -147,9 +155,8 @@ struct ServiceView: View {
             // --- Hidden Navigation Links ---
             NavigationLink(destination: LoginView().environmentObject(appState), isActive: $navigateToLoginFromAlert) { EmptyView() }
             
-            // แก้ไข: ต้องมี View ปลายทางจริงๆ (BookingView)
+            // Navigation ไปหน้า Booking
             NavigationLink(destination: BookingView().environmentObject(appState), isActive: $showBookingSpace) { EmptyView() }
-//             NavigationLink(destination: Text("Booking View (Coming Soon)"), isActive: $showBookingSpace) { EmptyView() } // Placeholder
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -166,11 +173,9 @@ struct ServiceView: View {
     @ViewBuilder
     func destinationForActivity() -> some View {
         if appState.isLoggedIn {
-             StudentActivityListView().environmentObject(appState) // Uncomment เมื่อมีไฟล์จริง
-            /*Text("Student Activity List (Coming Soon)")*/ // Placeholder
+            StudentActivityListView().environmentObject(appState)
         } else {
-             GuestActivityListView().environmentObject(appState) // Uncomment เมื่อมีไฟล์จริง
-            /*Text("Guest Activity List (Coming Soon)")*/ // Placeholder
+            GuestActivityListView().environmentObject(appState)
         }
     }
 }
