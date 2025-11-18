@@ -32,7 +32,7 @@ struct ContentView: View {
             if user.role == .admin {
                 // Admin: ไปหน้า Activity List
                 NavigationStack {
-                    ActivityListView() // <--- ต้องมี View นี้
+                    AdminDashboardView() // <--- ต้องมี View นี้
                         .environmentObject(appState)
                 }
             } else {

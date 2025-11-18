@@ -50,15 +50,15 @@ struct ActivityListView: View {
                             .font(.headline)
                             .foregroundColor(.black)
                         Spacer()
-                        Button("ออกจากระบบ") {
-                            appState.logout()
-                        }
-                        .font(.caption)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(swuRed)
-                        .cornerRadius(8)
+//                        Button("ออกจากระบบ") {
+//                            appState.logout()
+//                        }
+//                        .font(.caption)
+//                        .foregroundColor(.white)
+//                        .padding(.horizontal, 8)
+//                        .padding(.vertical, 4)
+//                        .background(swuRed)
+//                        .cornerRadius(8)
                     }
                     .padding()
                     .background(.white.opacity(0.2))
