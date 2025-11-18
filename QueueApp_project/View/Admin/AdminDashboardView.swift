@@ -17,9 +17,7 @@ struct AdminDashboardView: View {
                 DynamicBackground(style: .random)
                 
                 VStack(spacing: 0) {
-                    // ---------------------------------------
-                    // HEADER SECTION
-                    // ---------------------------------------
+                    // --- HEADER SECTION (Unchanged) ---
                     VStack(spacing: 15) {
                         HStack {
                             // Profile Icon & Name
@@ -50,7 +48,7 @@ struct AdminDashboardView: View {
                             
                             // Logout Button
                             Button(action: {
-                                appState.logout() // 🎯 Logic: Logout
+                                appState.logout()
                             }) {
                                 HStack(spacing: 5) {
                                     Image(systemName: "rectangle.portrait.and.arrow.right")
@@ -80,9 +78,7 @@ struct AdminDashboardView: View {
                     .padding(.top, 20)
                     .padding(.bottom, 30)
                     
-                    // ---------------------------------------
-                    // CONTENT AREA (White Sheet)
-                    // ---------------------------------------
+                    // --- CONTENT AREA (White Sheet) ---
                     ZStack {
                         Color.white
                             .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -96,14 +92,14 @@ struct AdminDashboardView: View {
                                     .foregroundColor(Color.Theme.textDark)
                                     .padding(.top, 30)
                                 
-                                // ✅ NEW LAYOUT: Full-Width Stack (บน-ล่าง)
+                                // NEW LAYOUT: Full-Width Stack (บน-ล่าง)
                                 VStack(spacing: 16) {
                                     
                                     // Card 1: Activities (TOP - Full Width)
                                     NavigationLink(destination: ActivityListView().environmentObject(appState)) {
                                         AdminDashboardCard(
                                             title: "Activities Management",
-                                            count: "\(appState.activities.count)", // 🎯 Logic: Activity Count
+                                            count: "\(appState.activities.count)",
                                             icon: "list.bullet.rectangle.portrait.fill",
                                             color: .blue
                                         )
@@ -114,7 +110,7 @@ struct AdminDashboardView: View {
                                     NavigationLink(destination: AdminBookingView().environmentObject(appState)) {
                                         AdminDashboardCard(
                                             title: "Bookings Management",
-                                            count: "\(appState.allAdminBookings.count)", // 🎯 Logic: Booking Count
+                                            count: "\(appState.allAdminBookings.count)",
                                             icon: "calendar.badge.clock",
                                             color: .orange
                                         )
@@ -132,11 +128,21 @@ struct AdminDashboardView: View {
             }
             .navigationBarHidden(true)
         }
+        // ✅ FIX: Centralize loading and listening here
+        .onAppear {
+            // 1. ดึงรายการกิจกรรม (Activities)
+            appState.loadActivities()
+            // 2. เริ่ม Listener สำหรับการจองทั้งหมด (Bookings)
+            appState.listenToAdminBookings()
+        }
+        .onDisappear {
+            // หยุด Listener เมื่อออกจากหน้า Dashboard
+            appState.stopListeningToAdminBookings()
+        }
     }
 }
 
-// MARK: - Helper View: DashboardCardView
-// (ใช้ logic และโครงสร้างเดิม, แต่ปรับให้ยืดเต็มจอ)
+// MARK: - Helper View: DashboardCardView (Unchanged)
 struct AdminDashboardCard: View {
     let title: String
     let count: String

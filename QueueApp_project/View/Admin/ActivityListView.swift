@@ -22,32 +22,56 @@ struct ActivityListView: View {
 
     var body: some View {
         ZStack {
-            // ✅ 1. Background ใหม่
+            // 1. Background Theme
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
                 // ---------------------------------------
-                // CUSTOM HEADER (แทน Navigation Bar)
+                // CUSTOM HEADER (ปรับให้มีปุ่ม Add)
                 // ---------------------------------------
                 VStack(alignment: .leading, spacing: 10) {
-                    // Back Button
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        HStack {
-                            Image(systemName: "chevron.left")
-                            Text("Back")
+                    // ✅ TOP UTILITY ROW: Back | Add
+                    HStack {
+                        // Back Button (Left)
+                        Button(action: {
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            HStack {
+                                Image(systemName: "chevron.left")
+                                Text("Back")
+                            }
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .background(Color.white.opacity(0.2))
+                            .clipShape(Capsule())
                         }
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(Color.white.opacity(0.2))
-                        .clipShape(Capsule())
+                        
+                        Spacer()
+                        
+                        // ✅ ADD Button (Right)
+                        Button(action: {
+                            showingAddActivity = true
+                        }) {
+                            HStack(spacing: 5) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title3)
+                                Text("Add Activity")
+                            }
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .background(Color.orange.opacity(0.8)) // ใช้สีส้ม Accent
+                            .clipShape(Capsule())
+                            .shadow(radius: 3)
+                        }
                     }
                     .padding(.top, 50)
                     
-                    // Greeting & Title
+                    // Greeting & Title (Below Top Bar)
                     Text("Activities Management")
                         .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
@@ -70,6 +94,7 @@ struct ActivityListView: View {
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
                     if appState.activities.isEmpty {
+                        // Empty State
                         VStack(spacing: 20) {
                             Image(systemName: "square.stack.3d.up.slash")
                                 .font(.system(size: 60))
@@ -81,15 +106,15 @@ struct ActivityListView: View {
                             Button("สร้างกิจกรรมใหม่") {
                                 showingAddActivity = true
                             }
-                            .buttonStyle(BluePillButtonStyle()) // ✅ ใช้สไตล์ปุ่มที่เราทำไว้
+                            .buttonStyle(BluePillButtonStyle())
                             .frame(width: 200)
                             
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
+                        // List Content
                         List {
                             ForEach(appState.activities.indices, id: \.self) { index in
-                                // ✅ ใช้ ActivityNavigationLink ที่ปรับปรุงแล้ว
                                 ActivityNavigationLink(activity: appState.activities[index])
                                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                         // Edit Button
@@ -110,8 +135,8 @@ struct ActivityListView: View {
                                             Label("Delete", systemImage: "trash")
                                         }
                                     }
-                                    .listRowBackground(Color.white) // พื้นหลังขาว
-                                    .listRowSeparator(.hidden) // ซ่อนเส้นแบ่ง List
+                                    .listRowBackground(Color.white)
+                                    .listRowSeparator(.hidden)
                             }
                         }
                         .scrollContentBackground(.hidden)
@@ -130,7 +155,7 @@ struct ActivityListView: View {
             Button("ลบ", role: .destructive) {
                 if let index = deleteIndex {
                     appState.deleteActivity(activity: appState.activities[index])
-                    appState.activities.remove(at: index) // 🎯 Logic: ลบจาก array
+                    appState.activities.remove(at: index)
                 }
                 deleteIndex = nil
             }
@@ -146,7 +171,7 @@ struct ActivityListView: View {
                 title: "สร้างกิจกรรมใหม่",
                 activityName: $newActivityName,
                 onSave: {
-                    appState.addActivity(name: newActivityName) // 🎯 Logic: เพิ่มกิจกรรม
+                    appState.addActivity(name: newActivityName)
                     newActivityName = ""
                 }
             )
@@ -159,14 +184,14 @@ struct ActivityListView: View {
                 activityName: $editActivityName,
                 onSave: {
                     if let index = editIndex {
-                        appState.activities[index].name = editActivityName // 🎯 Logic: แก้ชื่อใน array
-                        appState.updateActivity(activity: appState.activities[index]) // 🎯 Logic: ส่งไป Firebase
+                        appState.activities[index].name = editActivityName
+                        appState.updateActivity(activity: appState.activities[index])
                     }
                 }
             )
         }
         .onAppear {
-            appState.loadActivities() // โหลดกิจกรรมทุกครั้งที่เข้าหน้า
+            appState.loadActivities()
         }
     }
 }
@@ -177,7 +202,6 @@ struct ActivityNavigationLink: View {
 
     var body: some View {
         NavigationLink(
-            // Destination Logic Preserved
             destination: QueueView(activity: .constant(activity))
                 .environmentObject(AppState())
         ) {
@@ -193,9 +217,10 @@ struct ActivityNavigationLink: View {
                 
                 Spacer()
                 
-//                Text("คิว: \(activity.queues.count)")
-//                    .font(.subheadline)
-//                    .foregroundColor(.gray)
+                Text("คิว: \(activity.queueCount)") // ✅ ใช้ queueCount ที่แก้บั๊กแล้ว
+                    .font(.subheadline)
+                    .fontWeight(activity.queueCount > 0 ? .bold : .regular)
+                    .foregroundColor(activity.queueCount > 0 ? .orange : .gray)
             }
             .padding(.vertical, 8)
         }
@@ -245,9 +270,9 @@ struct AddEditActivitySheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("ยกเลิก") {
                         dismiss()
-                        activityName = "" // เคลียร์ค่าเมื่อยกเลิก
+                        activityName = ""
                     }
-                    .foregroundColor(Color.red) // ใช้สีแดง
+                    .foregroundColor(Color.red)
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
