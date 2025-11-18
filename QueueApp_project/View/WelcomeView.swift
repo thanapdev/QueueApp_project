@@ -5,94 +5,139 @@
 //  Created by Thanapong Yamkamol on 17/11/2568 BE.
 //
 
-
 import SwiftUI
 
 struct WelcomeView: View {
-    // รับ AppState มาเพื่อส่งต่อไปยัง LoginView
     @EnvironmentObject var appState: AppState
-
-    // SWU Colors (จาก LoginView.swift)
-    let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
-    let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
     
     var body: some View {
-        // NavigationView นี้จำเป็นสำหรับการ "push" ไปยัง LoginView
         NavigationView {
             ZStack {
-                            // Background
-                            LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                                .edgesIgnoringSafeArea(.all)
-
-                            // Shape Background
-                            GeometryReader { geometry in
-                                Circle()
-                                    .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                                    .frame(width: 200, height: 200)
-                                    .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
-
-                                Circle()
-                                    .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                                    .frame(width: 200, height: 200)
-                                    .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
-                            }
-                // 3. Content (อ้างอิงจากรูปตัวอย่าง)
-                VStack(spacing: 20) {
-                    Spacer()
-                    
-                    // Logo (ใช้ SFSymbol แทน)
-                    Image(systemName: "graduationcap.fill")
-                        .font(.system(size: 100))
-                        .foregroundColor(swuRed) // ใช้สี swuRed
-                        .padding(.bottom, 20)
-                    
-                    // Title
-                    Text("SWU Services") // หรือชื่อแอปของคุณ
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.black)
-                    
-                    // Description
-                    Text("แอปพลิเคชันบริการนักศึกษา")
-                        .font(.headline)
-                        .foregroundColor(.black.opacity(0.7))
-                    
-                    Spacer()
-                    Spacer()
-                    
-                    // "GET STARTED" Button
-                    // ใช้ NavigationLink เพื่อไปหน้า LoginView
-                    NavigationLink(destination: LoginView().environmentObject(appState)) {
-                        Text("GET STARTED")
-                            .font(.headline)
-                            .padding()
-                            .frame(width: 250, height: 50)
-                            .foregroundColor(.white)
-                            .background(swuRed) // ใช้สี swuRed
-                            .cornerRadius(10)
-                            .shadow(radius: 5)
-                    }
-                    
-                    // Bottom text
-                    Text("เริ่มต้นใช้งานโดยการเข้าสู่ระบบ")
-                        .font(.caption)
-                        .foregroundColor(swuGray) // ใช้สี swuGray
-                        .padding(.top, 10)
-                    
-                    Spacer()
-                }
-                .padding()
+                // 1. Background กราฟิก
+                DynamicBackground(style: .style1)
                 
+                VStack(spacing: 0) {
+                    // ---------------------------------------
+                    // ส่วนบน: Logo และ พื้นที่ว่าง
+                    // ---------------------------------------
+                    Spacer()
+                    
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 180, height: 180)
+                        
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 150, height: 150)
+                            .shadow(radius: 10)
+                        
+                        Image(systemName: "graduationcap.fill")
+                            .font(.system(size: 80))
+                            .foregroundColor(Color.Theme.primary)
+                    }
+                    .padding(.bottom, 40)
+                    
+                    Spacer()
+                    
+                    // ---------------------------------------
+                    // ส่วนล่าง: การ์ดสีฟ้าเข้มขึ้น หรือ พื้นที่โค้งๆ
+                    // ---------------------------------------
+                    ZStack {
+                        // สร้าง Shape โค้งด้านล่าง (เหมือนคลื่นในรูป)
+                        WaveShapeBottomCard()
+                            .fill(Color.white) // เปลี่ยนเป็นสีขาวเพื่อให้ Text อ่านง่าย
+                            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: -5)
+                        
+                        VStack(spacing: 20) {
+                            // Text Content
+                            VStack(spacing: 8) {
+                                Text("SWU Services")
+                                    .font(.system(size: 32, weight: .heavy)) // Font หนาๆ
+                                    .foregroundColor(Color.Theme.primary)
+                                
+                                Text("มหาวิทยาลัยศรีนครินทรวิโรฒ")
+                                    .font(.headline)
+                                    .foregroundColor(Color.gray)
+                                
+                                Text("แหล่งรวมบริการนักศึกษาครบวงจร\nใช้งานง่าย สะดวก รวดเร็ว")
+                                    .font(.body)
+                                    .multilineTextAlignment(.center)
+                                    .foregroundColor(Color.gray)
+                                    .padding(.top, 10)
+                                    .padding(.horizontal)
+                            }
+                            .padding(.top, 60) // ดันลงมาจากยอดคลื่น
+                            
+                            Spacer()
+                            
+                            // ปุ่ม Sign In (สไตล์ขาว)
+                            NavigationLink(destination: LoginView().environmentObject(appState)) {
+                                Text("Sign In")
+                            }
+                            .buttonStyle(BluePillButtonStyle()) // ใช้ Style ใหม่แต่อาจจะกลืนกับพื้นขาว
+                            .padding(.horizontal, 30)
+                            .padding(.bottom, 10)
+                            // *ถ้าพื้นหลังเป็นขาว ปุ่มขาวจะมองไม่เห็น ให้ Override สีปุ่มตรงนี้*
+//                            .overlay(
+//                                Capsule()
+//                                    .stroke(Color.Theme.primary, lineWidth: 2) // ใส่ขอบแทน หรือเปลี่ยนเป็นปุ่มสีฟ้า
+//                            )
+                            
+                            // ** หรือถ้าอยากได้ปุ่มทึบสีฟ้าบนพื้นขาว ให้ใช้ Code นี้แทนปุ่มข้างบน **
+                            /*
+                            NavigationLink(destination: LoginView().environmentObject(appState)) {
+                                Text("Sign In")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 56)
+                                    .background(Color.Theme.primary)
+                                    .clipShape(Capsule())
+                                    .padding(.horizontal, 30)
+                            }
+                            */
+                            
+                            Text("Powered by SWU")
+                                .font(.caption)
+                                .foregroundColor(Color.gray.opacity(0.6))
+                                .padding(.bottom, 40)
+                        }
+                    }
+                    .frame(height: 380) // ความสูงของ Card ด้านล่าง
+                }
+                .edgesIgnoringSafeArea(.bottom)
             }
-            .navigationBarHidden(true) // ซ่อน Navigation Bar ที่หน้า Welcome
+            .navigationBarHidden(true)
         }
-        .navigationViewStyle(.stack) // ป้องกันปัญหา layout บน iPad
+        .navigationViewStyle(.stack)
     }
 }
 
-// MARK: - Preview
+// Shape สำหรับส่วนโค้งด้านล่าง
+struct WaveShapeBottomCard: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: 0, y: 60)) // เริ่มต้นทางซ้าย ต่ำลงมาหน่อย
+        
+        // วาดโค้งขึ้นไปตรงกลาง
+        path.addCurve(
+            to: CGPoint(x: rect.width, y: 0), // ไปจบขวาบนสุด
+            control1: CGPoint(x: rect.width * 0.3, y: 60), // จุดดัด 1
+            control2: CGPoint(x: rect.width * 0.6, y: -30) // จุดดัด 2 (ดึงขึ้น)
+        )
+        
+        path.addLine(to: CGPoint(x: rect.width, y: rect.height))
+        path.addLine(to: CGPoint(x: 0, y: rect.height))
+        path.closeSubpath()
+        return path
+    }
+}
+
 struct WelcomeView_Previews: PreviewProvider {
     static var previews: some View {
         WelcomeView()
-            .environmentObject(AppState()) // ส่ง AppState จำลอง
+            .environmentObject(AppState())
     }
 }

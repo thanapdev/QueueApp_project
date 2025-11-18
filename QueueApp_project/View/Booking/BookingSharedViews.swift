@@ -1,21 +1,13 @@
+//
+//  BookingSharedViews.swift
+//  QueueApp_project
+//
+//  Created by Thanapong Yamkamol.
+//
+
 import SwiftUI
 
-// ServiceCardView (เหมือนเดิม)
-struct ServiceCardView: View {
-    let service: LibraryService
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: service.iconName).font(.system(size: 40, weight: .bold)).foregroundColor(service.themeColor).frame(maxWidth: .infinity, minHeight: 100).background(service.themeColor.opacity(0.1)).cornerRadius(12)
-            Text(service.name).font(.headline).fontWeight(.bold).foregroundColor(.black)
-            Text(service.description).font(.caption).foregroundColor(.gray).lineLimit(2)
-            Spacer()
-            Text("Book Now").font(.caption).fontWeight(.bold).foregroundColor(.white).padding(.horizontal, 12).padding(.vertical, 6).background(service.themeColor).cornerRadius(20)
-        }
-        .padding().frame(minHeight: 240).background(.white.opacity(0.8)).cornerRadius(16).shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
-    }
-}
-
-// ⭐️ Banner (อัปเกรด)
+// MARK: - 1. Active Booking Banner (ปรับปรุง UI ให้สวยขึ้น)
 struct MyBookingBannerView: View {
     @EnvironmentObject var appState: AppState
     
@@ -27,52 +19,84 @@ struct MyBookingBannerView: View {
         VStack(spacing: 12) {
             if let booking = activeBooking {
                 HStack {
-                    VStack(alignment: .leading) {
-                        Text(booking.status == "In-Use" ? "Currently Using" : (booking.status == "Queued" ? "Waiting in Queue" : "Reserved"))
-                            .font(.caption).foregroundColor(.white.opacity(0.7))
+                    VStack(alignment: .leading, spacing: 4) {
+                        // Status Badge (เล็กๆ ด้านบน)
+                        Text(statusText(for: booking.status))
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(statusColor(for: booking.status).opacity(0.2))
+                            .foregroundColor(statusColor(for: booking.status))
+                            .cornerRadius(8)
                         
-                        Text("\(booking.serviceName): \(booking.details)")
-                            .font(.headline).fontWeight(.bold)
+                        // Service Name & Detail
+                        Text(booking.serviceName)
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
                         
-                        // ⭐️ แสดงเวลาถอยหลัง
-                        Text("Time Remaining: \(formatTime(appState.timeRemaining))")
-                            .font(.title3).fontWeight(.heavy)
-                            .foregroundColor(appState.timeRemaining < 600 ? .red : .green) // สีแดงถ้าเหลือน้อย
+                        Text(booking.details)
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        // Timer Countdown
+                        HStack(spacing: 4) {
+                            Image(systemName: "timer")
+                            Text("Time Remaining: \(formatTime(appState.timeRemaining))")
+                        }
+                        .font(.footnote)
+                        .fontWeight(.semibold)
+                        .foregroundColor(appState.timeRemaining < 600 ? .red : .green) // สีแดงถ้าเหลือน้อย
+                        .padding(.top, 4)
                     }
                     
                     Spacer()
                     
-                    // ปุ่ม Cancel (เสมอ)
-                    Button("End/Cancel") { appState.cancelActiveBooking() }
-                        .buttonStyle(.bordered).tint(.white.opacity(0.8))
+                    // End/Cancel Button
+                    Button(action: {
+                        appState.cancelActiveBooking()
+                    }) {
+                        VStack {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title2)
+                            Text("End")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundColor(.white.opacity(0.9))
+                        .padding(10)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
                 }
                 
-                // ⭐️ ปุ่ม Extend (โชว์เฉพาะตอนแจ้งเตือน)
+                // Extend Button (แสดงเฉพาะตอนแจ้งเตือน)
                 if appState.showExtendAlert {
                     Button(action: {
                         appState.extendBooking()
                     }) {
                         HStack {
                             Image(systemName: "clock.arrow.circlepath")
-                            Text("Extend for 2 Hours")
+                            Text("Extend (+2 Hours)")
                         }
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
-                        .padding(8)
+                        .padding(10)
                         .background(Color.blue)
                         .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .cornerRadius(12)
                     }
+                    .transition(.opacity)
                 }
             }
         }
-        .padding()
-        .background(Color.black.opacity(0.85))
-        .foregroundColor(.white)
-        .cornerRadius(16)
-        .padding(.horizontal)
-        .padding(.bottom, 8)
-        .transition(.move(edge: .bottom))
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(red: 0.15, green: 0.15, blue: 0.15)) // สีเทาเข้มเกือบดำ (Modern Dark)
+                .shadow(color: Color.black.opacity(0.3), radius: 15, x: 0, y: 10) // เงาลอยๆ
+        )
         .alert("หมดเวลาแล้ว!", isPresented: $appState.showQueueAlert) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -80,6 +104,7 @@ struct MyBookingBannerView: View {
         }
     }
     
+    // Helper Functions
     func formatTime(_ totalSeconds: TimeInterval) -> String {
         let h = Int(totalSeconds) / 3600
         let m = (Int(totalSeconds) % 3600) / 60
@@ -87,41 +112,187 @@ struct MyBookingBannerView: View {
         if h > 0 { return String(format: "%02d:%02d:%02d", h, m, s) }
         else { return String(format: "%02d:%02d", m, s) }
     }
-}
-
-// AlreadyBookedView (เหมือนเดิม)
-struct AlreadyBookedView: View {
-    @EnvironmentObject var appState: AppState
-    var body: some View {
-        VStack {
-            Text("You have an active session").font(.title2).fontWeight(.bold).padding()
-            if let b = appState.activeReservation?.data ?? appState.activeQueue?.data {
-                Text(b.serviceName); Text(b.details)
-            }
-            Button("End Session") { appState.cancelActiveBooking() }.buttonStyle(.borderedProminent).tint(.red).padding()
+    
+    func statusText(for status: String) -> String {
+        switch status {
+        case "In-Use": return "🟢 Active Now"
+        case "Queued": return "🟡 Waiting"
+        case "Reserved": return "🔵 Reserved"
+        default: return status
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity).background(.black.opacity(0.8)).foregroundColor(.white)
+    }
+    
+    func statusColor(for status: String) -> Color {
+        switch status {
+        case "In-Use": return .green
+        case "Queued": return .yellow
+        case "Reserved": return .blue
+        default: return .gray
+        }
     }
 }
 
-// LegendView & TimeSlotView (เหมือนเดิม)
+// MARK: - 2. Already Booked View (หน้าเต็มจอบังไว้)
+struct AlreadyBookedView: View {
+    @EnvironmentObject var appState: AppState
+    @Environment(\.dismiss) var dismiss // 1. เพิ่มตัวสั่งปิดหน้า
+    
+    var body: some View {
+        ZStack(alignment: .topLeading) { // 2. ใช้ ZStack เพื่อวางปุ่ม Back มุมซ้ายบน
+            
+            // --- ปุ่ม Back (กลับไปหน้าเลือกบริการ) ---
+            Button(action: {
+                dismiss()
+            }) {
+                HStack(spacing: 5) {
+                    Image(systemName: "chevron.left")
+                    Text("Back")
+                }
+                .font(.headline)
+                .foregroundColor(.blue) // ใช้สีให้ตัดกับพื้นขาว
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(Color.blue.opacity(0.1))
+                .clipShape(Capsule())
+            }
+            .padding(.leading, 20)
+            .padding(.top, 50) // เผื่อพื้นที่ Safe Area ด้านบน
+            .zIndex(1) // ให้ปุ่มลอยอยู่ชั้นบนสุด
+            
+            // --- เนื้อหาแจ้งเตือน (อยู่ตรงกลางเหมือนเดิม) ---
+            VStack(spacing: 24) {
+                Spacer()
+                
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 80))
+                    .foregroundColor(.green)
+                    .shadow(color: .green.opacity(0.3), radius: 10, x: 0, y: 5)
+                
+                VStack(spacing: 8) {
+                    Text("You have an active session")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    
+                    Text("คุณมีการจองค้างอยู่แล้ว 1 รายการ\nสามารถจองได้ทีละ 1 รายการเท่านั้น")
+                        .font(.body)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                
+                // แสดงรายละเอียดการจองปัจจุบัน
+                if let b = appState.activeReservation?.data ?? appState.activeQueue?.data {
+                    VStack(spacing: 8) {
+                        Text("Current Booking:")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .textCase(.uppercase)
+                        
+                        Text(b.serviceName)
+                            .font(.headline)
+                            .foregroundColor(.blue)
+                        
+                        Text(b.details)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue.opacity(0.05))
+                    .cornerRadius(16)
+                    .padding(.horizontal, 40)
+                }
+                
+                Spacer()
+                
+                // ปุ่ม End Session (เผื่ออยากยกเลิกจริงๆ)
+                Button(action: {
+                    appState.cancelActiveBooking()
+                }) {
+                    Text("End Session (Cancel)")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(width: 250)
+                        .background(Color.red)
+                        .cornerRadius(15)
+                        .shadow(color: .red.opacity(0.3), radius: 5, x: 0, y: 3)
+                }
+                .padding(.bottom, 50)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(uiColor: .systemBackground))
+        // .navigationBarHidden(true) // ซ่อน Bar ของระบบ (เพราะเราทำปุ่ม Back เองแล้ว)
+    }
+}
+// MARK: - 3. Legend View (คำอธิบายสี)
 struct LegendView: View {
     let service: LibraryService
     var body: some View {
-        HStack(spacing: 20) {
-            HStack(spacing: 5) { RoundedRectangle(cornerRadius: 4).fill(service.themeColor.opacity(0.3)).frame(width: 20, height: 20); Text("Available") }
-            HStack(spacing: 5) { RoundedRectangle(cornerRadius: 4).fill(Color.green).frame(width: 20, height: 20); Text("Selected") }
-            HStack(spacing: 5) { RoundedRectangle(cornerRadius: 4).fill(Color.gray).frame(width: 20, height: 20); Text("Booked") }
-        }.font(.caption).padding(.leading, 10)
+        HStack(spacing: 16) {
+            LegendItem(color: service.themeColor.opacity(0.3), text: "Available")
+            LegendItem(color: .green, text: "Selected")
+            LegendItem(color: .gray, text: "Booked")
+        }
+        .font(.caption)
+        .padding(.vertical, 8)
     }
 }
+
+struct LegendItem: View {
+    let color: Color
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 10, height: 10)
+            Text(text)
+                .foregroundColor(.gray)
+        }
+    }
+}
+
+// MARK: - 4. Time Slot View (ปุ่มเลือกรอบเวลา)
 struct TimeSlotView: View {
-    let slot: TimeSlot; @Binding var selectedSlot: TimeSlot?; let themeColor: Color
-    var isBooked: Bool { slot.isBooked }; var isSelected: Bool { selectedSlot?.id == slot.id }
-    var slotColor: Color { if isBooked { return .gray } else if isSelected { return .green } else { return themeColor.opacity(0.3) } }
+    let slot: TimeSlot
+    @Binding var selectedSlot: TimeSlot?
+    let themeColor: Color
+    
+    var isBooked: Bool { slot.isBooked }
+    var isSelected: Bool { selectedSlot?.id == slot.id }
+    
+    var slotColor: Color {
+        if isBooked { return .gray.opacity(0.3) } // ปรับสีเทาให้อ่อนลงหน่อย
+        else if isSelected { return .green }
+        else { return themeColor.opacity(0.1) } // สีพื้นหลังอ่อนๆ ตามธีม
+    }
+    
+    var textColor: Color {
+        if isBooked { return .gray }
+        else if isSelected { return .white }
+        else { return themeColor }
+    }
+    
     var body: some View {
         Button(action: { selectedSlot = slot }) {
-            Text(slot.time).font(.system(size: 14, weight: .bold)).frame(maxWidth: .infinity).padding(.vertical, 16).background(slotColor).foregroundColor(isBooked ? .white.opacity(0.7) : .white).cornerRadius(8)
-        }.disabled(isBooked)
+            Text(slot.time)
+                .font(.system(size: 14, weight: .bold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(slotColor)
+                .foregroundColor(textColor)
+                .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(isSelected ? Color.green : (isBooked ? Color.clear : themeColor.opacity(0.3)), lineWidth: 1.5)
+                )
+        }
+        .disabled(isBooked)
+        .opacity(isBooked ? 0.6 : 1.0)
     }
 }

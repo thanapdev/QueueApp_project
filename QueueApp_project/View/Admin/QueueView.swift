@@ -1,6 +1,6 @@
 //
-//  AppState.swift
-//  term_projecct
+//  QueueView.swift
+//  QueueApp_project
 //
 //  Created by Thanapong Yamkamol on 7/11/2568 BE.
 //
@@ -8,277 +8,373 @@
 import SwiftUI
 
 struct QueueView: View {
+    // MARK: - Properties
     @Binding var activity: Activity
+    @EnvironmentObject var appState: AppState
+    @Environment(\.presentationMode) var presentationMode
+    
     @State private var showingAddQueue = false
     @State private var newCustomerName = ""
     @State private var showingCallOptions = false
-    @State private var isCountingDown = false // ควบคุมการเปิด Modal
+    @State private var isCountingDown = false
     @State private var showTimeoutMessage = false
-    @EnvironmentObject var appState: AppState
-    @State private var queueItems: [QueueItem] = [] // Local state for queue items
+    
+    // Local state for queue items (to manage filtering/sorting locally if needed)
+    @State private var queueItems: [QueueItem] = []
 
-    // SWU Colors (From LoginView.swift)
-    let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
-    let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
-
-    // Computed property to get the next queue item
+    // Computed property
     private var nextQueueItem: QueueItem? {
         queueItems.first
     }
 
     var body: some View {
-            ZStack {
-                // Background (Gradient จาก LoginView.swift)
-                LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                    .edgesIgnoringSafeArea(.all)
-
-                // Shape Background (Circles จาก LoginView.swift)
-                GeometryReader { geometry in
-                    Circle()
-                        .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                        .frame(width: 200, height: 200)
-                        .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
-
-                    Circle()
-                        .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                        .frame(width: 200, height: 200)
-                        .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
+        ZStack {
+            // 1. Background (Theme ใหม่)
+            DynamicBackground(style: .random)
+            
+            VStack(spacing: 0) {
+                // ---------------------------------------
+                // HEADER
+                // ---------------------------------------
+                VStack(alignment: .leading, spacing: 10) {
+                    // Back Button
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        HStack {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.white.opacity(0.2))
+                        .clipShape(Capsule())
+                    }
+                    .padding(.top, 50)
+                    
+                    // Title
+                    Text(activity.name)
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 10)
+                        .lineLimit(2)
+                    
+                    Text("จัดการคิว (Admin Panel)")
+                        .font(.body)
+                        .foregroundColor(Color.white.opacity(0.9))
                 }
-            VStack(spacing: 16) { // 👈 ปรับ spacing เล็กน้อย
-                            // ⭐️ 1. ส่วนแสดงคิวถัดไป (ปรับเป็นการ์ดขาว)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 20)
+                
+                // ---------------------------------------
+                // CONTENT (White Sheet)
+                // ---------------------------------------
+                ZStack {
+                    Color.white
+                        .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
+                    
+                    VStack(spacing: 24) {
+                        
+                        // 1. Current Queue Card (การ์ดแสดงคิวปัจจุบัน)
+                        VStack(spacing: 10) {
+                            Text("NOW SERVING")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.gray)
+                                .tracking(2)
+                            
                             if let next = nextQueueItem {
-                                VStack {
-                                    Text("คิวถัดไป")
-                                        .font(.headline)
-                                        .foregroundColor(.secondary)
-                                    Text("#\(next.number) - \(next.studentName)")
-                                        .font(.largeTitle)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.black) // 👈 เปลี่ยนเป็นสีดำ
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity) // 👈 ทำให้เต็มความกว้าง
-                                .background(.white) // 👈 ใช้พื้นหลังขาว
-                                .cornerRadius(12) // 👈 ขอบมน
-                                .shadow(radius: 3) // 👈 ใส่เงา
-                                .padding(.horizontal) // 👈 เว้นขอบซ้ายขวา
+                                Text("#\(next.number)")
+                                    .font(.system(size: 80, weight: .heavy))
+                                    .foregroundColor(Color.Theme.primary)
                                 
+                                Text(next.studentName)
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(Color.Theme.textDark)
+                                
+                                Text(next.studentId)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
                             } else {
-                                Text("ยังไม่มีคิว")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                                    .padding(.vertical, 32) // 👈 เพิ่ม padding ให้ไม่โล่งไป
+                                VStack(spacing: 15) {
+                                    Image(systemName: "moon.zzz.fill")
+                                        .font(.system(size: 50))
+                                        .foregroundColor(.gray.opacity(0.3))
+                                    Text("ไม่มีคิวรอ")
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.gray)
+                                }
+                                .padding(.vertical, 20)
                             }
-
-                            // ⭐️ 2. ปุ่มเรียกคิว (ปรับให้เต็มความกว้าง)
-                            Button("เรียกคิวถัดไป") {
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 30)
+                        .background(Color.white)
+                        .cornerRadius(20)
+                        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 30)
+                        .padding(.top, 30)
+                        
+                        // 2. Action Buttons
+                        HStack(spacing: 15) {
+                            // ปุ่มเพิ่มคิว
+                            Button(action: {
+                                showingAddQueue = true
+                            }) {
+                                VStack {
+                                    Image(systemName: "plus")
+                                        .font(.title2)
+                                    Text("Add Queue")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                }
+                                .foregroundColor(Color.Theme.primary)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 15)
+                                .background(Color.Theme.primary.opacity(0.1))
+                                .cornerRadius(15)
+                            }
+                            
+                            // ปุ่มเรียกคิว (ปุ่มใหญ่)
+                            Button(action: {
                                 if !queueItems.isEmpty {
                                     showingCallOptions = true
                                 }
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity) // 👈 ทำให้เต็มความกว้าง (ใน padding)
-                            .background(swuRed)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                            .padding(.horizontal) // 👈 เว้นขอบซ้ายขวา
-                            .disabled(queueItems.isEmpty || isCountingDown)
-                            .confirmationDialog(
-                                "เลือกการกระทำ",
-                                isPresented: $showingCallOptions,
-                                titleVisibility: .visible
-                            ) {
-                                Button("✅ มาแล้ว") {
-                                    callNextQueue(status: "มาแล้ว")
+                            }) {
+                                HStack {
+                                    Image(systemName: "bell.fill")
+                                    Text("Call Next")
                                 }
-                                .foregroundColor(.black)
-                                Button("⏳ ยังไม่มา") {
-                                    isCountingDown = true
-                                }
-                                .foregroundColor(.black)
-                                Button("⏭️ ข้ามคิว") {
-                                    callNextQueue(status: "ข้ามคิว")
-                                }
-                                .foregroundColor(.black)
-                                Button("ยกเลิก", role: .cancel) { }
-                                    .foregroundColor(.black)
-                            }
-
-                            // ⭐️ 2. ปุ่มเพิ่มคิว (ปรับให้เต็มความกว้าง)
-                            Button("เพิ่มคิว") {
-                                showingAddQueue = true
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity) // 👈 ทำให้เต็มความกว้าง (ใน padding)
-                            .background(swuRed)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                            .padding(.horizontal) // 👈 เว้นขอบซ้ายขวา
-
-                            // ⭐️ แสดงจำนวนคิวที่กำลังรอ
-                            HStack {
-                                Text("คิวที่กำลังรอ")
-                                    .font(.headline)
-                                    .foregroundColor(.black)
-                                Spacer()
-                                Text("(\(queueItems.count) คิว)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                            }
-                            .padding(.horizontal)
-                            .padding(.top, 8)
-                            
-                            ScrollView {
-                                LazyVStack(spacing: 12) {
-                                    ForEach(queueItems) { item in
-                                        // ⭐️ นี่คือการ์ดของแต่ละคิว
-                                        HStack {
-                                            Text("#\(item.number)")
-                                                .font(.title.weight(.bold))
-                                                .foregroundColor(swuRed) // 👈 ใช้สีแดง SWU ให้เด่น
-                                            
-                                            VStack(alignment: .leading) {
-                                                Text(item.studentName)
-                                                    .font(.headline)
-                                                    .foregroundColor(.black)
-                                                Text(item.studentId)
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                            }
-                                            
-                                            Spacer()
-                                            
-                                            if let status = item.status {
-                                                Text(status)
-                                                    .font(.caption)
-                                                    .foregroundColor(.gray)
-                                                    .italic()
-                                            }
-                                        }
-                                        .padding()
-                                        .background(.white)
-                                        .cornerRadius(12)
-                                        .shadow(radius: 3)
-                                    }
-                                }
-                                .padding(.horizontal) // 👈 เว้นขอบซ้ายขวาให้ ScrollView
-                                .padding(.bottom) // 👈 เว้นด้านล่างหน่อย
-                            }
-                            // ❗️ ลบ .frame(maxHeight: 200) ทิ้งไปเลย
-
-                            Spacer() // 👈 Spacer ตัวนี้ยังอยู่เหมือนเดิม
-                        }
-            .navigationTitle(activity.name)
-            .sheet(isPresented: $showingAddQueue) {
-                NavigationStack {
-                    ZStack {
-                        LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                            .edgesIgnoringSafeArea(.all)
-
-                        VStack {
-                            Text("เพิ่มคิวใหม่")
-                                .font(.title2)
+                                .font(.headline)
                                 .fontWeight(.bold)
-                                .padding()
-                                .foregroundColor(.black)
-
-                            TextField("ชื่อลูกค้า", text: $newCustomerName)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .padding()
-                                .background(Color.white.opacity(0.7))
-                                .cornerRadius(8)
-                                .foregroundColor(.black)
-
-                            HStack {
-                                Button("ยกเลิก") { showingAddQueue = false }
-                                    .foregroundColor(.black)
-                                Spacer()
-                                Button("เพิ่ม") {
-                                    if !newCustomerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                        let newItem = QueueItem(
-                                            id: UUID(),
-                                            studentId: "MANUAL-\(activity.nextQueueNumber)",
-                                            studentName: newCustomerName,
-                                            number: activity.nextQueueNumber,
-                                            status: nil
-                                        )
-                                        appState.addQueueItem(activity: activity, queueItem: newItem)
-                                        queueItems.append(newItem)
-                                        activity.nextQueueNumber += 1
-                                        appState.updateActivity(activity: activity) // Update nextQueueNumber in Firestore
-                                        newCustomerName = ""
-                                    }
-                                    showingAddQueue = false
-                                }
-                                .disabled(newCustomerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                .foregroundColor(.black)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 15)
+                                .background(queueItems.isEmpty ? Color.gray : Color.Theme.primary)
+                                .cornerRadius(15)
+                                .shadow(color: queueItems.isEmpty ? .clear : Color.Theme.primary.opacity(0.4), radius: 8, x: 0, y: 4)
                             }
-                            .padding()
+                            .disabled(queueItems.isEmpty || isCountingDown)
                         }
-                        .padding()
+                        .padding(.horizontal, 30)
+                        
+                        // 3. Waiting List Header
+                        HStack {
+                            Text("Waiting List")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundColor(Color.Theme.textDark)
+                            Spacer()
+                            Text("\(queueItems.count) People")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                                .padding(6)
+                                .background(Color.gray.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                        .padding(.horizontal, 30)
+                        
+                        // 4. Waiting List (ScrollView)
+                        ScrollView(showsIndicators: false) {
+                            LazyVStack(spacing: 12) {
+                                ForEach(queueItems) { item in
+                                    HStack(spacing: 15) {
+                                        // Queue Number
+                                        Text("#\(item.number)")
+                                            .font(.title3)
+                                            .fontWeight(.heavy)
+                                            .foregroundColor(Color.Theme.primary)
+                                            .frame(width: 50)
+                                        
+                                        // Divider
+                                        Rectangle()
+                                            .fill(Color.gray.opacity(0.2))
+                                            .frame(width: 1, height: 30)
+                                        
+                                        // Info
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(item.studentName)
+                                                .font(.headline)
+                                                .foregroundColor(Color.Theme.textDark)
+                                            Text(item.studentId)
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        // Status (if any)
+                                        if let status = item.status {
+                                            Text(status)
+                                                .font(.caption)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(.gray)
+                                                .padding(6)
+                                                .background(Color.gray.opacity(0.1))
+                                                .cornerRadius(6)
+                                        }
+                                    }
+                                    .padding()
+                                    .background(Color.white)
+                                    .cornerRadius(15)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                                    )
+                                }
+                            }
+                            .padding(.horizontal, 30)
+                            .padding(.bottom, 50)
+                        }
                     }
                 }
             }
-            .sheet(isPresented: $isCountingDown) {
-                CountdownModal(
-                    isActive: $isCountingDown,
-                    onTimeout: {
-                        callNextQueue(status: "หมดเวลา")
-                    },
-                    onCancel: {
-                        // ไม่ทำอะไร — ไม่ลบคิว
-                    }
-                )
-                .presentationDetents([.medium])
-            }
-            .alert("มาช้าเกินไป!", isPresented: $showTimeoutMessage, actions: {
-                Button("ตกลง") {
-                    showTimeoutMessage = false
-                }
-                .foregroundColor(.black)
-            }, message: {
-                Text("ลูกค้าไม่มาภายในเวลาที่กำหนด\nจึงข้ามคิวไปแล้ว")
-            })
+            .edgesIgnoringSafeArea(.bottom)
         }
+        .navigationBarHidden(true)
         .onAppear {
             loadQueueItems()
         }
         .onChange(of: activity.id) { _ in
             loadQueueItems()
         }
+        
+        // MARK: - Action Sheets & Alerts
+        .confirmationDialog("Action for Queue #\(nextQueueItem?.number ?? 0)", isPresented: $showingCallOptions, titleVisibility: .visible) {
+            Button("✅ Customer Arrived") {
+                callNextQueue(status: "มาแล้ว")
+            }
+            Button("⏳ Not Here (Timer)") {
+                isCountingDown = true
+            }
+            Button("⏭️ Skip Queue") {
+                callNextQueue(status: "ข้ามคิว")
+            }
+            Button("Cancel", role: .cancel) { }
+        }
+        .sheet(isPresented: $isCountingDown) {
+            CountdownModal(
+                isActive: $isCountingDown,
+                onTimeout: { callNextQueue(status: "หมดเวลา") },
+                onCancel: { /* Do nothing */ }
+            )
+            .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showingAddQueue) {
+            // Custom Add Queue Sheet
+            AddQueueSheet(
+                isPresented: $showingAddQueue,
+                customerName: $newCustomerName,
+                onAdd: {
+                    addManualQueue()
+                }
+            )
+        }
+        .alert("Time's Up!", isPresented: $showTimeoutMessage) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Customer didn't arrive in time.\nQueue skipped automatically.")
+        }
     }
-
+    
+    // MARK: - Logic Functions (Preserved)
     private func loadQueueItems() {
         appState.loadQueueItems(activity: activity) { loadedQueueItems in
             queueItems = loadedQueueItems
-            // Also update the activity's queue count when local items are loaded/filtered
             activity.queueCount = loadedQueueItems.count
             appState.updateActivity(activity: activity)
         }
     }
 
-
     private func callNextQueue(status: String) {
-        guard let firstQueueItem = queueItems.first else {
-            return
-        }
-
+        guard let firstQueueItem = queueItems.first else { return }
+        
         var updatedItem = firstQueueItem
         updatedItem.status = status
         appState.updateQueueItemStatus(activity: activity, queueItem: updatedItem, status: status)
         
-        // Remove the item locally and update the activity's queue count
         if let index = queueItems.firstIndex(where: { $0.id == firstQueueItem.id }) {
             queueItems.remove(at: index)
-            activity.queueCount = queueItems.count // Update local activity object immediately
-            appState.updateActivity(activity: activity) // Save updated queue count to Firestore
+            activity.queueCount = queueItems.count
+            appState.updateActivity(activity: activity)
         }
         activity.currentQueueNumber = nil
-        appState.updateActivity(activity: activity) // Update currentQueueNumber
+        appState.updateActivity(activity: activity)
+    }
+    
+    private func addManualQueue() {
+        if !newCustomerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let newItem = QueueItem(
+                id: UUID(),
+                studentId: "MANUAL-\(activity.nextQueueNumber)",
+                studentName: newCustomerName,
+                number: activity.nextQueueNumber,
+                status: nil
+            )
+            appState.addQueueItem(activity: activity, queueItem: newItem)
+            queueItems.append(newItem)
+            activity.nextQueueNumber += 1
+            appState.updateActivity(activity: activity)
+            newCustomerName = ""
+            showingAddQueue = false
+        }
     }
 }
 
-// ✅ Modal สำหรับนับถอยหลัง — จัดการ Timer และลบคิวด้วยตัวเอง
+// MARK: - Helper View: Add Queue Sheet
+struct AddQueueSheet: View {
+    @Binding var isPresented: Bool
+    @Binding var customerName: String
+    var onAdd: () -> Void
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                DynamicBackground(style: .random)
+                
+                VStack(spacing: 20) {
+                    Text("Add New Queue")
+                        .font(.headline)
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.top, 20)
+                    
+                    TextField("Customer Name", text: $customerName)
+                        .padding()
+                        .background(Color.white.opacity(0.9))
+                        .cornerRadius(12)
+                    
+                    Spacer()
+                }
+                .padding()
+            }
+            .navigationTitle("Add Queue")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { isPresented = false }
+                        .foregroundColor(.red)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") { onAdd() }
+                        .bold()
+                        .disabled(customerName.isEmpty)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Helper View: Countdown Modal (Preserved Logic, New Look)
 struct CountdownModal: View {
     @Binding var isActive: Bool
     let onTimeout: () -> Void
@@ -287,51 +383,61 @@ struct CountdownModal: View {
     @State private var seconds = 10
     @State private var timer: Timer?
 
-    // SWU Colors (From LoginView.swift)
-    let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
-    let swuRed = Color(red: 190/255, green: 150/255, blue: 150/255)
-
     var body: some View {
         ZStack {
-            LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                .edgesIgnoringSafeArea(.all)
-
-            VStack(spacing: 20) {
-                Text("ยังไม่มา?")
-                    .font(.title)
+            Color.white.ignoresSafeArea()
+            
+            VStack(spacing: 30) {
+                Text("Waiting for Customer...")
+                    .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
 
-                Text("เหลือเวลา \(seconds) วินาที")
-                    .font(.headline)
-                    .foregroundColor(.black)
+                ZStack {
+                    Circle()
+                        .stroke(lineWidth: 15)
+                        .opacity(0.1)
+                        .foregroundColor(.orange)
+                    
+                    Circle()
+                        .trim(from: 0.0, to: CGFloat(seconds) / 10.0)
+                        .stroke(style: StrokeStyle(lineWidth: 15, lineCap: .round, lineJoin: .round))
+                        .foregroundColor(.orange)
+                        .rotationEffect(Angle(degrees: 270.0))
+                        .animation(.linear, value: seconds)
+                    
+                    Text("\(seconds)")
+                        .font(.system(size: 60, weight: .bold))
+                        .foregroundColor(.orange)
+                }
+                .frame(width: 150, height: 150)
+                .padding()
 
-                ProgressView(value: Double(seconds), total: 10.0)
-                    .tint(.orange)
-                    .padding()
-
-                Text("หากไม่มา จะข้ามคิวอัตโนมัติ")
+                Text("Auto-skip if not arrived")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.gray)
 
-                Button("ยกเลิก") {
+                Button(action: {
                     timer?.invalidate()
                     onCancel()
                     isActive = false
+                }) {
+                    Text("Cancel Timer")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.gray.opacity(0.2))
+                        .foregroundColor(.black)
+                        .cornerRadius(12)
                 }
-                .buttonStyle(.bordered)
-                .foregroundColor(.black)
+                .padding(.horizontal, 40)
             }
             .padding()
         }
-        .onAppear {
-            startTimer()
-        }
+        .onAppear { startTimer() }
         .onDisappear {
             timer?.invalidate()
-            if seconds == 0 {
-                onTimeout()
-            }
+            if seconds == 0 { onTimeout() }
         }
     }
 
@@ -341,7 +447,6 @@ struct CountdownModal: View {
             if seconds > 0 {
                 seconds -= 1
             }
-            // Use DispatchQueue.main.async to update isActive on the main thread
             DispatchQueue.main.async {
                 if seconds == 0 {
                     timer?.invalidate()
@@ -351,10 +456,3 @@ struct CountdownModal: View {
         }
     }
 }
-
-//#Preview {
-//    @State var activity: Activity = Activity(name: "ตัวอย่างกิจกรรม", queues: [
-//        QueueItem(id: UUID(), studentId: "654231001", studentName: "สมปอง", number: 1)
-//    ])
-//     QueueView(activity: $activity)
-//}

@@ -1,169 +1,227 @@
 import SwiftUI
 
 struct ServiceView: View {
+    // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
     @EnvironmentObject var appState: AppState
-
-    // State สำหรับ Navigation
     @State private var showBookingSpace = false // สำหรับ Logged-in user
-    
-    // State สำหรับ Alert และ Navigation ของ Guest
     @State private var showingLoginAlert = false
     @State private var navigateToLoginFromAlert = false // สำหรับ Alert -> Login
 
-    // SWU Colors
-    let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
-    let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
-
     var body: some View {
         ZStack {
-                        // Background
-                        LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                            .edgesIgnoringSafeArea(.all)
-
-                        // Shape Background
-                        GeometryReader { geometry in
-                            Circle()
-                                .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                                .frame(width: 200, height: 200)
-                                .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
-
-                            Circle()
-                                .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                                .frame(width: 200, height: 200)
-                                .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
+            // 1. Background (ใช้กราฟิกแบบสุ่มเหมือนเดิม)
+            DynamicBackground(style: .random)
+            
+            VStack(spacing: 0) {
+                // ---------------------------------------
+                // HEADER SECTION
+                // ---------------------------------------
+                VStack(alignment: .leading, spacing: 10) {
+                    // Top Toolbar (Logout / Login)
+                    HStack {
+                        Spacer()
+                        if appState.isLoggedIn {
+                            Button(action: {
+                                appState.logout()
+                            }) {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                                    Text("Logout")
+                                }
+                                .font(.subheadline)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 15)
+                                .padding(.vertical, 8)
+                                .background(Color.white.opacity(0.2))
+                                .clipShape(Capsule())
+                            }
+                        } else {
+                            Button(action: {
+                                navigateToLoginFromAlert = true
+                            }) {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "person.circle.fill")
+                                    Text("Login")
+                                }
+                                .font(.subheadline)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 15)
+                                .padding(.vertical, 8)
+                                .background(Color.white.opacity(0.2))
+                                .clipShape(Capsule())
+                            }
                         }
-
-            VStack(spacing: 40) {
-                Spacer()
-
-                Text("เลือกบริการ")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.black)
-                    .padding(.bottom, 20)
-
-                // --- (ส่วนที่แก้ไข) ---
-                // ปุ่ม Activity / Event (เปลี่ยนเป็น NavigationLink)
-                NavigationLink(destination: {
-                    // ตรวจสอบว่า Login หรือยัง?
-                    if appState.isLoggedIn {
-                        // ถ้า Login แล้ว (เป็น Student) -> ไป StudentActivityListView
-                        StudentActivityListView() // <--- ต้องมี View นี้
-                            .environmentObject(appState)
-                    } else {
-                        // ถ้ายังไม่ Login (เป็น Guest) -> ไป GuestActivityListView
-                        GuestActivityListView() // <--- ต้องมี View นี้
-                            .environmentObject(appState)
                     }
-                }) {
-                    // นี่คือหน้าตาของปุ่ม
-                    ServiceCard(title: "Activity / Event", description: "ดูกิจกรรมและอีเว้นท์", backgroundColor: swuRed)
-                }
-                .buttonStyle(.plain) // ทำให้ NavigationLink หน้าตาเหมือนปุ่ม
-                // --- (สิ้นสุดส่วนที่แก้ไข) ---
-
-                // --- ปุ่ม Booking Space (อันนี้ดีอยู่แล้ว) ---
-                Button(action: {
-                    if appState.isLoggedIn {
-                        // Logged-in: ไปหน้า Booking
-                        showBookingSpace = true
-                    } else {
-                        // Guest: แสดง Alert
-                        showingLoginAlert = true
+                    .padding(.top, 50)
+                    
+                    // Welcome Text
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(appState.isLoggedIn ? "Hello, Student!" : "Hello, Guest!")
+                            .font(.system(size: 34, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        Text("เลือกใช้บริการที่คุณต้องการ")
+                            .font(.body)
+                            .foregroundColor(Color.white.opacity(0.9))
                     }
-                }) {
-                    ServiceCard(title: "Booking Space", description: "จองพื้นที่", backgroundColor: swuRed)
+                    .padding(.top, 10)
                 }
-                .buttonStyle(.plain)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 40)
                 
-                Spacer()
-            }
-            .padding()
-            .toolbar {
-                // --- ปุ่ม Logout (จะแสดงเฉพาะเมื่อ Login แล้ว) ---
-                if appState.isLoggedIn {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Logout") {
-                            appState.logout() // <--- ต้องมีฟังก์ชันนี้ใน AppState
-                        }
-                        .foregroundColor(swuRed)
-                    }
-                }
-                
-                // --- ปุ่ม Profile/Login (สำหรับ Guest) ---
-                // ปุ่มนี้จะแสดงเฉพาะใน "โหมด Guest" (คือเมื่อ !isLoggedIn และไม่ได้มาจาก WelcomeView)
-                // เราต้องเช็กว่าเราอยู่ใน Navigation Stack ของ WelcomeView หรือไม่
-                // แต่เพื่อความง่าย: ปุ่มนี้จะแสดงเมื่อยังไม่ Login
-                if !appState.isLoggedIn {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        // เราใช้ navigateToLoginFromAlert เพื่อ "ย้อนกลับ" ไปหน้า Login
-                        Button(action: {
-                            navigateToLoginFromAlert = true
-                        }) {
-                            Image(systemName: "person.crop.circle")
+                // ---------------------------------------
+                // SERVICE MENU (White Card Area)
+                // ---------------------------------------
+                ZStack {
+                    Color.white
+                        .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
+                    
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            Text("Services")
                                 .font(.title2)
-                                .foregroundColor(.black)
+                                .fontWeight(.bold)
+                                .foregroundColor(Color.Theme.textDark)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.top, 30)
+                                .padding(.bottom, 10)
+                            
+                            // Grid Menu (2 Columns)
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
+                                
+                                // 1. Activity / Event Button
+                                NavigationLink(destination: destinationForActivity()) {
+                                    ServiceCardNew(
+                                        icon: "calendar.badge.clock",
+                                        title: "Activity",
+                                        subtitle: "กิจกรรม / อีเว้นท์",
+                                        color: Color.Theme.primary
+                                    )
+                                }
+                                
+                                // 2. Booking Space Button
+                                Button(action: {
+                                    if appState.isLoggedIn {
+                                        showBookingSpace = true
+                                    } else {
+                                        showingLoginAlert = true
+                                    }
+                                }) {
+                                    ServiceCardNew(
+                                        icon: "table.furniture",
+                                        title: "Booking",
+                                        subtitle: "จองพื้นที่",
+                                        color: Color.Theme.secondary
+                                    )
+                                }
+                                
+                                // (Optional) 3. Map (Example for future)
+                                ServiceCardNew(
+                                    icon: "map.fill",
+                                    title: "Campus Map",
+                                    subtitle: "แผนที่มหาลัย",
+                                    color: Color.gray.opacity(0.5)
+                                )
+                                .opacity(0.6) // ทำให้ดูเป็น Disabled
+                                
+                                // (Optional) 4. Profile (Example)
+                                ServiceCardNew(
+                                    icon: "person.crop.circle",
+                                    title: "Profile",
+                                    subtitle: "ข้อมูลส่วนตัว",
+                                    color: Color.gray.opacity(0.5)
+                                )
+                                .opacity(0.6)
+                            }
                         }
+                        .padding(.horizontal, 30)
+                        .padding(.bottom, 50)
                     }
                 }
             }
-            .navigationBarBackButtonHidden(!appState.isLoggedIn) // ซ่อนปุ่ม Back ถ้าเป็น Guest (เพราะมาจาก Login) แต่แสดงถ้าเป็น Student (มาจาก ContentView)
+            .edgesIgnoringSafeArea(.bottom) // ให้ Card ชิดขอบล่าง
             
-            // --- Navigation Links ที่ซ่อนไว้ ---
+            // --- Hidden Navigation Links ---
+            NavigationLink(destination: LoginView().environmentObject(appState), isActive: $navigateToLoginFromAlert) { EmptyView() }
             
-            // 1. สำหรับ Guest ที่โดน Alert แล้วกด "เข้าสู่ระบบ"
-            // (และสำหรับปุ่ม Profile icon ด้านบน)
-            NavigationLink(destination: LoginView().environmentObject(appState), isActive: $navigateToLoginFromAlert) {
-                EmptyView()
-            }
-        
-            // 2. สำหรับ Student ที่ Login แล้ว กด "Booking Space"
-            NavigationLink(destination: BookingView().environmentObject(appState), isActive: $showBookingSpace) { // <--- ต้องมี BookingView
-                EmptyView()
-            }
+            // แก้ไข: ต้องมี View ปลายทางจริงๆ (BookingView)
+            NavigationLink(destination: BookingView().environmentObject(appState), isActive: $showBookingSpace) { EmptyView() }
+//             NavigationLink(destination: Text("Booking View (Coming Soon)"), isActive: $showBookingSpace) { EmptyView() } // Placeholder
         }
+        .navigationBarHidden(true)
         .onAppear {
             print("ServiceView ปรากฏขึ้น. isLoggedIn: \(appState.isLoggedIn)")
         }
         .alert("เข้าสู่ระบบ", isPresented: $showingLoginAlert) {
-//            Button("ตกลง", role: .none) {
-//                navigateToLoginFromAlert = true // Trigger NavigationLink
-//            }
             Button("ตกลง", role: .cancel) { }
         } message: {
             Text("คุณต้องเข้าสู่ระบบก่อนจึงจะสามารถจองพื้นที่ได้")
         }
     }
-}
-
-// ServiceCard struct (ไม่เปลี่ยนแปลง)
-struct ServiceCard: View {
-    let title: String
-    let description: String
-    let backgroundColor: Color
-
-    var body: some View {
-        VStack {
-            Text(title)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
-            Text(description)
-                .font(.caption)
-                .foregroundColor(.white)
-                .padding(.top, 4)
+    
+    // Logic เลือกปลายทาง Activity
+    @ViewBuilder
+    func destinationForActivity() -> some View {
+        if appState.isLoggedIn {
+             StudentActivityListView().environmentObject(appState) // Uncomment เมื่อมีไฟล์จริง
+            /*Text("Student Activity List (Coming Soon)")*/ // Placeholder
+        } else {
+             GuestActivityListView().environmentObject(appState) // Uncomment เมื่อมีไฟล์จริง
+            /*Text("Guest Activity List (Coming Soon)")*/ // Placeholder
         }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(backgroundColor)
-        .cornerRadius(12)
-        .shadow(radius: 5)
-        .contentShape(Rectangle()) // ทำให้กดได้ทั้งการ์ด
     }
 }
 
-#Preview {
-    // ต้องครอบด้วย NavigationStack เพื่อให้ Preview Toolbar ทำงาน
-    NavigationStack {
-        ServiceView().environmentObject(AppState())
+// MARK: - NEW SERVICE CARD COMPONENT
+struct ServiceCardNew: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 15) {
+            // Icon Circle
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.1))
+                    .frame(width: 70, height: 70)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 30))
+                    .foregroundColor(color)
+            }
+            
+            // Text Info
+            VStack(spacing: 5) {
+                Text(title)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color.Theme.textDark)
+                
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 160)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+        )
+    }
+}
+
+struct ServiceView_Previews: PreviewProvider {
+    static var previews: some View {
+        ServiceView()
+            .environmentObject(AppState())
     }
 }

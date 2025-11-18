@@ -5,7 +5,6 @@
 //  Created by Thanapong Yamkamol on 17/11/2568 BE.
 //
 
-
 import SwiftUI
 
 struct CoWorkingBookingView: View {
@@ -15,61 +14,126 @@ struct CoWorkingBookingView: View {
     @Environment(\.dismiss) var dismiss
     let service: LibraryService
     
-    let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+    let columns = [
+        GridItem(.flexible(), spacing: 15),
+        GridItem(.flexible(), spacing: 15),
+        GridItem(.flexible(), spacing: 15)
+    ]
     
     // MARK: - State
     @State private var selectedSeat: Int? = nil
-    // ⭐️ (R1) ลบ @State private var bookedSeats ทิ้ง
     
     // MARK: - Body
     var body: some View {
-        VStack {
-            ScrollView {
-                VStack {
-                    Text("เลือกช่องที่ต้องการจอง").font(.title2).fontWeight(.bold).padding(.top)
-                    LegendView(service: service).padding(.bottom)
+        ZStack {
+            // 1. Background
+            DynamicBackground(style: .random)
+            
+            VStack(spacing: 0) {
+                // --- HEADER ---
+                VStack(alignment: .leading, spacing: 10) {
+                    // Back Button
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        HStack {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.white.opacity(0.2))
+                        .clipShape(Capsule())
+                    }
+                    .padding(.top, 50)
                     
-                    LazyVGrid(columns: columns, spacing: 15) {
-                        ForEach(1...15, id: \.self) { seatNumber in
-                            SeatView(
-                                seatNumber: seatNumber,
-                                selectedSeat: $selectedSeat,
-                                // ⭐️ (R1) ส่ง Set ของช่องที่จองแล้ว (จาก AppState)
-                                bookedSlots: appState.currentServiceBookedSlots,
-                                themeColor: service.themeColor
-                            )
+                    // Title
+                    Text(service.name)
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 10)
+                    
+                    Text("เลือกที่นั่งที่คุณต้องการ")
+                        .font(.body)
+                        .foregroundColor(Color.white.opacity(0.9))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 30)
+                
+                // --- CONTENT (White Sheet) ---
+                ZStack {
+                    Color.white
+                        .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
+                    
+                    VStack {
+                        ScrollView(showsIndicators: false) {
+                            VStack(alignment: .leading, spacing: 20) {
+                                
+                                // Title & Legend
+                                HStack {
+                                    Text("Select a Seat")
+                                        .font(.title3).fontWeight(.bold)
+                                        .foregroundColor(Color.Theme.textDark)
+                                    Spacer()
+                                }
+                                .padding(.top, 30)
+                                
+                                LegendView(service: service)
+                                    .padding(.bottom, 10)
+                                
+                                // Seat Grid
+                                LazyVGrid(columns: columns, spacing: 15) {
+                                    ForEach(1...15, id: \.self) { seatNumber in
+                                        SeatView(
+                                            seatNumber: seatNumber,
+                                            selectedSeat: $selectedSeat,
+                                            bookedSlots: appState.currentServiceBookedSlots,
+                                            themeColor: service.themeColor
+                                        )
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 30)
+                            .padding(.bottom, 100) // เว้นที่ให้ปุ่มด้านล่าง
                         }
                     }
-                    .padding()
                 }
             }
-            Spacer()
+            .edgesIgnoringSafeArea(.bottom)
             
-            // MARK: - Action Button
-            Button(action: {
-                if let seat = selectedSeat {
-                    let slotID = "Slot \(seat)"
-                    // ⭐️ (R1) สั่ง AppState ให้สร้างการจอง (Reservation)
-                    appState.createReservation(
-                        service: service,
-                        slotID: slotID, // 👈 ส่ง slotID
-                        timeSlot: nil,
-                        items: nil
-                    )
-                    dismiss()
+            // --- Floating Action Button ---
+            VStack {
+                Spacer()
+                Button(action: {
+                    if let seat = selectedSeat {
+                        let slotID = "Slot \(seat)"
+                        // สั่ง AppState ให้สร้างการจอง
+                        appState.createReservation(
+                            service: service,
+                            slotID: slotID,
+                            timeSlot: nil,
+                            items: nil
+                        )
+                        dismiss()
+                    }
+                }) {
+                    Text("Confirm Booking")
+                        .font(.headline).fontWeight(.bold).foregroundColor(.white)
+                        .frame(maxWidth: .infinity).padding()
+                        .background(selectedSeat == nil ? Color.gray : Color.green)
+                        .cornerRadius(15)
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
                 }
-            }) {
-                Text("Confirm Booking")
-                    .font(.headline).fontWeight(.bold).foregroundColor(.white)
-                    .frame(maxWidth: .infinity).padding()
-                    .background(selectedSeat == nil ? Color.gray : Color.green)
-                    .cornerRadius(12)
+                .disabled(selectedSeat == nil)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 20)
             }
-            .disabled(selectedSeat == nil)
-            .padding()
         }
-        .navigationTitle(service.name)
-        // ⭐️ (R1) เริ่ม/หยุด Listener ส่วนรวม
+        .navigationBarHidden(true)
         .onAppear {
             appState.listenToServiceBookings(service: service.name, timeSlot: nil)
         }
@@ -79,25 +143,26 @@ struct CoWorkingBookingView: View {
     }
 }
 
+// MARK: - Seat View Component
 struct SeatView: View {
     let seatNumber: Int
     @Binding var selectedSeat: Int?
-    let bookedSlots: Set<String> // 👈 (R1) รับ Set<String> จาก AppState
+    let bookedSlots: Set<String>
     let themeColor: Color
     
-    private var slotID: String { "Slot \(seatNumber)" } // 👈 (R1)
+    private var slotID: String { "Slot \(seatNumber)" }
     
-    // ⭐️ (R1) แก้ Logic isBooked
     var isBooked: Bool { bookedSlots.contains(slotID) }
     var isSelected: Bool { selectedSeat == seatNumber }
     
-    var seatColor: Color {
-        if isBooked { return .gray }
+    var bg: Color {
+        if isBooked { return .gray.opacity(0.3) }
         if isSelected { return .green }
-        return themeColor.opacity(0.3)
+        return themeColor.opacity(0.1)
     }
-    var textColor: Color {
-        if isBooked { return .white.opacity(0.7) }
+    
+    var fg: Color {
+        if isBooked { return .gray }
         if isSelected { return .white }
         return themeColor
     }
@@ -106,17 +171,22 @@ struct SeatView: View {
         Button(action: {
             if isSelected { selectedSeat = nil } else { selectedSeat = seatNumber }
         }) {
-            VStack {
+            VStack(spacing: 5) {
                 Image(systemName: "chair.lounge.fill")
-                Text(slotID) // 👈 (R1)
+                    .font(.title2)
+                Text("\(seatNumber)")
+                    .font(.headline)
+                    .fontWeight(.bold)
             }
-            .padding(10)
-            .frame(maxWidth: .infinity, minHeight: 70)
-            .background(seatColor)
-            .foregroundColor(textColor)
-            .cornerRadius(10)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? .green : Color.clear, lineWidth: 2))
+            .frame(maxWidth: .infinity, minHeight: 80)
+            .background(bg)
+            .foregroundColor(fg)
+            .cornerRadius(15)
+            .overlay(
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(isSelected ? .green : (isBooked ? .clear : themeColor.opacity(0.3)), lineWidth: 2)
+            )
         }
-        .disabled(isBooked) // ⭐️ (R1) ถ้า isBooked = true จะกดไม่ได้
+        .disabled(isBooked)
     }
 }

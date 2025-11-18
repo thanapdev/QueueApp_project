@@ -1,155 +1,99 @@
+//
+//  StudentActivityListView.swift
+//  QueueApp_project
+//
+//  Created by Thanapong Yamkamol on 17/11/2568 BE.
+//
+
 import SwiftUI
 
 struct StudentActivityListView: View {
     @EnvironmentObject var appState: AppState
-
-    // SWU Colors (From LoginView.swift)
-    let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
-    let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
+    @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
-        // <<< ลบ NavigationView ที่ครอบ View ทั้งหมดออก >>>
-        // NavigationView { // เดิม
-            ZStack {
-                // Background (Gradient From LoginView.swift)
-                LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                    .edgesIgnoringSafeArea(.all)
-
-                // Shape Background (Circles From LoginView.swift)
-                GeometryReader { geometry in
-                    Circle()
-                        .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                        .frame(width: 200, height: 200)
-                        .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
-
-                    Circle()
-                        .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                        .frame(width: 200, height: 200)
-                        .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
-                }
-
-                VStack {
-                    // Top Bar
+        ZStack {
+            DynamicBackground(style: .random)
+            
+            VStack(spacing: 0) {
+                // Header
+                VStack(alignment: .leading, spacing: 10) {
                     HStack {
-                        // Profile Icon and Greeting
-                        HStack {
-                            Image(systemName: "person.circle.fill") // Use a profile icon
-                                .font(.title2)
-                                .foregroundColor(.gray)
-                            Text("สวัสดี, \(appState.currentUser?.name ?? "นักศึกษา")")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundColor(.black)
-                        }
-
-                        Spacer()
-
-                        // Logout Button (SF Symbol)
+                        // ปุ่ม Back แบบไม่ใช้ Navigation Link เพื่อความสวยงาม
                         Button(action: {
-                            print("StudentActivityListView: Logout button pressed.")
-                            appState.logout()
+                            // เช็คก่อนว่ามีให้ Dismiss ไหม ถ้าไม่มี (เช่นเป็น Root view) ก็ไม่ทำอะไร
+                            presentationMode.wrappedValue.dismiss()
                         }) {
-                            Image(systemName: "arrow.right.square.fill")
-                                .font(.title2)
-                                .foregroundColor(.white)
+                            HStack(spacing: 5) {
+                                Image(systemName: "chevron.left")
+                                Text("Back")
+                            }
+                            .font(.headline).foregroundColor(.white)
+                            .padding(.vertical, 8).padding(.horizontal, 12)
+                            .background(Color.white.opacity(0.2)).clipShape(Capsule())
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(swuRed) // Use SWU red for button
-                        .cornerRadius(8)
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 8) {
+                            Text(appState.currentUser?.name ?? "Student")
+                                .font(.subheadline).fontWeight(.bold).foregroundColor(Color.Theme.primary)
+                            Image(systemName: "person.fill").foregroundColor(Color.Theme.primary)
+                        }
+                        .padding(.vertical, 6).padding(.horizontal, 12)
+                        .background(Color.white).clipShape(Capsule()).shadow(radius: 5)
                     }
-                    .padding()
-                    .background(.white.opacity(0.2))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-                    .padding(.top)
-
-                    // Activities List
+                    .padding(.top, 50)
+                    
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Student Activities")
+                            .font(.system(size: 32, weight: .bold)).foregroundColor(.white)
+                        Text("เลือกกิจกรรมที่ต้องการเข้าร่วม")
+                            .font(.body).foregroundColor(Color.white.opacity(0.9))
+                    }
+                    .padding(.top, 15)
+                }
+                .padding(.horizontal, 30).padding(.bottom, 30)
+                
+                // List Content
+                ZStack {
+                    Color.white
+                        .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
+                    
                     if appState.activities.isEmpty {
-                        // "No Activities" Message
-                        VStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 40))
-                                .foregroundColor(.orange)
-                            Text("ยังไม่มีกิจกรรมให้เข้าร่วม")
-                                .font(.title3)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.gray)
+                        VStack(spacing: 20) {
+                            Image(systemName: "doc.text.magnifyingglass")
+                                .font(.system(size: 60)).foregroundColor(Color.gray.opacity(0.3))
+                            Text("ยังไม่มีกิจกรรมให้เข้าร่วมในขณะนี้")
+                                .font(.headline).foregroundColor(Color.gray)
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity) // Center the message
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
-                        // Activities List (using ScrollView and LazyVStack)
-                        ScrollView {
+                        ScrollView(showsIndicators: false) {
                             LazyVStack(spacing: 16) {
+                                // ✅ ใช้ indices loop เพื่อส่ง activity object ตัวจริงให้ ObservedObject ทำงาน
                                 ForEach(appState.activities.indices, id: \.self) { index in
                                     let activity = appState.activities[index]
+                                    
                                     NavigationLink(
                                         destination: StudentQueueJoinView(activity: activity).environmentObject(appState)
                                     ) {
-                                        HStack {
-                                            Text(activity.name)
-                                                .font(.title3)
-                                                .fontWeight(.semibold)
-                                                .foregroundColor(.black) // Adjusted color
-                                            Spacer()
-                                            // ✅ แสดงจำนวนคิว + สีตามสถานะ
-                                            QueueCountBadge(activity: activity)
-                                        }
-                                        .padding()
-                                        .background(.white)
-                                        .cornerRadius(12)
-                                        .shadow(radius: 3)
+                                        ActivityCardView(activity: activity)
                                     }
-                                    .buttonStyle(PlainButtonStyle()) // Remove button styling
+                                    .buttonStyle(PlainButtonStyle())
                                 }
                             }
-                            .padding()
+                            .padding(.top, 30).padding(.horizontal, 30).padding(.bottom, 50)
                         }
                     }
-
-                    Spacer() // Push content to the top
                 }
             }
-            .navigationTitle("กิจกรรม")
-            .navigationBarTitleDisplayMode(.inline)
-        // } // ลบวงเล็บปิดของ NavigationView
+            .edgesIgnoringSafeArea(.bottom)
+        }
+        .navigationBarHidden(true)
         .onAppear {
             appState.loadActivities()
-            print("StudentActivityListView ปรากฏขึ้น. isLoggedIn: \(appState.isLoggedIn)")
         }
     }
-}
-
-// ✅ สร้าง View แยกสำหรับแสดง Badge จำนวนคิว
-struct QueueCountBadge: View {
-    @ObservedObject var activity: Activity
-    
-    var body: some View {
-        Text("(\(activity.queues.count) คิว)")
-            .font(.caption)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(queueColor)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-    }
-    
-    private var queueColor: Color {
-        switch activity.queues.count {
-        case 0:
-            return Color.green.opacity(0.7)
-        case 1...3:
-            return Color.yellow.opacity(0.7)
-        case 4...7:
-            return Color.orange.opacity(0.7)
-        default:
-            return Color.red.opacity(0.7)
-        }
-    }
-}
-
-#Preview{
-    StudentActivityListView()
-        .environmentObject(AppState())
 }

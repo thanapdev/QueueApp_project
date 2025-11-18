@@ -1,150 +1,238 @@
+//
+//  StudentQueueJoinView.swift
+//  QueueApp_project
+//
+//  Created by Thanapong Yamkamol on 17/11/2568 BE.
+//
+
 import SwiftUI
 
 struct StudentQueueJoinView: View {
+    // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
     @EnvironmentObject var appState: AppState
     @ObservedObject var activity: Activity
+    @Environment(\.presentationMode) var presentationMode
 
-    // <<< เปลี่ยน isJoined จาก @State เป็น Computed Property >>>
+    // Computed Property: Check if user joined based on current queues
     var isJoined: Bool {
         guard let studentId = appState.currentUser?.id else { return false }
-        let result = activity.queues.contains { $0.studentId == studentId }
-        print("StudentQueueJoinView: isJoined computed to \(result) for student ID \(studentId ?? "N/A")")
-        return result
+        // เช็คจาก array queues ที่ activity ถืออยู่ (ซึ่งอัปเดต real-time จาก Listener ใน AppState)
+        return activity.queues.contains { $0.studentId == studentId }
     }
-
-    // SWU Colors (From StudentActivityListView.swift)
-    let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
-    let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
 
     var body: some View {
         ZStack {
-            // Background (Gradient From StudentActivityListView.swift)
-            LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                .edgesIgnoringSafeArea(.all)
-
-            // Shape Background (Circles From StudentActivityListView.swift)
-            GeometryReader { geometry in
-                Circle()
-                    .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                    .frame(width: 200, height: 200)
-                    .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
-
-                Circle()
-                    .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                    .frame(width: 200, height: 200)
-                    .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
-            }
-
-            VStack(spacing: 24) {
-                Text("กิจกรรม: \(activity.name)")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.black)
-
-                if isJoined { // ถ้าเข้าร่วมแล้ว
-                    if let myQueue = activity.queues.first(where: { $0.studentId == appState.currentUser?.id }) {
-                        if let myIndex = activity.queues.firstIndex(where: { $0.id == myQueue.id }) {
-                            let myPosition = myIndex + 1
-                            let queuesAhead = myIndex // คนข้างหน้า = จำนวนคิวที่ต้องรอ
-
-                            VStack(spacing: 16) {
-                                // ✅ 1. อีกกี่คิวจะถึงเรา → เน้นสุด!
-                                if queuesAhead > 0 {
-                                    VStack {
-                                        Text("อีก")
-                                            .font(.headline)
-                                            .foregroundColor(.secondary)
-                                        Text("\(queuesAhead) คิว")
-                                            .font(.system(size: 48, weight: .bold))
-                                            .foregroundColor(.blue)
-                                            .padding(.bottom, 4)
-                                        Text("จะถึงคิวคุณ")
-                                            .font(.headline)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.blue.opacity(0.1)) // ใช้สีฟ้าอ่อนๆ
-                                    .cornerRadius(16)
-                                    
-                                } else {
-                                    // ✅ ถึงคิวแล้ว → แจ้งเตือนสวย ๆ
-                                    VStack {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .font(.system(size: 60))
-                                            .foregroundColor(.green)
-                                            .padding(.bottom, 8)
-                                        Text("ถึงคิวคุณแล้ว!")
-                                            .font(.largeTitle)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.green)
-                                            .multilineTextAlignment(.center)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.green.opacity(0.1))
-                                    .cornerRadius(16)
-                                }
-
-                                // ✅ 2. คุณอยู่คิวที่ #\(myPosition)
-                                Text("คุณอยู่คิวที่ #\(myPosition)")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-
-                                Button("ยกเลิกคิว") {
-                                    print("StudentQueueJoinView: Leave queue button pressed.")
-                                    leaveQueue()
-                                }
-                                .padding()
-                                .background(swuRed) // Use SWU red for button
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                                .shadow(radius: 3) // Adding shadow for the button
-                            }
-                            .padding()
-                            .background(.white) // Adding a background for better readability
-                            .cornerRadius(10)
-                            .shadow(radius: 3)
+            // 1. Background (Theme ใหม่)
+            DynamicBackground(style: .random)
+            
+            VStack(spacing: 0) {
+                // ---------------------------------------
+                // HEADER SECTION
+                // ---------------------------------------
+                VStack(alignment: .leading, spacing: 10) {
+                    // Back Button
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        HStack {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
                         }
-                    } else {
-                        // กรณีที่ isJoined เป็น true แต่หาคิวของตัวเองไม่เจอ (อาจเกิดจากข้อมูลยังไม่ sync)
-                        Text("กำลังโหลดข้อมูลคิว...")
-                            .foregroundColor(.gray)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.white.opacity(0.2))
+                        .clipShape(Capsule())
                     }
-                } else { // ถ้ายังไม่ได้เข้าร่วม
-                    Button("ต่อคิว") {
-                        print("StudentQueueJoinView: Join queue button pressed.")
-                        joinQueue()
-                    }
-                    .padding()
-                    .background(swuRed) // Use SWU red for button
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    .shadow(radius: 3) // Adding shadow for the button
+                    .padding(.top, 50)
+                    
+                    // Title
+                    Text(activity.name)
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 10)
+                        .lineLimit(2)
+                    
+                    Text("รายละเอียดการจองคิว")
+                        .font(.body)
+                        .foregroundColor(Color.white.opacity(0.9))
                 }
-
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 30)
+                
+                // ---------------------------------------
+                // CONTENT AREA (White Sheet)
+                // ---------------------------------------
+                ZStack {
+                    Color.white
+                        .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
+                    
+                    VStack(spacing: 30) {
+                        Spacer()
+                        
+                        if isJoined {
+                            // =========================================
+                            // CASE 1: JOINED (แสดงสถานะคิว)
+                            // =========================================
+                            if let myQueue = activity.queues.first(where: { $0.studentId == appState.currentUser?.id }),
+                               let myIndex = activity.queues.firstIndex(where: { $0.id == myQueue.id }) {
+                                
+                                let myPosition = myIndex + 1
+                                let queuesAhead = myIndex // จำนวนคิวที่รอ
+                                
+                                VStack(spacing: 25) {
+                                    // --- Status Circle ---
+                                    ZStack {
+                                        Circle()
+                                            .stroke(lineWidth: 15)
+                                            .foregroundColor(Color.Theme.primary.opacity(0.1))
+                                            .frame(width: 220, height: 220)
+                                        
+                                        if queuesAhead == 0 {
+                                            // ถึงคิวแล้ว!
+                                            Circle()
+                                                .trim(from: 0.0, to: 1.0)
+                                                .stroke(style: StrokeStyle(lineWidth: 15, lineCap: .round))
+                                                .foregroundColor(.green)
+                                                .frame(width: 220, height: 220)
+                                                .rotationEffect(.degrees(-90))
+                                            
+                                            VStack {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.system(size: 50))
+                                                    .foregroundColor(.green)
+                                                Text("ถึงคิวคุณแล้ว!")
+                                                    .font(.title2)
+                                                    .fontWeight(.bold)
+                                                    .foregroundColor(.green)
+                                            }
+                                        } else {
+                                            // ยังรออยู่
+                                            Circle()
+                                                .trim(from: 0.0, to: 0.75) // แสดงขีดความคืบหน้าหลอกๆ ให้ดูสวย
+                                                .stroke(style: StrokeStyle(lineWidth: 15, lineCap: .round))
+                                                .foregroundColor(Color.Theme.primary)
+                                                .frame(width: 220, height: 220)
+                                                .rotationEffect(.degrees(-90))
+                                            
+                                            VStack {
+                                                Text("รออีก")
+                                                    .font(.headline)
+                                                    .foregroundColor(.gray)
+                                                Text("\(queuesAhead)")
+                                                    .font(.system(size: 70, weight: .heavy))
+                                                    .foregroundColor(Color.Theme.primary)
+                                                Text("คิว")
+                                                    .font(.headline)
+                                                    .foregroundColor(.gray)
+                                            }
+                                        }
+                                    }
+                                    .padding(.top, 20)
+                                    
+                                    // --- Info Text ---
+                                    VStack(spacing: 5) {
+                                        Text("หมายเลขคิวของคุณ")
+                                            .foregroundColor(.gray)
+                                        Text("#\(myQueue.number)") // แสดงเบอร์คิวจริงๆ
+                                            .font(.title)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(Color.Theme.textDark)
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.Theme.primary.opacity(0.05))
+                                    .cornerRadius(15)
+                                    
+                                    Spacer()
+                                    
+                                    // --- Cancel Button ---
+                                    Button(action: {
+                                        leaveQueue()
+                                    }) {
+                                        Text("ยกเลิกการจอง")
+                                            .font(.headline)
+                                            .foregroundColor(.red)
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .background(Color.red.opacity(0.1))
+                                            .cornerRadius(15)
+                                    }
+                                    .padding(.bottom, 40)
+                                }
+                                
+                            } else {
+                                // Loading State (กรณีข้อมูลยังไม่มา หรือหาไม่เจอ)
+                                ProgressView("กำลังโหลดข้อมูล...")
+                            }
+                            
+                        } else {
+                            // =========================================
+                            // CASE 2: NOT JOINED (ยังไม่จอง)
+                            // =========================================
+                            VStack(spacing: 30) {
+                                Image(systemName: "person.3.sequence.fill")
+                                    .font(.system(size: 80))
+                                    .foregroundColor(Color.Theme.primary.opacity(0.5))
+                                
+                                VStack(spacing: 10) {
+                                    Text("คุณยังไม่ได้จองคิว")
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(Color.Theme.textDark)
+                                    
+                                    Text("กดปุ่มด้านล่างเพื่อรับบัตรคิว\nและรอเรียกคิวของคุณ")
+                                        .font(.body)
+                                        .multilineTextAlignment(.center)
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                Spacer()
+                                
+                                // Join Button
+                                Button(action: {
+                                    joinQueue()
+                                }) {
+                                    HStack {
+                                        Text("กดเพื่อรับบัตรคิว")
+                                        Image(systemName: "ticket.fill")
+                                    }
+                                }
+                                .buttonStyle(BluePillButtonStyle())
+                                .padding(.bottom, 40)
+                            }
+                            .padding(.top, 50)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 30)
+                }
             }
-            .padding()
-            .navigationTitle("ต่อคิว")
-            .navigationBarTitleDisplayMode(.inline)
+            .edgesIgnoringSafeArea(.bottom)
         }
+        .navigationBarHidden(true)
         .onAppear {
-            // ไม่ต้องเรียก checkIfJoined() ตรงนี้แล้ว เพราะ isJoined เป็น computed property
+            // เรียก Listener เพื่อให้ activity.queues อัปเดตตลอดเวลา
             appState.startListening(to: activity)
-            print("StudentQueueJoinView ปรากฏขึ้นสำหรับกิจกรรม: \(activity.name).")
+            print("StudentQueueJoinView Appeared: \(activity.name)")
         }
         .onDisappear {
+            // หยุด Listener เมื่อออกจากหน้า
             appState.stopListening(to: activity)
-            print("StudentQueueJoinView หายไปสำหรับกิจกรรม: \(activity.name).")
+            print("StudentQueueJoinView Disappeared: \(activity.name)")
         }
     }
-
+    
+    // MARK: - LOGIC FUNCTIONS (เหมือนเดิมเป๊ะ)
     func joinQueue() {
-        guard let student = appState.currentUser else {
-            print("StudentQueueJoinView: No current user to join queue.")
-            return
-        }
+        guard let student = appState.currentUser else { return }
+        
+        // สร้าง QueueItem ใหม่
+        // หมายเหตุ: id ควรจะเป็น UUID string ที่ตรงกับ documentID ใน Firestore
         let newItem = QueueItem(
             id: UUID(),
             studentId: student.id,
@@ -152,31 +240,30 @@ struct StudentQueueJoinView: View {
             number: activity.nextQueueNumber,
             status: nil
         )
-        print("StudentQueueJoinView: Adding queue item for \(student.name), number \(newItem.number)")
+        
+        print("Joining queue: \(newItem)")
         appState.addQueueItem(activity: activity, queueItem: newItem)
-        // isJoined จะถูกอัปเดตอัตโนมัติเมื่อ activity.queues เปลี่ยนผ่าน listener
     }
 
     func leaveQueue() {
-        guard let student = appState.currentUser else {
-            print("StudentQueueJoinView: No current user to leave queue.")
-            return
-        }
+        guard let student = appState.currentUser else { return }
+        
+        // หา QueueItem ของเราจาก activity.queues
         if let myQueue = activity.queues.first(where: { $0.studentId == student.id }) {
-            print("StudentQueueJoinView: Updating status to 'ยกเลิกคิว' for \(myQueue.studentName), number \(myQueue.number)")
+            print("Leaving queue: \(myQueue)")
+            // ส่งไปอัปเดต Status ใน Firestore
             appState.updateQueueItemStatus(activity: activity, queueItem: myQueue, status: "ยกเลิกคิว")
-            // isJoined จะถูกอัปเดตอัตโนมัติเมื่อ activity.queues เปลี่ยนผ่าน listener
         } else {
-            print("StudentQueueJoinView: Could not find student's queue to leave.")
+            print("Error: Could not find queue item to leave.")
         }
     }
-    
-    // <<< ลบฟังก์ชัน checkIfJoined() ออกไป เพราะไม่จำเป็นแล้ว >>>
-    // func checkIfJoined() {
-    //    guard let studentId = appState.currentUser?.id else {
-    //        isJoined = false
-    //        return
-    //    }
-    //    isJoined = activity.queues.contains { $0.studentId == studentId }
-    // }
 }
+
+//struct StudentQueueJoinView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        // Mock Data
+//        let dummyActivity = Activity(id: UUID(), name: "Mock Activity", description: "Test", queues: [], nextQueueNumber: 1, currentQueueNumber: nil, queueCount: 0)
+//        StudentQueueJoinView(activity: dummyActivity)
+//            .environmentObject(AppState())
+//    }
+//}

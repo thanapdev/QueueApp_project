@@ -1,3 +1,10 @@
+//
+//  BoardGameBookingView.swift
+//  QueueApp_project
+//
+//  Created by Thanapong Yamkamol.
+//
+
 import SwiftUI
 
 struct BoardGameBookingView: View {
@@ -25,95 +32,173 @@ struct BoardGameBookingView: View {
 
     // MARK: - Body
     var body: some View {
-        VStack {
-            ScrollView {
-                VStack(alignment: .leading) {
-                    
-                    // --- 1. เลือกโต๊ะ ---
-                    Text("1. Select a Table (1)").font(.title2).fontWeight(.bold).padding([.top, .horizontal])
-                    LazyVGrid(columns: tableColumns, spacing: 10) {
-                        ForEach(1...6, id: \.self) { tableNum in
-                            BoardGameTableView(
-                                tableNumber: tableNum,
-                                selectedTable: $selectedTable,
-                                bookedSlots: appState.currentServiceBookedSlots,
-                                themeColor: service.themeColor
-                            )
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    Divider().padding()
-                    
-                    // --- 2. เลือกเกม ---
-                    Text("2. Select Games (1-3)").font(.title2).fontWeight(.bold).padding(.horizontal)
-                    Text("Selected: \(selectedGames.count)").font(.caption).padding(.horizontal)
-                    
-                    List(mockGames, id: \.self) { game in
-                        let isGameBooked = appState.currentBookedGames.contains(game)
-                        
+        ZStack {
+            // 1. Background
+            DynamicBackground(style: .random)
+            
+            VStack(spacing: 0) {
+                // --- HEADER ---
+                VStack(alignment: .leading, spacing: 10) {
+                    // Back Button
+                    Button(action: {
+                        dismiss()
+                    }) {
                         HStack {
-                            Image(systemName: selectedGames.contains(game) ? "checkmark.square.fill" : (isGameBooked ? "x.square.fill" : "square"))
-                                .foregroundColor(selectedGames.contains(game) ? .green : (isGameBooked ? .gray : service.themeColor))
-                            
-                            Text(game)
-                                .strikethrough(isGameBooked)
-                                .foregroundColor(isGameBooked ? .gray : .primary)
-                            
-                            Spacer()
-                            
-                            if isGameBooked {
-                                Text("In Use")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
+                            Image(systemName: "chevron.left")
+                            Text("Back")
                         }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            guard !isGameBooked else { return }
-                            
-                            if selectedGames.contains(game) {
-                                selectedGames.remove(game)
-                            } else if selectedGames.count < 3 {
-                                selectedGames.insert(game)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.white.opacity(0.2))
+                        .clipShape(Capsule())
+                    }
+                    .padding(.top, 50)
+                    
+                    // Title
+                    Text(service.name)
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 10)
+                    
+                    Text("เลือกโต๊ะและเกมที่ต้องการเล่น (1-3 เกม)")
+                        .font(.body)
+                        .foregroundColor(Color.white.opacity(0.9))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 30)
+                
+                // --- CONTENT (White Sheet) ---
+                ZStack {
+                    Color.white
+                        .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
+                    
+                    VStack {
+                        ScrollView(showsIndicators: false) {
+                            VStack(alignment: .leading, spacing: 25) {
+                                
+                                // --- 1. เลือกโต๊ะ ---
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("1. Select a Table")
+                                        .font(.title3).fontWeight(.bold)
+                                        .foregroundColor(Color.Theme.textDark)
+                                    
+                                    LazyVGrid(columns: tableColumns, spacing: 15) {
+                                        ForEach(1...6, id: \.self) { tableNum in
+                                            BoardGameTableView(
+                                                tableNumber: tableNum,
+                                                selectedTable: $selectedTable,
+                                                bookedSlots: appState.currentServiceBookedSlots,
+                                                themeColor: service.themeColor
+                                            )
+                                        }
+                                    }
+                                }
+                                
+                                Divider()
+                                
+                                // --- 2. เลือกเกม ---
+                                VStack(alignment: .leading, spacing: 10) {
+                                    HStack {
+                                        Text("2. Select Games")
+                                            .font(.title3).fontWeight(.bold)
+                                            .foregroundColor(Color.Theme.textDark)
+                                        Spacer()
+                                        Text("\(selectedGames.count)/3 Selected")
+                                            .font(.caption).fontWeight(.bold)
+                                            .foregroundColor(selectedGames.count > 0 ? .green : .gray)
+                                            .padding(6)
+                                            .background(Color.green.opacity(0.1))
+                                            .cornerRadius(8)
+                                    }
+                                    
+                                    // Custom List Row
+                                    ForEach(mockGames, id: \.self) { game in
+                                        let isGameBooked = appState.currentBookedGames.contains(game)
+                                        let isSelected = selectedGames.contains(game)
+                                        
+                                        HStack {
+                                            Image(systemName: isSelected ? "checkmark.square.fill" : (isGameBooked ? "x.square.fill" : "square"))
+                                                .foregroundColor(isSelected ? .green : (isGameBooked ? .gray : service.themeColor))
+                                                .font(.title3)
+                                            
+                                            Text(game)
+                                                .strikethrough(isGameBooked)
+                                                .foregroundColor(isGameBooked ? .gray : .primary)
+                                                .fontWeight(isSelected ? .semibold : .regular)
+                                            
+                                            Spacer()
+                                            
+                                            if isGameBooked {
+                                                Text("In Use")
+                                                    .font(.caption)
+                                                    .padding(4)
+                                                    .background(Color.gray.opacity(0.2))
+                                                    .cornerRadius(4)
+                                                    .foregroundColor(.gray)
+                                            }
+                                        }
+                                        .padding()
+                                        .background(isSelected ? Color.green.opacity(0.05) : Color.white)
+                                        .cornerRadius(10)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(isSelected ? Color.green : Color.gray.opacity(0.2), lineWidth: 1)
+                                        )
+                                        .contentShape(Rectangle())
+                                        .onTapGesture {
+                                            guard !isGameBooked else { return }
+                                            if isSelected {
+                                                selectedGames.remove(game)
+                                            } else if selectedGames.count < 3 {
+                                                selectedGames.insert(game)
+                                            }
+                                        }
+                                    }
+                                }
                             }
+                            .padding(.horizontal, 30)
+                            .padding(.top, 30)
+                            .padding(.bottom, 100) // เว้นที่ให้ปุ่มด้านล่าง
                         }
                     }
-                    .frame(height: 300)
-                    .listStyle(.plain)
-                    .cornerRadius(10)
-                    .padding(.horizontal)
                 }
             }
-            Spacer()
+            .edgesIgnoringSafeArea(.bottom)
             
-            // MARK: - Action Button
-            Button(action: {
-                guard let table = selectedTable else { return }
-                let slotID = "Table \(table)"
-                let games = Array(selectedGames)
-                
-                // ⭐️⭐️⭐️ จุดที่แก้ไข ⭐️⭐️⭐️
-                // เปลี่ยนจาก joinQueue เป็น createReservation
-                appState.createReservation(
-                    service: service,
-                    slotID: slotID,
-                    timeSlot: nil, // ไม่มีรอบเวลา (Walk-in)
-                    items: games
-                )
-                dismiss()
-            }) {
-                // เปลี่ยนข้อความปุ่ม
-                Text("Confirm Booking (2 Hrs)")
-                    .font(.headline).fontWeight(.bold).foregroundColor(.white)
-                    .frame(maxWidth: .infinity).padding()
-                    .background(isSelectionValid ? Color.green : Color.gray)
-                    .cornerRadius(12)
+            // --- Floating Action Button ---
+            VStack {
+                Spacer()
+                Button(action: {
+                    guard let table = selectedTable else { return }
+                    let slotID = "Table \(table)"
+                    let games = Array(selectedGames)
+                    
+                    // สั่ง AppState ให้สร้างการจอง (Logic เดิม)
+                    appState.createReservation(
+                        service: service,
+                        slotID: slotID,
+                        timeSlot: nil, // ไม่มีรอบเวลา (Walk-in)
+                        items: games
+                    )
+                    dismiss()
+                }) {
+                    Text("Confirm Booking (2 Hrs)")
+                        .font(.headline).fontWeight(.bold).foregroundColor(.white)
+                        .frame(maxWidth: .infinity).padding()
+                        .background(isSelectionValid ? Color.green : Color.gray)
+                        .cornerRadius(15)
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                }
+                .disabled(!isSelectionValid)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 20)
             }
-            .disabled(!isSelectionValid)
-            .padding()
         }
-        .navigationTitle(service.name)
+        .navigationBarHidden(true)
         .onAppear {
             appState.listenToServiceBookings(service: service.name, timeSlot: nil)
             appState.listenToBookedGames()
@@ -125,7 +210,7 @@ struct BoardGameBookingView: View {
     }
 }
 
-// (ส่วน BoardGameTableView ด้านล่างเหมือนเดิมครับ ไม่ต้องแก้)
+// MARK: - Table View Component (ปรับแต่งเล็กน้อย)
 struct BoardGameTableView: View {
     let tableNumber: Int
     @Binding var selectedTable: Int?
@@ -137,28 +222,36 @@ struct BoardGameTableView: View {
     var isBooked: Bool { bookedSlots.contains(slotID) }
     var isSelected: Bool { selectedTable == tableNumber }
     
-    var seatColor: Color {
-        if isBooked { return .gray }
+    var bg: Color {
+        if isBooked { return .gray.opacity(0.3) }
         if isSelected { return .green }
-        return themeColor.opacity(0.3)
+        return themeColor.opacity(0.1)
     }
-    var textColor: Color {
-        if isBooked { return .white.opacity(0.7) }
+    
+    var fg: Color {
+        if isBooked { return .gray }
         if isSelected { return .white }
         return themeColor
     }
+    
     var body: some View {
         Button(action: { selectedTable = tableNumber }) {
             VStack {
                 Image(systemName: "gamecontroller.fill")
+                    .font(.title2)
                 Text(slotID)
+                    .font(.caption)
+                    .fontWeight(.bold)
             }
             .padding(10)
-            .frame(maxWidth: .infinity, minHeight: 70)
-            .background(seatColor)
-            .foregroundColor(textColor)
-            .cornerRadius(10)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? .green : Color.clear, lineWidth: 2))
+            .frame(maxWidth: .infinity, minHeight: 80)
+            .background(bg)
+            .foregroundColor(fg)
+            .cornerRadius(15)
+            .overlay(
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(isSelected ? .green : (isBooked ? .clear : themeColor.opacity(0.3)), lineWidth: 2)
+            )
         }
         .disabled(isBooked)
     }

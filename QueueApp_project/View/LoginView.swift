@@ -2,108 +2,165 @@ import SwiftUI
 import FirebaseAuth
 
 struct LoginView: View {
+    // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
     @EnvironmentObject var appState: AppState
     @State private var studentID = ""
     @State private var password = ""
     @State private var showAlert = false
     @State private var errorMessage = ""
     
-    // SWU Colors
-    let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
-    let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
-    
     var body: some View {
         ZStack {
-                        // Background
-                        LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                            .edgesIgnoringSafeArea(.all)
-
-                        // Shape Background
-                        GeometryReader { geometry in
-                            Circle()
-                                .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                                .frame(width: 200, height: 200)
-                                .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
-
-                            Circle()
-                                .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                                .frame(width: 200, height: 200)
-                                .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
-                        }
+            // 1. Background (ใช้ตัวเดียวกับ WelcomeView)
+            DynamicBackground(style: .style2)
             
+            // 2. Content
             VStack {
+                // ---------------------------------------
+                // HEADER: Logo & Welcome Text
+                // ---------------------------------------
                 Spacer()
                 
-                Text("Sign in")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.black)
-                    .padding(.bottom, 20)
-                
-                // Input Fields
-                TextField("Student ID", text: $studentID)
-                    .padding()
-                    .keyboardType(.numberPad)
-                    .autocapitalization(.none)
-                    .background(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.3), lineWidth: 1))
-                    // .foregroundColor(.white)
-                    .padding(.bottom, 10)
-                
-                SecureField("Password", text: $password)
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.3), lineWidth: 1))
-                    // .foregroundColor(.white)
-                    .padding(.bottom, 20)
-                
-                // Login Button
-                Button("Login") {
-                    login()
+                VStack(alignment: .leading, spacing: 15) {
+                    // Logo เล็กๆ
+                    ZStack {
+                        Circle().fill(Color.white.opacity(0.2)).frame(width: 80, height: 80)
+                        Image(systemName: "graduationcap.fill")
+                            .font(.system(size: 40))
+                            .foregroundColor(.white)
+                    }
+                    
+                    Text("        \n Welcome !")
+                        .font(.system(size: 40, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineSpacing(5)
+                    
+                    Text("ลงชื่อเข้าใช้เพื่อเริ่มใช้งานบริการต่างๆ")
+                        .font(.body)
+                        .foregroundColor(Color.white.opacity(0.9))
                 }
-                .padding()
-                .frame(width: 200, height: 40)
-                .foregroundColor(.white)
-                .background(swuRed)
-                .cornerRadius(8)
-                .shadow(radius: 5)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 30)
                 
-                // Register Link
-                NavigationLink(destination: RegisterView().environmentObject(appState)) { // <--- ต้องมี RegisterView
-                    Text("Don't have an account? Register")
-                        .foregroundColor(.blue)
-                }
-                .padding(.top, 10)
-
-                // --- (ส่วนที่แก้ไข) ---
-                // เปลี่ยนจาก Button เป็น NavigationLink
-                NavigationLink(destination: ServiceView().environmentObject(appState)) {
-                    Text("Continue as Guest")
+                // ---------------------------------------
+                // FORM AREA: White Bottom Sheet
+                // ---------------------------------------
+                ZStack {
+                    Color.white
+                        // ทำมุมโค้งเฉพาะด้านบน
+                        .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
+                    
+                    VStack(spacing: 25) {
+                        Text("Login")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(Color.Theme.textDark)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 30)
+                        
+                        // Input Fields
+                        VStack(spacing: 15) {
+                            // Student ID Input
+                            HStack {
+                                Image(systemName: "person.text.rectangle")
+                                    .foregroundColor(Color.Theme.primary)
+                                    .frame(width: 30)
+                                TextField("Student ID", text: $studentID)
+                                    .keyboardType(.numberPad)
+                                    .autocapitalization(.none)
+                            }
+                            .padding()
+                            .background(Color(uiColor: .systemGray6)) // พื้นหลังช่องกรอกสีเทาอ่อน
+                            .cornerRadius(12)
+                            
+                            // Password Input
+                            HStack {
+                                Image(systemName: "lock")
+                                    .foregroundColor(Color.Theme.primary)
+                                    .frame(width: 30)
+                                SecureField("Password", text: $password)
+                            }
+                            .padding()
+                            .background(Color(uiColor: .systemGray6))
+                            .cornerRadius(12)
+                        }
+                        
+                        // Login Button
+                        Button(action: {
+                            login()
+                        }) {
+                            Text("Login")
+                        }
+                        .buttonStyle(BluePillButtonStyle()) // ใช้ปุ่มสีฟ้าตัวเดิม
+                        .padding(.top, 10)
+                        
+                        // Register Link
+                        HStack {
+                            Text("Don't have an account?")
+                                .foregroundColor(Color.gray)
+                            NavigationLink(destination: RegisterView().environmentObject(appState)) {
+                                Text("Register")
+                                    .fontWeight(.bold)
+                                    .foregroundColor(Color.Theme.primary)
+                            }
+                        }
                         .font(.subheadline)
-                        .foregroundColor(swuGray)
-                        .padding(.top, 15)
+                        
+                        // Guest Link
+                        NavigationLink(destination: ServiceView().environmentObject(appState)) {
+                            Text("Continue as Guest")
+                                .font(.subheadline)
+                                .foregroundColor(Color.gray.opacity(0.6))
+                        }
+                        .padding(.bottom, 20)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 30)
                 }
-                // --- (สิ้นสุดส่วนที่แก้ไข) ---
-                
-                Spacer()
+                .frame(height: 500) // ความสูงของ Card
             }
-            .padding()
-            .alert(isPresented: $showAlert) {
-                Alert(title: Text("Login Failed"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
-            }
+            .edgesIgnoringSafeArea(.bottom) // ให้ Card ชิดขอบล่างสุด
         }
-        .navigationBarHidden(true) // ซ่อน Bar เมื่อมาจาก WelcomeView
+        .navigationBarHidden(true)
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text("Login Failed"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+        }
         .onAppear {
             print("LoginView ปรากฏขึ้น. isLoggedIn: \(appState.isLoggedIn)")
         }
     }
     
+    // MARK: - LOGIC FUNCTIONS
     func login() {
         appState.loginAsStudent(studentID: studentID, password: password) { success, message in
             if success {
-                // ไม่ต้องทำอะไร! ContentView จะสลับหน้าให้เอง
                 print("LoginView: Login successful.")
             } else {
                 errorMessage = message ?? "Invalid credentials. Please try again."
                 showAlert = true
             }
         }
+    }
+}
+
+// MARK: - HELPER: Shape for Top Corners Only
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
+    }
+}
+
+// MARK: - PREVIEW
+struct LoginView_Previews: PreviewProvider {
+    static var previews: some View {
+        LoginView()
+            .environmentObject(AppState())
     }
 }

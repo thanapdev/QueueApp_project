@@ -14,12 +14,11 @@ struct GreenScreenBookingView: View {
     @Environment(\.dismiss) var dismiss
     let service: LibraryService
     
-    let roomColumns = [GridItem(.flexible()), GridItem(.flexible())]
     let slotColumns = [GridItem(.flexible()), GridItem(.flexible())]
+    let roomColumns = [GridItem(.flexible()), GridItem(.flexible())]
     
     // MARK: - State
     @State private var mockEquipment = ["Camera (Sony A7)", "Tripod", "LED Light Panel", "Microphone (Rode)"]
-    // ⭐️ (R1) ลบ @State private var bookedRooms ทิ้ง
     @State private var timeSlots: [TimeSlot] = []
     
     @State private var selectedRoom: Int? = nil
@@ -32,105 +31,189 @@ struct GreenScreenBookingView: View {
 
     // MARK: - Body
     var body: some View {
-        VStack {
-            ScrollView {
-                VStack(alignment: .leading) {
-                    
-                    // --- 1. เลือกรอบเวลา (ย้ายมาไว้ข้างบน) ---
-                    Text("1. Select a Time Slot")
-                        .font(.title2).fontWeight(.bold).padding([.top, .horizontal])
-                    LazyVGrid(columns: slotColumns, spacing: 10) {
-                        ForEach(timeSlots) { slot in
-                            TimeSlotView(slot: slot, selectedSlot: $selectedSlot, themeColor: service.themeColor)
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    Divider().padding()
-
-                    // --- 2. เลือกห้อง ---
-                    if selectedSlot != nil {
-                        Text("2. Select a Room")
-                            .font(.title2).fontWeight(.bold).padding(.horizontal)
-                        LegendView(service: service).padding(.horizontal)
-                        LazyVGrid(columns: roomColumns, spacing: 10) {
-                            ForEach(1...2, id: \.self) { roomNum in
-                                GreenScreenRoomView(
-                                    roomNumber: roomNum,
-                                    selectedRoom: $selectedRoom,
-                                    // ⭐️ (R1) ส่ง Set ของช่องที่จองแล้ว (จาก AppState)
-                                    bookedSlots: appState.currentServiceBookedSlots,
-                                    themeColor: service.themeColor
-                                )
-                            }
-                        }
-                        .padding(.horizontal)
-                        
-                        Divider().padding()
-                    }
-
-                    // --- 3. เลือกอุปกรณ์ (Optional) ---
-                    Text("3. Select Equipment (Optional)")
-                        .font(.title2).fontWeight(.bold).padding(.horizontal)
-                    Text("Selected: \(selectedEquipment.count)")
-                        .font(.caption).padding(.horizontal)
-                    List(mockEquipment, id: \.self) { item in
+        ZStack {
+            // 1. Background
+            DynamicBackground(style: .random)
+            
+            VStack(spacing: 0) {
+                // --- HEADER ---
+                VStack(alignment: .leading, spacing: 10) {
+                    // Back Button
+                    Button(action: {
+                        dismiss()
+                    }) {
                         HStack {
-                            Image(systemName: selectedEquipment.contains(item) ? "checkmark.square.fill" : "square")
-                                .foregroundColor(service.themeColor)
-                            Text(item)
-                            Spacer()
+                            Image(systemName: "chevron.left")
+                            Text("Back")
                         }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            if selectedEquipment.contains(item) {
-                                selectedEquipment.remove(item)
-                            } else {
-                                selectedEquipment.insert(item)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.white.opacity(0.2))
+                        .clipShape(Capsule())
+                    }
+                    .padding(.top, 50)
+                    
+                    // Title
+                    Text(service.name)
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 10)
+                    
+                    Text("จองห้องสตูดิโอและอุปกรณ์")
+                        .font(.body)
+                        .foregroundColor(Color.white.opacity(0.9))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 30)
+                
+                // --- CONTENT (White Sheet) ---
+                ZStack {
+                    Color.white
+                        .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
+                    
+                    VStack {
+                        ScrollView(showsIndicators: false) {
+                            VStack(alignment: .leading, spacing: 25) {
+                                
+                                // --- 1. เลือกรอบเวลา ---
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("1. Select Time Slot")
+                                        .font(.title3).fontWeight(.bold)
+                                        .foregroundColor(Color.Theme.textDark)
+                                    
+                                    LazyVGrid(columns: slotColumns, spacing: 10) {
+                                        ForEach(timeSlots) { slot in
+                                            TimeSlotView(slot: slot, selectedSlot: $selectedSlot, themeColor: service.themeColor)
+                                        }
+                                    }
+                                }
+                                
+                                Divider()
+                                
+                                // --- 2. เลือกห้อง ---
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("2. Select Room")
+                                        .font(.title3).fontWeight(.bold)
+                                        .foregroundColor(Color.Theme.textDark)
+                                        .opacity(selectedSlot == nil ? 0.5 : 1.0)
+                                    
+                                    LegendView(service: service)
+                                        .opacity(selectedSlot == nil ? 0.5 : 1.0)
+                                    
+                                    LazyVGrid(columns: roomColumns, spacing: 10) {
+                                        ForEach(1...2, id: \.self) { roomNum in
+                                            GreenScreenRoomView(
+                                                roomNumber: roomNum,
+                                                selectedRoom: $selectedRoom,
+                                                bookedSlots: appState.currentServiceBookedSlots,
+                                                themeColor: service.themeColor
+                                            )
+                                        }
+                                    }
+                                    .disabled(selectedSlot == nil)
+                                    .opacity(selectedSlot == nil ? 0.5 : 1.0)
+                                }
+
+                                Divider()
+                                
+                                // --- 3. เลือกอุปกรณ์ ---
+                                VStack(alignment: .leading, spacing: 10) {
+                                    HStack {
+                                        Text("3. Select Equipment")
+                                            .font(.title3).fontWeight(.bold)
+                                            .foregroundColor(Color.Theme.textDark)
+                                        Spacer()
+                                        if !selectedEquipment.isEmpty {
+                                            Text("\(selectedEquipment.count) Items")
+                                                .font(.caption).fontWeight(.bold)
+                                                .foregroundColor(.green)
+                                                .padding(6)
+                                                .background(Color.green.opacity(0.1))
+                                                .cornerRadius(8)
+                                        }
+                                    }
+                                    
+                                    // Equipment Cards
+                                    ForEach(mockEquipment, id: \.self) { item in
+                                        let isSelected = selectedEquipment.contains(item)
+                                        
+                                        HStack {
+                                            Image(systemName: isSelected ? "checkmark.square.fill" : "square")
+                                                .foregroundColor(isSelected ? .green : service.themeColor)
+                                                .font(.title3)
+                                            
+                                            Text(item)
+                                                .fontWeight(isSelected ? .semibold : .regular)
+                                                .foregroundColor(.primary)
+                                            
+                                            Spacer()
+                                        }
+                                        .padding()
+                                        .background(isSelected ? Color.green.opacity(0.05) : Color.white)
+                                        .cornerRadius(10)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(isSelected ? Color.green : Color.gray.opacity(0.2), lineWidth: 1)
+                                        )
+                                        .contentShape(Rectangle())
+                                        .onTapGesture {
+                                            if isSelected {
+                                                selectedEquipment.remove(item)
+                                            } else {
+                                                selectedEquipment.insert(item)
+                                            }
+                                        }
+                                    }
+                                }
                             }
+                            .padding(.horizontal, 30)
+                            .padding(.top, 30)
+                            .padding(.bottom, 100) // เว้นที่ให้ปุ่ม
                         }
                     }
-                    .frame(height: 250)
-                    .listStyle(.plain)
-                    .cornerRadius(10)
-                    .padding(.horizontal)
                 }
             }
-            Spacer()
+            .edgesIgnoringSafeArea(.bottom)
             
-            // MARK: - Action Button
-            Button(action: {
-                guard let room = selectedRoom, let slot = selectedSlot else { return }
-                
-                let slotID = "Room \(room)"
-                let items = Array(selectedEquipment)
-                
-                // ⭐️ (R1) สั่ง AppState ให้สร้างการจอง
-                appState.createReservation(
-                    service: service,
-                    slotID: slotID,   // 👈 ส่ง slotID
-                    timeSlot: slot.time, // 👈 ส่ง timeSlot
-                    items: items.isEmpty ? nil : items // 👈 ส่ง items
-                )
-                dismiss()
-                
-            }) {
-                Text("Confirm Booking")
-                    .font(.headline).fontWeight(.bold).foregroundColor(.white)
-                    .frame(maxWidth: .infinity).padding()
-                    .background(isSelectionValid ? Color.green : Color.gray)
-                    .cornerRadius(12)
+            // --- Floating Action Button ---
+            VStack {
+                Spacer()
+                Button(action: {
+                    guard let room = selectedRoom, let slot = selectedSlot else { return }
+                    
+                    let slotID = "Room \(room)"
+                    let items = Array(selectedEquipment)
+                    
+                    // สั่ง AppState ให้สร้างการจอง (Logic เดิม)
+                    appState.createReservation(
+                        service: service,
+                        slotID: slotID,
+                        timeSlot: slot.time,
+                        items: items.isEmpty ? nil : items
+                    )
+                    dismiss()
+                }) {
+                    Text("Confirm Booking")
+                        .font(.headline).fontWeight(.bold).foregroundColor(.white)
+                        .frame(maxWidth: .infinity).padding()
+                        .background(isSelectionValid ? Color.green : Color.gray)
+                        .cornerRadius(15)
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                }
+                .disabled(!isSelectionValid)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 20)
             }
-            .disabled(!isSelectionValid)
-            .padding()
         }
-        .navigationTitle(service.name)
+        .navigationBarHidden(true)
         .onAppear { loadMockTimeSlots() }
         .onDisappear {
-            // ⭐️ (R1) หยุด Listener เมื่อออกจากหน้า
             appState.stopListeningToServiceBookings()
         }
-        // ⭐️ (R1) เมื่อ "รอบเวลา" เปลี่ยน ให้เริ่ม Listener ใหม่
         .onChange(of: selectedSlot) { newSlot in
             if let slot = newSlot {
                 selectedRoom = nil
@@ -141,36 +224,35 @@ struct GreenScreenBookingView: View {
         }
     }
     
-    // (จำลองการโหลดรอบเวลา)
     func loadMockTimeSlots() {
         self.timeSlots = [
             TimeSlot(time: "10:00 - 12:00", isBooked: false),
-            TimeSlot(time: "12:00 - 14:00", isBooked: false),
-            TimeSlot(time: "14:00 - 16:00", isBooked: false),
-            TimeSlot(time: "16:00 - 18:00", isBooked: true)
+            TimeSlot(time: "13:00 - 15:00", isBooked: false),
+            TimeSlot(time: "15:00 - 17:00", isBooked: false)
         ]
     }
 }
 
+// MARK: - Room View Component
 struct GreenScreenRoomView: View {
     let roomNumber: Int
     @Binding var selectedRoom: Int?
-    let bookedSlots: Set<String> // 👈 (R1) รับ Set<String>
+    let bookedSlots: Set<String>
     let themeColor: Color
     
-    private var slotID: String { "Room \(roomNumber)" } // 👈 (R1)
+    private var slotID: String { "Room \(roomNumber)" }
     
-    // ⭐️ (R1) แก้ Logic isBooked
     var isBooked: Bool { bookedSlots.contains(slotID) }
     var isSelected: Bool { selectedRoom == roomNumber }
     
-    var seatColor: Color {
-        if isBooked { return .gray }
+    var bg: Color {
+        if isBooked { return .gray.opacity(0.3) }
         if isSelected { return .green }
-        return themeColor.opacity(0.3)
+        return themeColor.opacity(0.1)
     }
-    var textColor: Color {
-        if isBooked { return .white.opacity(0.7) }
+    
+    var fg: Color {
+        if isBooked { return .gray }
         if isSelected { return .white }
         return themeColor
     }
@@ -179,14 +261,20 @@ struct GreenScreenRoomView: View {
         Button(action: { selectedRoom = roomNumber }) {
             VStack {
                 Image(systemName: "camera.fill")
+                    .font(.title2)
                 Text(slotID)
+                    .font(.caption)
+                    .fontWeight(.bold)
             }
             .padding(10)
-            .frame(maxWidth: .infinity, minHeight: 70)
-            .background(seatColor)
-            .foregroundColor(textColor)
-            .cornerRadius(10)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? .green : Color.clear, lineWidth: 2))
+            .frame(maxWidth: .infinity, minHeight: 80)
+            .background(bg)
+            .foregroundColor(fg)
+            .cornerRadius(15)
+            .overlay(
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(isSelected ? .green : (isBooked ? .clear : themeColor.opacity(0.3)), lineWidth: 2)
+            )
         }
         .disabled(isBooked)
     }

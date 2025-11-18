@@ -1,91 +1,98 @@
 //
-//  AppState.swift
-//  term_projecct
+//  ActivityListView.swift
+//  QueueApp_project
 //
 //  Created by Thanapong Yamkamol on 7/11/2568 BE.
 //
 
-// ActivityListView.swift
 import SwiftUI
 
 struct ActivityListView: View {
+    // MARK: - SYSTEM LOGIC (PRESERVED)
     @EnvironmentObject var appState: AppState
     @State private var showingAddActivity = false
     @State private var newActivityName = ""
-    @State private var showDeleteConfirmation = false // ✅ ใช้สำหรับ Alert
-    @State private var deleteIndex: Int? = nil // เก็บ index ที่จะลบ
+    @State private var showDeleteConfirmation = false
+    @State private var deleteIndex: Int? = nil
     @Environment(\.editMode) var editMode
     @State private var showEditActivity = false
     @State private var editIndex: Int? = nil
     @State private var editActivityName: String = ""
-
-
-    // SWU Colors (From LoginView.swift)
-    let swuGray = Color(red: 150/255, green: 150/255, blue: 150/255)
-    let swuRed = Color(red: 190/255, green: 50/255, blue: 50/255)
+    @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background
-                LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                    .edgesIgnoringSafeArea(.all)
-                
-                // Shape Background
-                GeometryReader { geometry in
-                    Circle()
-                        .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.24, green: 0.27, blue: 0.68, alpha: 1)), Color(#colorLiteral(red: 0.14, green: 0.64, blue: 0.96, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                        .frame(width: 200, height: 200)
-                        .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
-                    
-                    Circle()
-                        .fill(LinearGradient(gradient: Gradient(colors: [Color(#colorLiteral(red: 0.97, green: 0.32, blue: 0.18, alpha: 1)), Color(#colorLiteral(red: 0.94, green: 0.59, blue: 0.1, alpha: 1))]), startPoint: .top, endPoint: .bottom))
-                        .frame(width: 200, height: 200)
-                        .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.9)
-                }
-
-                VStack {
-                    HStack {
-                        Text("สวัสดี, \(appState.currentUser?.name ?? "ผู้ดูแล")")
-                            .font(.headline)
-                            .foregroundColor(.black)
-                        Spacer()
-//                        Button("ออกจากระบบ") {
-//                            appState.logout()
-//                        }
-//                        .font(.caption)
-//                        .foregroundColor(.white)
-//                        .padding(.horizontal, 8)
-//                        .padding(.vertical, 4)
-//                        .background(swuRed)
-//                        .cornerRadius(8)
+        ZStack {
+            // ✅ 1. Background ใหม่
+            DynamicBackground(style: .random)
+            
+            VStack(spacing: 0) {
+                // ---------------------------------------
+                // CUSTOM HEADER (แทน Navigation Bar)
+                // ---------------------------------------
+                VStack(alignment: .leading, spacing: 10) {
+                    // Back Button
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        HStack {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.white.opacity(0.2))
+                        .clipShape(Capsule())
                     }
-                    .padding()
-                    .background(.white.opacity(0.2))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-                    .padding(.top)
+                    .padding(.top, 50)
+                    
+                    // Greeting & Title
+                    Text("Activities Management")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 10)
+                    
+                    Text("สวัสดี, \(appState.currentUser?.name ?? "ผู้ดูแล")")
+                        .font(.body)
+                        .foregroundColor(Color.white.opacity(0.9))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 30)
 
+                // ---------------------------------------
+                // CONTENT AREA (White Sheet)
+                // ---------------------------------------
+                ZStack {
+                    Color.white
+                        .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
+                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
+                    
                     if appState.activities.isEmpty {
-                        VStack {
-                            Text("ยังไม่มีกิจกรรม")
+                        VStack(spacing: 20) {
+                            Image(systemName: "square.stack.3d.up.slash")
+                                .font(.system(size: 60))
+                                .foregroundColor(Color.gray.opacity(0.3))
+                            Text("ยังไม่มีกิจกรรมให้จัดการ")
                                 .font(.headline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.gray)
+                            
                             Button("สร้างกิจกรรมใหม่") {
                                 showingAddActivity = true
                             }
-                            .padding()
-                            .background(swuRed)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                            .shadow(radius: 3)
+                            .buttonStyle(BluePillButtonStyle()) // ✅ ใช้สไตล์ปุ่มที่เราทำไว้
+                            .frame(width: 200)
+                            
                         }
-                        .padding()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         List {
                             ForEach(appState.activities.indices, id: \.self) { index in
+                                // ✅ ใช้ ActivityNavigationLink ที่ปรับปรุงแล้ว
                                 ActivityNavigationLink(activity: appState.activities[index])
                                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        // Edit Button
                                         Button {
                                             editIndex = index
                                             editActivityName = appState.activities[index].name
@@ -93,8 +100,9 @@ struct ActivityListView: View {
                                         } label: {
                                             Label("Edit", systemImage: "pencil")
                                         }
-                                        .tint(.blue)
-
+                                        .tint(.orange) // ใช้สีส้มเพื่อให้เข้าธีม
+                                        
+                                        // Delete Button
                                         Button(role: .destructive) {
                                             deleteIndex = index
                                             showDeleteConfirmation = true
@@ -102,192 +110,155 @@ struct ActivityListView: View {
                                             Label("Delete", systemImage: "trash")
                                         }
                                     }
-                                    .listRowBackground(Color.white.opacity(0.7)) // <- คุณทำส่วนนี้ไว้ดีแล้วครับ
+                                    .listRowBackground(Color.white) // พื้นหลังขาว
+                                    .listRowSeparator(.hidden) // ซ่อนเส้นแบ่ง List
                             }
                         }
-                        .scrollContentBackground(.hidden) // ⬅️ ✨ 1. ซ่อนพื้นหลังทึบของ List
-                        .listStyle(.insetGrouped)       // ⬅️ ✨ 2. ทำให้ขอบมนและดูเหมือนการ์ด
-                        .toolbar {
-//                            ToolbarItem(placement: .navigationBarTrailing) {
-//                                if !appState.activities.isEmpty {
-//                                    EditButton()
-//                                        .foregroundColor(.black)
-//                                }
-//                            }
-                            ToolbarItem(placement: .navigationBarLeading) {
-                                Button("เพิ่ม") {
-                                    showingAddActivity = true
-                                }
-                                .foregroundColor(.black)
-                            }
-                        }
-                    }
-
-                    Spacer() // Push content to the top
-                }
-            }
-            .navigationTitle("กิจกรรมของคุณ")
-            
-            // ⭐️⭐️⭐️======= โค้ดที่ปรับปรุงอยู่ตรงนี้ =======⭐️⭐️⭐️
-            .sheet(isPresented: $showingAddActivity) {
-                NavigationStack {
-                    ZStack {
-                        // ✅ 1. ใช้พื้นหลัง Gradient เดิมของคุณ
-                        LinearGradient(gradient: Gradient(colors: [swuGray.opacity(0.3), swuRed.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
-                            .edgesIgnoringSafeArea(.all)
-                        
-                        VStack(spacing: 20) {
-                            // ✅ 2. เพิ่มคำอธิบายเล็กน้อย
-                            Text("กรุณาป้อนชื่อกิจกรรมใหม่")
-                                .font(.headline)
-                                .foregroundColor(.black.opacity(0.7))
-                                .padding(.top, 20) // เพิ่มช่องว่างจาก Title
-                            
-                            // ✅ 3. จัดสไตล์ TextField ใหม่ให้สวยงาม
-                            TextField("เช่น 'กิจกรรมรับน้อง', 'ไหว้ครู'", text: $newActivityName)
-                                .padding() // เพิ่ม padding ให้ช่องกรอก
-                                .background(Color.white.opacity(0.8)) // พื้นหลังสีขาวกึ่งโปร่งแสง
-                                .cornerRadius(10) // ขอบมน
-                                .overlay(
-                                    // เพิ่มเส้นขอบบางๆ
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                                )
-                            
-                            Spacer() // ดันทุกอย่างขึ้นบน
-                        }
-                        .padding() // เว้นขอบซ้ายขวา
-                    }
-                    .navigationTitle("สร้างกิจกรรมใหม่") // ✅ 4. เพิ่ม Title ให้หน้านี้
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        // ✅ 5. ย้ายปุ่ม 'ยกเลิก' มาไว้บน Toolbar
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("ยกเลิก") {
-                                showingAddActivity = false
-                                newActivityName = "" // เคลียร์ค่าเมื่อยกเลิก
-                            }
-                            .foregroundColor(swuRed) // ใช้สีธีมของแอป
-                        }
-                        
-                        // ✅ 6. ย้ายปุ่ม 'สร้าง' มาไว้บน Toolbar
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("สร้าง") {
-                                if !newActivityName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                    appState.addActivity(name: newActivityName)
-                                    newActivityName = ""
-                                    showingAddActivity = false
-                                }
-                            }
-                            .bold() // ทำให้ปุ่มหลักชัดเจน
-                            .disabled(newActivityName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        }
+                        .scrollContentBackground(.hidden)
+                        .listStyle(.insetGrouped)
+                        .padding(.top, 20)
                     }
                 }
-            }
-            // ⭐️⭐️⭐️======= สิ้นสุดโค้ดที่ปรับปรุง =======⭐️⭐️⭐️
-            
-            // ✅ Alert ยืนยันการลบ
-            .alert("ยืนยันการลบ?", isPresented: $showDeleteConfirmation, actions: {
-                Button("ยกเลิก", role: .cancel) {
-                    showDeleteConfirmation = false
-                    deleteIndex = nil
-                }
-                Button("ลบ", role: .destructive) {
-                    if let index = deleteIndex {
-                        let activityToDelete = appState.activities[index]
-                        appState.deleteActivity(activity: activityToDelete)
-                        appState.activities.remove(at: index)
-                    }
-                    showDeleteConfirmation = false
-                    deleteIndex = nil
-                }
-            }, message: {
-                if let index = deleteIndex {
-                    Text("คุณแน่ใจหรือไม่ว่าจะลบกิจกรรม \"\(appState.activities[index].name)\"? \nคิวทั้งหมดจะหายไปด้วย!")
-                }
-            })
-            .sheet(isPresented: $showEditActivity) {
-                EditActivityView(
-                    showEditActivity: $showEditActivity,
-                    activityName: $editActivityName,
-                    onSave: {
-                        if let index = editIndex {
-                            let activity = appState.activities[index]
-                            activity.name = editActivityName
-                            appState.updateActivity(activity: activity)
-                        }
-                    }
-                )
+                .edgesIgnoringSafeArea(.bottom)
             }
         }
-    }
+        .navigationBarHidden(true) // ซ่อน Navigation Bar เพราะทำ Header เอง
 
-    // ✅ ฟังก์ชันลบกิจกรรม — แสดง Alert ก่อนลบ
-    func deleteActivities(offsets: IndexSet) {
-        if let index = offsets.first {
-            deleteIndex = index
-            showDeleteConfirmation = true
+        // MARK: - Modals and Alerts
+        .alert("ยืนยันการลบ?", isPresented: $showDeleteConfirmation, actions: {
+            Button("ยกเลิก", role: .cancel) { deleteIndex = nil }
+            Button("ลบ", role: .destructive) {
+                if let index = deleteIndex {
+                    appState.deleteActivity(activity: appState.activities[index])
+                    appState.activities.remove(at: index) // 🎯 Logic: ลบจาก array
+                }
+                deleteIndex = nil
+            }
+        }, message: {
+            if let index = deleteIndex {
+                Text("คุณแน่ใจหรือไม่ว่าจะลบกิจกรรม \"\(appState.activities[index].name)\"? \nคิวทั้งหมดจะหายไปด้วย!")
+            }
+        })
+        
+        // --- Add Activity Sheet ---
+        .sheet(isPresented: $showingAddActivity) {
+            AddEditActivitySheet(
+                title: "สร้างกิจกรรมใหม่",
+                activityName: $newActivityName,
+                onSave: {
+                    appState.addActivity(name: newActivityName) // 🎯 Logic: เพิ่มกิจกรรม
+                    newActivityName = ""
+                }
+            )
+        }
+        
+        // --- Edit Activity Sheet ---
+        .sheet(isPresented: $showEditActivity) {
+            AddEditActivitySheet(
+                title: "แก้ไขกิจกรรม",
+                activityName: $editActivityName,
+                onSave: {
+                    if let index = editIndex {
+                        appState.activities[index].name = editActivityName // 🎯 Logic: แก้ชื่อใน array
+                        appState.updateActivity(activity: appState.activities[index]) // 🎯 Logic: ส่งไป Firebase
+                    }
+                }
+            )
+        }
+        .onAppear {
+            appState.loadActivities() // โหลดกิจกรรมทุกครั้งที่เข้าหน้า
         }
     }
 }
 
+// MARK: - Helper View: ActivityNavigationLink (List Row)
 struct ActivityNavigationLink: View {
     @ObservedObject var activity: Activity
 
     var body: some View {
         NavigationLink(
-            destination: QueueView(activity: .constant(activity)) // Use a constant binding
+            // Destination Logic Preserved
+            destination: QueueView(activity: .constant(activity))
                 .environmentObject(AppState())
         ) {
-            Text(activity.name)
-                .font(.body)
-                .foregroundColor(.black)
+            HStack {
+                Image(systemName: "list.number")
+                    .font(.title2)
+                    .foregroundColor(Color.Theme.primary)
+                
+                Text(activity.name)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(Color.Theme.textDark)
+                
+                Spacer()
+                
+//                Text("คิว: \(activity.queues.count)")
+//                    .font(.subheadline)
+//                    .foregroundColor(.gray)
+            }
+            .padding(.vertical, 8)
         }
     }
 }
 
 
-struct EditActivityView: View {
-    @Binding var showEditActivity: Bool
+// MARK: - Helper View: Add/Edit Sheet (รวม Add และ Edit)
+struct AddEditActivitySheet: View {
+    @Environment(\.dismiss) var dismiss
+    let title: String
     @Binding var activityName: String
     var onSave: () -> Void
 
-    var body: some View {
-        NavigationView {
-            VStack {
-                TextField("Activity Name", text: $activityName)
-                    .padding()
-                    .background(Color.white.opacity(0.7))
-                    .cornerRadius(8)
-                    .padding(.bottom, 20)
+    var isSaveDisabled: Bool {
+        activityName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
-                HStack {
-                    Button("Cancel") {
-                        showEditActivity = false
-                    }
-                    .foregroundColor(.black)
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                // Background
+                DynamicBackground(style: .random)
+                
+                VStack(spacing: 20) {
+                    Text(title == "สร้างกิจกรรมใหม่" ? "ป้อนชื่อกิจกรรมใหม่" : "ป้อนชื่อกิจกรรมที่แก้ไข")
+                        .font(.headline)
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.top, 20)
+                    
+                    TextField("เช่น 'กิจกรรมรับน้อง', 'ไหว้ครู'", text: $activityName)
+                        .padding()
+                        .background(Color.white.opacity(0.8))
+                        .cornerRadius(10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                        )
+                    
                     Spacer()
-                    Button("Save") {
-                        onSave()
-                        showEditActivity = false
-                    }
-                    .foregroundColor(.black)
                 }
                 .padding()
             }
-            .padding()
-            .navigationTitle("Edit Activity Name")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            
-            // ⭐️ หมายเหตุ: EditActivityView ยังไม่ได้ใส่พื้นหลัง Gradient
-            // ถ้าอยากให้สวยเหมือนกัน สามารถเพิ่ม ZStack และ LinearGradient
-            // แบบเดียวกับที่ทำใน .sheet(isPresented: $showingAddActivity) ได้ครับ
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("ยกเลิก") {
+                        dismiss()
+                        activityName = "" // เคลียร์ค่าเมื่อยกเลิก
+                    }
+                    .foregroundColor(Color.red) // ใช้สีแดง
+                }
+                
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("บันทึก") {
+                        onSave()
+                        dismiss()
+                    }
+                    .bold()
+                    .disabled(isSaveDisabled)
+                }
+            }
         }
     }
-}
-
-
-#Preview {
-    ActivityListView().environmentObject(AppState())
 }
