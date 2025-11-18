@@ -1,11 +1,3 @@
-//
-//  BoardGameBookingView.swift
-//  QueueApp_project
-//
-//  Created by Thanapong Yamkamol on 17/11/2568 BE.
-//
-
-
 import SwiftUI
 
 struct BoardGameBookingView: View {
@@ -18,8 +10,12 @@ struct BoardGameBookingView: View {
     let tableColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
     
     // MARK: - State
-    @State private var mockGames = ["Catan", "Monopoly", "Clue", "Risk", "Uno", "Jenga", "Exploding Kittens"]
-    // ⭐️ (R1) ลบ @State private var bookedTables ทิ้ง
+    @State private var mockGames = [
+        "Catan", "Monopoly", "Clue", "Risk", "Uno", "Jenga", "Exploding Kittens",
+        "Ticket to Ride", "Carcassonne", "Pandemic", "Scythe", "Terraforming Mars",
+        "Wingspan", "Chess", "Cards Against Humanity", "What Do You Meme?"
+    ]
+    
     @State private var selectedTable: Int? = nil
     @State private var selectedGames: Set<String> = []
     
@@ -32,31 +28,50 @@ struct BoardGameBookingView: View {
         VStack {
             ScrollView {
                 VStack(alignment: .leading) {
+                    
+                    // --- 1. เลือกโต๊ะ ---
                     Text("1. Select a Table (1)").font(.title2).fontWeight(.bold).padding([.top, .horizontal])
                     LazyVGrid(columns: tableColumns, spacing: 10) {
                         ForEach(1...6, id: \.self) { tableNum in
                             BoardGameTableView(
                                 tableNumber: tableNum,
                                 selectedTable: $selectedTable,
-                                // ⭐️ (R1) ส่ง Set ของช่องที่จองแล้ว (จาก AppState)
                                 bookedSlots: appState.currentServiceBookedSlots,
                                 themeColor: service.themeColor
                             )
                         }
                     }
                     .padding(.horizontal)
+                    
                     Divider().padding()
+                    
+                    // --- 2. เลือกเกม ---
                     Text("2. Select Games (1-3)").font(.title2).fontWeight(.bold).padding(.horizontal)
                     Text("Selected: \(selectedGames.count)").font(.caption).padding(.horizontal)
+                    
                     List(mockGames, id: \.self) { game in
+                        let isGameBooked = appState.currentBookedGames.contains(game)
+                        
                         HStack {
-                            Image(systemName: selectedGames.contains(game) ? "checkmark.square.fill" : "square")
-                                .foregroundColor(service.themeColor)
+                            Image(systemName: selectedGames.contains(game) ? "checkmark.square.fill" : (isGameBooked ? "x.square.fill" : "square"))
+                                .foregroundColor(selectedGames.contains(game) ? .green : (isGameBooked ? .gray : service.themeColor))
+                            
                             Text(game)
+                                .strikethrough(isGameBooked)
+                                .foregroundColor(isGameBooked ? .gray : .primary)
+                            
                             Spacer()
+                            
+                            if isGameBooked {
+                                Text("In Use")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
                         }
                         .contentShape(Rectangle())
                         .onTapGesture {
+                            guard !isGameBooked else { return }
+                            
                             if selectedGames.contains(game) {
                                 selectedGames.remove(game)
                             } else if selectedGames.count < 3 {
@@ -78,15 +93,18 @@ struct BoardGameBookingView: View {
                 let slotID = "Table \(table)"
                 let games = Array(selectedGames)
                 
-                // ⭐️ (R1) สั่ง AppState ให้ "เข้าคิว"
-                appState.joinQueue(
+                // ⭐️⭐️⭐️ จุดที่แก้ไข ⭐️⭐️⭐️
+                // เปลี่ยนจาก joinQueue เป็น createReservation
+                appState.createReservation(
                     service: service,
-                    slotID: slotID, // 👈 ส่ง slotID
-                    items: games    // 👈 ส่ง games
+                    slotID: slotID,
+                    timeSlot: nil, // ไม่มีรอบเวลา (Walk-in)
+                    items: games
                 )
                 dismiss()
             }) {
-                Text("Join Queue")
+                // เปลี่ยนข้อความปุ่ม
+                Text("Confirm Booking (2 Hrs)")
                     .font(.headline).fontWeight(.bold).foregroundColor(.white)
                     .frame(maxWidth: .infinity).padding()
                     .background(isSelectionValid ? Color.green : Color.gray)
@@ -96,25 +114,26 @@ struct BoardGameBookingView: View {
             .padding()
         }
         .navigationTitle(service.name)
-        // ⭐️ (R1) เริ่ม/หยุด Listener ส่วนรวม
         .onAppear {
             appState.listenToServiceBookings(service: service.name, timeSlot: nil)
+            appState.listenToBookedGames()
         }
         .onDisappear {
             appState.stopListeningToServiceBookings()
+            appState.stopListeningToBookedGames()
         }
     }
 }
 
+// (ส่วน BoardGameTableView ด้านล่างเหมือนเดิมครับ ไม่ต้องแก้)
 struct BoardGameTableView: View {
     let tableNumber: Int
     @Binding var selectedTable: Int?
-    let bookedSlots: Set<String> // 👈 (R1) รับ Set<String>
+    let bookedSlots: Set<String>
     let themeColor: Color
     
-    private var slotID: String { "Table \(tableNumber)" } // 👈 (R1)
+    private var slotID: String { "Table \(tableNumber)" }
     
-    // ⭐️ (R1) แก้ Logic isBooked
     var isBooked: Bool { bookedSlots.contains(slotID) }
     var isSelected: Bool { selectedTable == tableNumber }
     
