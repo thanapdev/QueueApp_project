@@ -92,10 +92,10 @@ struct AdminDashboardView: View {
                                     .foregroundColor(Color.Theme.textDark)
                                     .padding(.top, 30)
                                 
-                                // NEW LAYOUT: Full-Width Stack (บน-ล่าง)
+                                // NEW LAYOUT: Full-Width Stack (เรียงลงมา)
                                 VStack(spacing: 16) {
                                     
-                                    // Card 1: Activities (TOP - Full Width)
+                                    // Card 1: Activities (Activities Management)
                                     NavigationLink(destination: ActivityListView().environmentObject(appState)) {
                                         AdminDashboardCard(
                                             title: "Activities Management",
@@ -106,13 +106,26 @@ struct AdminDashboardView: View {
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                     
-                                    // Card 2: Bookings (BOTTOM - Full Width)
+                                    // Card 2: Bookings (Bookings Management)
                                     NavigationLink(destination: AdminBookingView().environmentObject(appState)) {
                                         AdminDashboardCard(
                                             title: "Bookings Management",
                                             count: "\(appState.allAdminBookings.count)",
                                             icon: "calendar.badge.clock",
                                             color: .orange
+                                        )
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    
+                                    // -------------------------------------------
+                                    // ✅ Card 3: Social Board (NEW ADDITION)
+                                    // -------------------------------------------
+                                    NavigationLink(destination: AdminSocialBoardView()) {
+                                        AdminDashboardCard(
+                                            title: "Social Board & Moderation",
+                                            count: "Manage", // ใส่ข้อความแทนตัวเลขเพราะไม่ได้ดึงข้อมูลในหน้านี้
+                                            icon: "bubble.left.and.bubble.right.fill",
+                                            color: .purple // ใช้สีม่วงให้แตกต่าง
                                         )
                                     }
                                     .buttonStyle(PlainButtonStyle())
@@ -128,7 +141,6 @@ struct AdminDashboardView: View {
             }
             .navigationBarHidden(true)
         }
-        // ✅ FIX: Centralize loading and listening here
         .onAppear {
             // 1. ดึงรายการกิจกรรม (Activities)
             appState.loadActivities()
@@ -191,13 +203,5 @@ struct AdminDashboardCard: View {
             RoundedRectangle(cornerRadius: 20)
                 .stroke(Color.gray.opacity(0.1), lineWidth: 1)
         )
-    }
-}
-
-// Preview
-struct AdminDashboardView_Previews: PreviewProvider {
-    static var previews: some View {
-        AdminDashboardView()
-            .environmentObject(AppState())
     }
 }

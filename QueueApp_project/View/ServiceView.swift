@@ -10,7 +10,11 @@ import SwiftUI
 struct ServiceView: View {
     // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
     @EnvironmentObject var appState: AppState
+    @StateObject var socialVM = SocialViewModel()
+    
     @State private var showBookingSpace = false // สำหรับ Logged-in user
+    @State private var showSocialBoard = false  // <--- [เพิ่มตรงนี้] ตามแบบอย่างข้างบน
+    
     @State private var showingLoginAlert = false
     @State private var navigateToLoginFromAlert = false // สำหรับ Alert -> Login
 
@@ -125,24 +129,32 @@ struct ServiceView: View {
                                     )
                                 }
                                 
-                                // 3. Campus Map Button (✅ แก้ไข: ใส่ NavigationLink ให้แล้ว)
+                                // 3. Campus Map Button
                                 NavigationLink(destination: CampusMapView()) {
                                     ServiceCardNew(
                                         icon: "map.fill",
                                         title: "Campus Map",
                                         subtitle: "แผนที่มหาลัย",
-                                        color: Color.green // ปรับสีให้สดใส (สีเขียวสื่อถึง Map ได้ดี)
+                                        color: Color.green
                                     )
                                 }
                                 
-                                // (Optional) 4. Profile (Example)
-                                ServiceCardNew(
-                                    icon: "person.crop.circle",
-                                    title: "Profile",
-                                    subtitle: "ข้อมูลส่วนตัว",
-                                    color: Color.gray.opacity(0.5)
-                                )
-                                .opacity(0.6)
+                                // 4. SWU Board Button (แก้ไขส่วนนี้ตามสั่ง)
+                                // ใช้ Logic เดียวกับ Booking ด้านบน คือเช็ค Login ก่อน
+                                Button(action: {
+                                    if appState.isLoggedIn {
+                                        showSocialBoard = true // สั่งให้เปลี่ยนหน้า
+                                    } else {
+                                        showingLoginAlert = true
+                                    }
+                                }) {
+                                    ServiceCardNew(
+                                        icon: "bubble.left.and.bubble.right.fill",
+                                        title: "SWU Board",
+                                        subtitle: "พูดคุย/ข่าวสาร",
+                                        color: Color.purple
+                                    )
+                                }
                             }
                         }
                         .padding(.horizontal, 30)
@@ -157,15 +169,21 @@ struct ServiceView: View {
             
             // Navigation ไปหน้า Booking
             NavigationLink(destination: BookingView().environmentObject(appState), isActive: $showBookingSpace) { EmptyView() }
+            
+            // Navigation ไปหน้า Social (เพิ่มตรงนี้ตามตัวอย่างข้างบน)
+            NavigationLink(destination: destinationForSocial(), isActive: $showSocialBoard) { EmptyView() }
         }
         .navigationBarHidden(true)
         .onAppear {
             print("ServiceView ปรากฏขึ้น. isLoggedIn: \(appState.isLoggedIn)")
+            socialVM.checkAdminStatus() // สั่งเช็คสิทธิ์ Admin ทุกครั้งที่หน้านี้โผล่มา
         }
         .alert("เข้าสู่ระบบ", isPresented: $showingLoginAlert) {
-            Button("ตกลง", role: .cancel) { }
+            Button("ตกลง", role: .cancel) {
+                navigateToLoginFromAlert = true // เพิ่มให้กดตกลงแล้วไปหน้า Login เลย
+            }
         } message: {
-            Text("คุณต้องเข้าสู่ระบบก่อนจึงจะสามารถจองพื้นที่ได้")
+            Text("คุณต้องเข้าสู่ระบบก่อนจึงจะสามารถใช้งานฟีเจอร์นี้ได้")
         }
     }
     
@@ -176,6 +194,16 @@ struct ServiceView: View {
             StudentActivityListView().environmentObject(appState)
         } else {
             GuestActivityListView().environmentObject(appState)
+        }
+    }
+    
+    // Logic เลือกปลายทาง Social Board
+    @ViewBuilder
+    func destinationForSocial() -> some View {
+        if socialVM.isAdmin {
+            AdminSocialBoardView() // ไปหน้า Admin
+        } else {
+            SocialBoardView()      // ไปหน้านิสิต
         }
     }
 }

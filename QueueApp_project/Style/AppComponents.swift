@@ -90,6 +90,27 @@ struct BluePillButtonStyle: ButtonStyle {
     }
 }
 
+// ✅ NEW: White Pill Button Style (ใช้สำหรับปุ่มรอง หรือปุ่มที่มีพื้นหลังสีเข้ม)
+struct WhitePillButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 18, weight: .bold))
+            .foregroundColor(Color.Theme.primary) // ตัวหนังสือสีฟ้า
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(Color.white) // พื้นหลังขาว
+            .clipShape(Capsule())
+            .overlay(
+                // เพิ่มขอบสีฟ้าจางๆ ให้ปุ่ม
+                Capsule()
+                    .stroke(Color.Theme.primary.opacity(0.4), lineWidth: 1.5)
+            )
+            .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 3)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.spring(), value: configuration.isPressed)
+    }
+}
+
 // ==========================================
 // MARK: - SHARED ACTIVITY CARD (แก้ไขให้ตรงกับ AppState)
 // ==========================================
