@@ -41,6 +41,7 @@ struct RegisterView: View {
                 .padding(.horizontal, 20)
                 
                 VStack(alignment: .leading, spacing: 10) {
+                    // Title Area
                     Text("Create\nAccount")
                         .font(.system(size: 40, weight: .bold))
                         .foregroundColor(.white)
@@ -64,22 +65,14 @@ struct RegisterView: View {
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
-                    // ใช้ ScrollView เพราะช่องกรอกเยอะ อาจล้นจอ
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 25) {
                             
                             // Input Fields Group
                             VStack(spacing: 15) {
-                                // Name Input
                                 CustomTextField(icon: "person.fill", placeholder: "Full Name", text: $name)
-                                
-                                // Student ID Input
-                                CustomTextField(icon: "person.text.rectangle", placeholder: "Student ID", text: $studentID, keyboardType: .numberPad)
-                                
-                                // Email Input
+                                CustomTextField(icon: "person.text.rectangle", placeholder: "Student ID (11 digits)", text: $studentID, keyboardType: .numberPad)
                                 CustomTextField(icon: "envelope.fill", placeholder: "Email Address", text: $email, keyboardType: .emailAddress)
-                                
-                                // Password Input
                                 CustomSecureField(icon: "lock.fill", placeholder: "Password", text: $password)
                             }
                             .padding(.top, 30)
@@ -104,7 +97,7 @@ struct RegisterView: View {
                             }) {
                                 Text("Register")
                             }
-                            .buttonStyle(BluePillButtonStyle()) // ใช้ปุ่มสไตล์เดียวกัน
+                            .buttonStyle(BluePillButtonStyle())
                             .padding(.top, 10)
                             
                             // Footer Link (Back to Login)
@@ -125,13 +118,13 @@ struct RegisterView: View {
                         .padding(.horizontal, 30)
                     }
                 }
-                .frame(height: 550) // กำหนดความสูงของ Sheet (ปรับได้ตามต้องการ)
+                .frame(height: 550) // กำหนดความสูงของ Sheet
             }
             .edgesIgnoringSafeArea(.bottom)
         }
         .navigationBarHidden(true)
         .alert(isPresented: $showAlert) {
-            Alert(title: Text("Register Failed"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+            Alert(title: Text("Registration Failed"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
         }
         .alert(isPresented: $showSuccessAlert) {
             Alert(title: Text("Success"), message: Text("Registration successful!"), dismissButton: .default(Text("OK"), action: {
@@ -140,13 +133,14 @@ struct RegisterView: View {
         }
     }
     
-    // MARK: - LOGIC FUNCTION
+    // MARK: - LOGIC FUNCTION (Keep Logic Structure)
     func register() {
         appState.register(name: name, studentID: studentID, email: email, password: password, role: selectedRole) { success, message in
             if success {
                 print("Registration Successful!")
                 showSuccessAlert = true
             } else {
+                // 🎯 This logic relies on the AppState fix to provide detailed error messages
                 errorMessage = message ?? "Registration failed. Please try again."
                 showAlert = true
             }
@@ -154,7 +148,7 @@ struct RegisterView: View {
     }
 }
 
-// MARK: - HELPER VIEWS (Custom TextFields เพื่อความสะอาดของโค้ด)
+// MARK: - HELPER VIEWS (Custom TextFields - Necessary for this file to compile)
 struct CustomTextField: View {
     var icon: String
     var placeholder: String
