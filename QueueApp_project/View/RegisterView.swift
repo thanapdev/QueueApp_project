@@ -2,18 +2,20 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
+// MARK: - Register View
+// หน้าจอลงทะเบียนสมาชิกใหม่
 struct RegisterView: View {
     // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
     @EnvironmentObject var appState: AppState
-    @State private var name = ""
-    @State private var studentID = ""
-    @State private var email = ""
-    @State private var password = ""
-    @State private var selectedRole: AppState.UserRole = .student
+    @State private var name = "" // ชื่อ-นามสกุล
+    @State private var studentID = "" // รหัสนิสิต
+    @State private var email = "" // อีเมล
+    @State private var password = "" // รหัสผ่าน
+    @State private var selectedRole: AppState.UserRole = .student // บทบาทที่เลือก (Default: Student)
     @State private var showAlert = false
     @State private var errorMessage = ""
     @State private var showSuccessAlert = false
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.presentationMode) var presentationMode // ใช้สำหรับปิดหน้านี้ (Back)
 
     var body: some View {
         ZStack {
@@ -23,6 +25,7 @@ struct RegisterView: View {
             VStack {
                 // ---------------------------------------
                 // HEADER: Back Button & Title
+                // ส่วนหัว: ปุ่มย้อนกลับ และชื่อหน้า
                 // ---------------------------------------
                 HStack {
                     Button(action: {
@@ -59,6 +62,7 @@ struct RegisterView: View {
                 
                 // ---------------------------------------
                 // FORM AREA: White Bottom Sheet
+                // ส่วนฟอร์มกรอกข้อมูล (พื้นหลังสีขาว)
                 // ---------------------------------------
                 ZStack {
                     Color.white
@@ -77,7 +81,7 @@ struct RegisterView: View {
                             }
                             .padding(.top, 30)
                             
-                            // Role Picker
+                            // Role Picker (เลือกบทบาท: นิสิต หรือ Admin)
                             VStack(alignment: .leading, spacing: 10) {
                                 Text("Select Role")
                                     .font(.subheadline)
@@ -128,19 +132,19 @@ struct RegisterView: View {
         }
         .alert(isPresented: $showSuccessAlert) {
             Alert(title: Text("Success"), message: Text("Registration successful!"), dismissButton: .default(Text("OK"), action: {
-                presentationMode.wrappedValue.dismiss()
+                presentationMode.wrappedValue.dismiss() // ปิดหน้า Register เมื่อสำเร็จ
             }))
         }
     }
     
-    // MARK: - LOGIC FUNCTION (Keep Logic Structure)
+    // MARK: - LOGIC FUNCTION
+    // ฟังก์ชันสมัครสมาชิก เรียกใช้ AppState
     func register() {
         appState.register(name: name, studentID: studentID, email: email, password: password, role: selectedRole) { success, message in
             if success {
                 print("Registration Successful!")
                 showSuccessAlert = true
             } else {
-                // 🎯 This logic relies on the AppState fix to provide detailed error messages
                 errorMessage = message ?? "Registration failed. Please try again."
                 showAlert = true
             }
@@ -148,7 +152,8 @@ struct RegisterView: View {
     }
 }
 
-// MARK: - HELPER VIEWS (Custom TextFields - Necessary for this file to compile)
+// MARK: - HELPER VIEWS (Custom TextFields)
+// Component ย่อยสำหรับช่องกรอกข้อมูล เพื่อลด Code ซ้ำซ้อน
 struct CustomTextField: View {
     var icon: String
     var placeholder: String

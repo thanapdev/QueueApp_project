@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// MARK: - Admin Dashboard View
+// หน้าหลักสำหรับผู้ดูแลระบบ (Admin)
+// แสดงภาพรวมและเมนูนำทางไปยังฟีเจอร์จัดการต่างๆ
 struct AdminDashboardView: View {
     @EnvironmentObject var appState: AppState
     
@@ -17,7 +20,8 @@ struct AdminDashboardView: View {
                 DynamicBackground(style: .random)
                 
                 VStack(spacing: 0) {
-                    // --- HEADER SECTION (Unchanged) ---
+                    // --- HEADER SECTION ---
+                    // ส่วนหัวแสดงข้อมูล Admin และปุ่ม Logout
                     VStack(spacing: 15) {
                         HStack {
                             // Profile Icon & Name
@@ -79,6 +83,7 @@ struct AdminDashboardView: View {
                     .padding(.bottom, 30)
                     
                     // --- CONTENT AREA (White Sheet) ---
+                    // พื้นที่แสดงเมนูจัดการต่างๆ
                     ZStack {
                         Color.white
                             .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -95,7 +100,7 @@ struct AdminDashboardView: View {
                                 // NEW LAYOUT: Full-Width Stack (เรียงลงมา)
                                 VStack(spacing: 16) {
                                     
-                                    // Card 1: Activities (Activities Management)
+                                    // Card 1: Activities (จัดการกิจกรรมและคิว)
                                     NavigationLink(destination: ActivityListView().environmentObject(appState)) {
                                         AdminDashboardCard(
                                             title: "Activities Management",
@@ -106,7 +111,7 @@ struct AdminDashboardView: View {
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                     
-                                    // Card 2: Bookings (Bookings Management)
+                                    // Card 2: Bookings (จัดการการจองพื้นที่)
                                     NavigationLink(destination: AdminBookingView().environmentObject(appState)) {
                                         AdminDashboardCard(
                                             title: "Bookings Management",
@@ -118,7 +123,8 @@ struct AdminDashboardView: View {
                                     .buttonStyle(PlainButtonStyle())
                                     
                                     // -------------------------------------------
-                                    // ✅ Card 3: Social Board (NEW ADDITION)
+                                    // ✅ Card 3: Social Board (Moderation)
+                                    // จัดการโพสต์และคอมเมนต์ (ลบเนื้อหาที่ไม่เหมาะสม)
                                     // -------------------------------------------
                                     NavigationLink(destination: AdminSocialBoardView()) {
                                         AdminDashboardCard(
@@ -144,7 +150,7 @@ struct AdminDashboardView: View {
         .onAppear {
             // 1. ดึงรายการกิจกรรม (Activities)
             appState.loadActivities()
-            // 2. เริ่ม Listener สำหรับการจองทั้งหมด (Bookings)
+            // 2. เริ่ม Listener สำหรับการจองทั้งหมด (Bookings) เพื่อแสดงตัวเลข Real-time
             appState.listenToAdminBookings()
         }
         .onDisappear {
@@ -154,7 +160,8 @@ struct AdminDashboardView: View {
     }
 }
 
-// MARK: - Helper View: DashboardCardView (Unchanged)
+// MARK: - Helper View: DashboardCardView
+// การ์ดแสดงเมนูใน Dashboard
 struct AdminDashboardCard: View {
     let title: String
     let count: String

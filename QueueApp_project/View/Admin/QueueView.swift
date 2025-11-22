@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// MARK: - Queue View (Admin)
+// หน้าจัดการคิวสำหรับกิจกรรม (Activity)
+// Admin สามารถเรียกคิวถัดไป, ข้ามคิว, หรือเพิ่มคิวแบบ Manual ได้
 struct QueueView: View {
     // MARK: - Properties
     @Binding var activity: Activity
@@ -22,7 +25,7 @@ struct QueueView: View {
     // Local state for queue items (to manage filtering/sorting locally if needed)
     @State private var queueItems: [QueueItem] = []
 
-    // Computed property
+    // Computed property: คิวถัดไปที่จะถูกเรียก
     private var nextQueueItem: QueueItem? {
         queueItems.first
     }
@@ -101,6 +104,7 @@ struct QueueView: View {
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
                             } else {
+                                // Empty State (ไม่มีคิวรอ)
                                 VStack(spacing: 15) {
                                     Image(systemName: "moon.zzz.fill")
                                         .font(.system(size: 50))
@@ -127,7 +131,7 @@ struct QueueView: View {
                         
                         // 2. Action Buttons
                         HStack(spacing: 15) {
-                            // ปุ่มเพิ่มคิว
+                            // ปุ่มเพิ่มคิว (Manual Add)
                             Button(action: {
                                 showingAddQueue = true
                             }) {
@@ -145,7 +149,7 @@ struct QueueView: View {
                                 .cornerRadius(15)
                             }
                             
-                            // ปุ่มเรียกคิว (ปุ่มใหญ่)
+                            // ปุ่มเรียกคิว (Call Next)
                             Button(action: {
                                 if !queueItems.isEmpty {
                                     showingCallOptions = true
@@ -250,6 +254,7 @@ struct QueueView: View {
         }
         
         // MARK: - Action Sheets & Alerts
+        // Dialog เลือกสถานะเมื่อเรียกคิว (มาแล้ว / ไม่มา / ข้าม)
         .confirmationDialog("Action for Queue #\(nextQueueItem?.number ?? 0)", isPresented: $showingCallOptions, titleVisibility: .visible) {
             Button("✅ Customer Arrived") {
                 callNextQueue(status: "มาแล้ว")
@@ -262,6 +267,7 @@ struct QueueView: View {
             }
             Button("Cancel", role: .cancel) { }
         }
+        // Sheet นับถอยหลัง (Timer)
         .sheet(isPresented: $isCountingDown) {
             CountdownModal(
                 isActive: $isCountingDown,
@@ -270,6 +276,7 @@ struct QueueView: View {
             )
             .presentationDetents([.medium])
         }
+        // Sheet เพิ่มคิว Manual
         .sheet(isPresented: $showingAddQueue) {
             // Custom Add Queue Sheet
             AddQueueSheet(
@@ -287,7 +294,9 @@ struct QueueView: View {
         }
     }
     
-    // MARK: - Logic Functions (Preserved)
+    // MARK: - Logic Functions
+    
+    // โหลดรายการคิวจาก Firestore
     private func loadQueueItems() {
         appState.loadQueueItems(activity: activity) { loadedQueueItems in
             queueItems = loadedQueueItems
@@ -296,6 +305,7 @@ struct QueueView: View {
         }
     }
 
+    // เรียกคิวถัดไปและอัปเดตสถานะ
     private func callNextQueue(status: String) {
         guard let firstQueueItem = queueItems.first else { return }
         
@@ -312,6 +322,7 @@ struct QueueView: View {
         appState.updateActivity(activity: activity)
     }
     
+    // เพิ่มคิวแบบ Manual
     private func addManualQueue() {
         if !newCustomerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let newItem = QueueItem(
@@ -332,6 +343,7 @@ struct QueueView: View {
 }
 
 // MARK: - Helper View: Add Queue Sheet
+// หน้าต่างสำหรับเพิ่มคิวด้วยตัวเอง
 struct AddQueueSheet: View {
     @Binding var isPresented: Bool
     @Binding var customerName: String
@@ -374,7 +386,8 @@ struct AddQueueSheet: View {
     }
 }
 
-// MARK: - Helper View: Countdown Modal (Preserved Logic, New Look)
+// MARK: - Helper View: Countdown Modal
+// หน้าต่างนับถอยหลังเมื่อเรียกลูกค้าแล้วยังไม่มา
 struct CountdownModal: View {
     @Binding var isActive: Bool
     let onTimeout: () -> Void

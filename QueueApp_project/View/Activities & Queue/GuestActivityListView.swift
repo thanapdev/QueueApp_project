@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// MARK: - Guest Activity List View
+// หน้าแสดงรายการกิจกรรมสำหรับบุคคลทั่วไป (Guest)
+// สามารถดูรายการกิจกรรมได้ แต่ไม่สามารถจองคิวได้ (ต้อง Login ก่อน)
 struct GuestActivityListView: View {
     @EnvironmentObject var appState: AppState
     @State private var showLoginAlert = false
@@ -14,6 +17,7 @@ struct GuestActivityListView: View {
     
     var body: some View {
         ZStack {
+            // Background Theme
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
@@ -46,25 +50,28 @@ struct GuestActivityListView: View {
                 }
                 .padding(.horizontal, 30).padding(.bottom, 30)
                 
-                // List Content
+                // List Content (White Sheet)
                 ZStack {
                     Color.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
                     if appState.activities.isEmpty {
+                        // Empty State
                         VStack(spacing: 15) {
                             Image(systemName: "tray.fill").font(.system(size: 50)).foregroundColor(Color.gray.opacity(0.3))
                             Text("ยังไม่มีกิจกรรมในขณะนี้").font(.headline).foregroundColor(Color.gray)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
+                        // Activities List
                         ScrollView(showsIndicators: false) {
                             LazyVStack(spacing: 15) {
-                                // ✅ ใช้ indices loop เช่นกัน
+                                // ✅ ใช้ indices loop เพื่อให้ได้ข้อมูลล่าสุด
                                 ForEach(appState.activities.indices, id: \.self) { index in
                                     let activity = appState.activities[index]
                                     
+                                    // กดแล้วจะขึ้น Alert ให้ Login
                                     Button(action: {
                                         self.showLoginAlert = true
                                     }) {
@@ -81,6 +88,7 @@ struct GuestActivityListView: View {
             .edgesIgnoringSafeArea(.bottom)
         }
         .navigationBarHidden(true)
+        // Alert แจ้งเตือนเมื่อ Guest พยายามกดจอง
         .alert(isPresented: $showLoginAlert) {
             Alert(
                 title: Text("Login Required"),

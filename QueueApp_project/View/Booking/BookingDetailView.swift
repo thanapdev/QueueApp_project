@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// MARK: - Booking Detail View
+// ตัวกลาง (Router) สำหรับนำทางไปยังหน้าจองของแต่ละบริการ
+// ตรวจสอบสถานะการจองปัจจุบันก่อนแสดงผล
 struct BookingDetailView: View {
     
     // MARK: - Properties

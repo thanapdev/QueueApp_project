@@ -7,12 +7,16 @@
 
 import SwiftUI
 
+// MARK: - Student Activity List View
+// หน้าแสดงรายการกิจกรรมสำหรับนิสิต (Student)
+// สามารถเลือกกิจกรรมเพื่อเข้าไปจองคิวได้
 struct StudentActivityListView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
         ZStack {
+            // Background Theme
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
@@ -35,6 +39,7 @@ struct StudentActivityListView: View {
                         
                         Spacer()
                         
+                        // User Profile Badge
                         HStack(spacing: 8) {
                             Text(appState.currentUser?.name ?? "Student")
                                 .font(.subheadline).fontWeight(.bold).foregroundColor(Color.Theme.primary)
@@ -55,13 +60,14 @@ struct StudentActivityListView: View {
                 }
                 .padding(.horizontal, 30).padding(.bottom, 30)
                 
-                // List Content
+                // List Content (White Sheet)
                 ZStack {
                     Color.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
                     if appState.activities.isEmpty {
+                        // Empty State
                         VStack(spacing: 20) {
                             Image(systemName: "doc.text.magnifyingglass")
                                 .font(.system(size: 60)).foregroundColor(Color.gray.opacity(0.3))
@@ -70,6 +76,7 @@ struct StudentActivityListView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
+                        // Activities List
                         ScrollView(showsIndicators: false) {
                             LazyVStack(spacing: 16) {
                                 // ✅ ใช้ indices loop เพื่อส่ง activity object ตัวจริงให้ ObservedObject ทำงาน

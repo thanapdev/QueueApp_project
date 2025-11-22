@@ -7,9 +7,15 @@
 
 import CoreData
 
+// MARK: - Core Data Persistence
+// ตัวจัดการฐานข้อมูล Core Data (Local Database)
+// หมายเหตุ: ในโปรเจกต์นี้หลักๆ ใช้ Firebase เป็น Backend, Core Data อาจจะถูกสร้างมาโดย Default ของ Xcode
+// แต่อาจจะยังเก็บไว้ใช้สำหรับ Cache ข้อมูลบางอย่างในเครื่องได้
 struct PersistenceController {
+    // Singleton Instance สำหรับเรียกใช้ทั่วทั้งแอป
     static let shared = PersistenceController()
 
+    // Preview Instance สำหรับใช้ใน SwiftUI Preview (ข้อมูลจำลองใน RAM)
     @MainActor
     static let preview: PersistenceController = {
         let result = PersistenceController(inMemory: true)
@@ -21,26 +27,24 @@ struct PersistenceController {
         do {
             try viewContext.save()
         } catch {
-            // Replace this implementation with code to handle the error appropriately.
-            // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
             let nsError = error as NSError
             fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
         }
         return result
     }()
 
+    // Container หลักของ Core Data
     let container: NSPersistentContainer
 
+    // Init: โหลด Database
     init(inMemory: Bool = false) {
         container = NSPersistentContainer(name: "QueueApp_project")
         if inMemory {
+            // ถ้าเป็น inMemory (เช่นตอน Test) ให้เขียนลง /dev/null แทนไฟล์จริง
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-
                 /*
                  Typical reasons for an error here include:
                  * The parent directory does not exist, cannot be created, or disallows writing.
@@ -52,6 +56,7 @@ struct PersistenceController {
                 fatalError("Unresolved error \(error), \(error.userInfo)")
             }
         })
+        // ให้ ViewContext อัปเดตอัตโนมัติเมื่อมีการเปลี่ยนแปลงจาก Parent
         container.viewContext.automaticallyMergesChangesFromParent = true
     }
 }

@@ -11,6 +11,8 @@ import FirebaseAuth
 // ******************************************************
 // MARK: - 1. ADMIN MAIN FEED VIEW (AdminSocialBoardView)
 // ******************************************************
+// หน้าหลักสำหรับ Admin ในการจัดการ Social Board
+// แสดงรายการโพสต์ทั้งหมด และสามารถลบโพสต์ที่ไม่เหมาะสมได้
 
 struct AdminSocialBoardView: View {
     @StateObject var viewModel = SocialViewModel()
@@ -38,6 +40,7 @@ struct AdminSocialBoardView: View {
                             .edgesIgnoringSafeArea(.bottom) // ให้พื้นหลังขาวลากยาวถึงขอบล่าง
                         
                         if viewModel.posts.isEmpty {
+                            // Empty State
                             VStack(spacing: 15) {
                                 Image(systemName: "bubble.left.and.bubble.right")
                                     .font(.system(size: 60))
@@ -46,7 +49,7 @@ struct AdminSocialBoardView: View {
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         } else {
-                            // List View
+                            // List View (รายการโพสต์)
                             ScrollView(showsIndicators: false) {
                                 LazyVStack(spacing: 12) {
                                     ForEach(viewModel.posts) { post in
@@ -66,12 +69,13 @@ struct AdminSocialBoardView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
-                viewModel.fetchPosts()
+                viewModel.fetchPosts() // โหลดข้อมูลโพสต์เมื่อหน้าจอแสดง
             }
         }
     }
     
     // Custom Header Component
+    // ส่วนหัวของหน้า Admin Social Board
     private struct CustomHeader: View {
         @Environment(\.presentationMode) var presentationMode
         
@@ -115,6 +119,8 @@ struct AdminSocialBoardView: View {
 // ******************************************************
 // MARK: - 2. ADMIN POST DETAIL VIEW (Moderation Screen)
 // ******************************************************
+// หน้าแสดงรายละเอียดโพสต์สำหรับ Admin
+// แสดงเนื้อหาโพสต์ ชื่อจริงผู้โพสต์ และรายการคอมเมนต์ (พร้อมปุ่มลบ)
 struct AdminPostDetailView: View {
     let post: SocialPost
     @ObservedObject var socialVM: SocialViewModel
@@ -176,6 +182,7 @@ struct AdminPostDetailView: View {
 // MARK: - 3. HELPER VIEWS
 
 // 3.1 Content สำหรับ List Row ในหน้าหลัก
+// แสดงตัวอย่างโพสต์ในหน้า Admin Feed
 private struct AdminRowContent: View {
     let post: SocialPost
     @ObservedObject var viewModel: SocialViewModel
@@ -233,6 +240,7 @@ private struct AdminRowContent: View {
 }
 
 // 3.2 Header View สำหรับหน้า Detail
+// แสดงรายละเอียดโพสต์เต็มรูปแบบในหน้า Admin Detail
 private struct AdminDetailHeaderView: View {
     let post: SocialPost
     @ObservedObject var socialVM: SocialViewModel
@@ -287,6 +295,7 @@ private struct AdminDetailHeaderView: View {
 }
 
 // 3.3 Comment Row พร้อมปุ่มลบสำหรับ Admin
+// แสดงคอมเมนต์แต่ละรายการ พร้อมปุ่มลบสำหรับ Admin
 private struct AdminCommentRowView: View {
     let comment: SocialComment
     @ObservedObject var socialVM: SocialViewModel

@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// MARK: - Activity List View (Admin)
+// หน้าแสดงรายการกิจกรรมทั้งหมดสำหรับ Admin
+// สามารถเพิ่ม ลบ และแก้ไขกิจกรรมได้
 struct ActivityListView: View {
     // MARK: - SYSTEM LOGIC (PRESERVED)
     @EnvironmentObject var appState: AppState
@@ -94,7 +97,7 @@ struct ActivityListView: View {
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
                     if appState.activities.isEmpty {
-                        // Empty State
+                        // Empty State (กรณีไม่มีกิจกรรม)
                         VStack(spacing: 20) {
                             Image(systemName: "square.stack.3d.up.slash")
                                 .font(.system(size: 60))
@@ -112,7 +115,7 @@ struct ActivityListView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
-                        // List Content
+                        // List Content (รายการกิจกรรม)
                         List {
                             ForEach(appState.activities.indices, id: \.self) { index in
                                 ActivityNavigationLink(activity: appState.activities[index])
@@ -150,6 +153,7 @@ struct ActivityListView: View {
         .navigationBarHidden(true) // ซ่อน Navigation Bar เพราะทำ Header เอง
 
         // MARK: - Modals and Alerts
+        // Alert ยืนยันการลบ
         .alert("ยืนยันการลบ?", isPresented: $showDeleteConfirmation, actions: {
             Button("ยกเลิก", role: .cancel) { deleteIndex = nil }
             Button("ลบ", role: .destructive) {
@@ -197,6 +201,7 @@ struct ActivityListView: View {
 }
 
 // MARK: - Helper View: ActivityNavigationLink (List Row)
+// แถวรายการกิจกรรมใน List
 struct ActivityNavigationLink: View {
     @ObservedObject var activity: Activity
 
@@ -229,6 +234,7 @@ struct ActivityNavigationLink: View {
 
 
 // MARK: - Helper View: Add/Edit Sheet (รวม Add และ Edit)
+// หน้าต่างสำหรับเพิ่มหรือแก้ไขชื่อกิจกรรม
 struct AddEditActivitySheet: View {
     @Environment(\.dismiss) var dismiss
     let title: String

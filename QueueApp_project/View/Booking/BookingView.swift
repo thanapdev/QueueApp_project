@@ -7,13 +7,16 @@
 
 import SwiftUI
 
+// MARK: - Booking View
+// หน้าหลักสำหรับการจองบริการห้องสมุด (Library Services)
+// แสดงรายการบริการต่างๆ เช่น Co-working Space, Netflix Room, Board Game, Green Screen
 struct BookingView: View {
     
     // MARK: - Properties
     @EnvironmentObject var appState: AppState
     @Environment(\.presentationMode) var presentationMode
     
-    // Grid Layout
+    // Grid Layout: จัดวางการ์ดบริการเป็น 2 คอลัมน์
     let gridColumns: [GridItem] = [
         GridItem(.flexible(), spacing: 15),
         GridItem(.flexible(), spacing: 15)
@@ -155,6 +158,7 @@ struct BookingView: View {
             .edgesIgnoringSafeArea(.bottom)
             
             // --- Active Banner ---
+            // แสดง Banner แจ้งเตือนถ้ามีการจองค้างอยู่
             if appState.hasActiveBooking {
                 VStack {
                     Spacer()
@@ -171,6 +175,7 @@ struct BookingView: View {
 }
 
 // MARK: - BookingMenuCard
+// การ์ดแสดงบริการแต่ละประเภทในหน้าเมนูหลัก
 struct BookingMenuCard: View {
     let service: LibraryService
     

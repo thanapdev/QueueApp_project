@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// MARK: - Create Post View
+// หน้าสร้างโพสต์ใหม่
+// ให้ผู้ใช้กรอกเนื้อหา เลือกหมวดหมู่ และเลือกว่าจะโพสต์แบบไม่ระบุตัวตนหรือไม่
 struct CreatePostView: View {
     @Environment(\.presentationMode) var presentationMode
     @ObservedObject var viewModel: SocialViewModel

@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// MARK: - Admin Booking View
+// หน้าจัดการการจองสำหรับ Admin
+// แสดงรายการจองทั้งหมด (Active Reservations) และปุ่ม Action ต่างๆ
 struct AdminBookingView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.presentationMode) var presentationMode
@@ -82,6 +85,7 @@ struct AdminBookingView: View {
                             
                             // Booking List
                             if appState.allAdminBookings.isEmpty {
+                                // Empty State
                                 VStack(spacing: 15) {
                                     Spacer()
                                     Image(systemName: "calendar.badge.exclamationmark")
@@ -94,9 +98,10 @@ struct AdminBookingView: View {
                                 }
                                 .frame(maxWidth: .infinity)
                             } else {
+                                // List of Bookings
                                 ScrollView(showsIndicators: false) {
                                     LazyVStack(spacing: 16) {
-                                        // กรองเฉพาะ Reservation / In-Use
+                                        // Loop แสดงรายการจอง
                                         ForEach(appState.allAdminBookings, id: \.docID) { bookingTuple in
                                             BookingAdminCard(booking: bookingTuple.data, docID: bookingTuple.docID)
                                         }
@@ -112,18 +117,19 @@ struct AdminBookingView: View {
             }
             .navigationBarHidden(true)
         }
-        .onAppear { appState.listenToAdminBookings() }
-        .onDisappear { appState.stopListeningToAdminBookings() }
+        .onAppear { appState.listenToAdminBookings() } // เริ่มฟังข้อมูล Real-time
+        .onDisappear { appState.stopListeningToAdminBookings() } // หยุดฟังเมื่อออก
     }
 }
 
 // MARK: - Booking Admin Card Component
+// การ์ดแสดงรายละเอียดการจองแต่ละรายการสำหรับ Admin
 struct BookingAdminCard: View {
     @EnvironmentObject var appState: AppState
     let booking: AppState.Booking
     let docID: String
     
-    // คำนวณเวลาที่เหลือ
+    // คำนวณเวลาที่เหลือ (สำหรับสถานะ In-Use)
     var timeRemainingString: String {
         guard let end = booking.endTime?.dateValue() else { return "Waiting..." }
         let remaining = end.timeIntervalSince(Date())
@@ -170,7 +176,7 @@ struct BookingAdminCard: View {
             // 2. Detail Row
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
-                    // Detail Info
+                    // Detail Info (e.g., Room Name, Time)
                     Text(booking.details)
                         .font(.subheadline)
                         .fontWeight(.medium)
@@ -203,7 +209,7 @@ struct BookingAdminCard: View {
                 // 3. Admin Action Buttons
                 VStack(spacing: 8) {
                     
-                    // Case A: Waiting for Check-in
+                    // Case A: Waiting for Check-in (Queued/Booked)
                     if booking.status == "Queued" || booking.status == "Booked" {
                         Button(action: { withAnimation { appState.checkInBooking(docID: docID) } }) {
                             HStack {
@@ -219,10 +225,10 @@ struct BookingAdminCard: View {
                         }
                     }
                     
-                    // Case B: In-Use Actions
+                    // Case B: In-Use Actions (Skip Time / Finish)
                     if booking.status == "In-Use" {
                         HStack(spacing: 8) {
-                            // Skip Time Button (Warp to last 10 mins)
+                            // Skip Time Button (Warp to last 10 mins - For Testing/Demo)
                             Button(action: { withAnimation { appState.adminSkipTime(docID: docID) } }) {
                                 Image(systemName: "goforward.plus")
                                     .font(.caption)
@@ -232,7 +238,7 @@ struct BookingAdminCard: View {
                                     .clipShape(Circle())
                             }
                             
-                            // Finish Button
+                            // Finish Button (End Session)
                             Button(action: { withAnimation { appState.finishBooking(docID: docID) } }) {
                                 Text("Finish")
                                     .font(.caption).fontWeight(.bold)

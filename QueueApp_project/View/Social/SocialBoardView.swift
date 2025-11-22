@@ -11,7 +11,7 @@ import FirebaseAuth
 // ******************************************************
 // MARK: - 1. MAIN FEED VIEW (SocialBoardView)
 // ******************************************************
-
+// หน้าหลักของ Social Board แสดงรายการโพสต์ทั้งหมด
 struct SocialBoardView: View {
     @StateObject var viewModel = SocialViewModel()
     @State private var showCreatePost = false
@@ -28,9 +28,11 @@ struct SocialBoardView: View {
                 
                 // --- ส่วนแสดงรายการโพสต์ (ใช้ ScrollView เพื่อ Card Styling) ---
                 if viewModel.isLoading && viewModel.posts.isEmpty {
+                    // Loading State
                     ProgressView("กำลังโหลดสังคมชาว มศว...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if viewModel.posts.isEmpty {
+                    // Empty State
                     VStack {
                         Image(systemName: "bubble.left.and.bubble.right")
                             .font(.system(size: 60))
@@ -40,6 +42,7 @@ struct SocialBoardView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
+                    // List of Posts
                     ScrollView(showsIndicators: false) {
                         LazyVStack(spacing: 16) { // เพิ่ม spacing
                             ForEach(viewModel.posts) { post in
@@ -82,7 +85,7 @@ struct SocialBoardView: View {
 // ******************************************************
 // MARK: - 2. POST ROW CARD COMPONENT (Card Style)
 // ******************************************************
-
+// การ์ดแสดงโพสต์แต่ละรายการในหน้า Feed
 struct PostRowView: View {
     let post: SocialPost
     @ObservedObject var viewModel: SocialViewModel
@@ -112,6 +115,7 @@ struct PostRowView: View {
 }
 
 // MARK: - Helper View: Post Header
+// ส่วนหัวของการ์ดโพสต์ (รูปโปรไฟล์, ชื่อ, เวลา, ปุ่มลบ)
 private struct PostHeaderView: View {
     let post: SocialPost
     @ObservedObject var viewModel: SocialViewModel
@@ -163,6 +167,7 @@ private struct PostHeaderView: View {
 }
 
 // MARK: - Helper View: Post Footer
+// ส่วนท้ายของการ์ดโพสต์ (ปุ่ม Like, ปุ่ม Comment)
 private struct PostFooterView: View {
     let post: SocialPost
     @ObservedObject var viewModel: SocialViewModel
@@ -202,6 +207,7 @@ private struct PostFooterView: View {
 }
 
 // MARK: - 3. Post Detail View (หน้าหลักแสดงคอมเมนต์)
+// หน้ารายละเอียดโพสต์ แสดงเนื้อหาเต็มและรายการคอมเมนต์
 struct PostDetailView: View {
     // โพสต์แม่ (Passed from SocialBoardView)
     let post: SocialPost
@@ -291,6 +297,7 @@ struct PostDetailView: View {
 }
 // MARK: - Helper Views สำหรับ PostDetailView
 
+// ส่วนหัวของหน้า Detail แสดงรายละเอียดโพสต์แม่
 private struct PostHeaderDetailView: View {
     let post: SocialPost
     
@@ -359,6 +366,7 @@ private struct PostHeaderDetailView: View {
 }
 
 
+// แถวแสดงคอมเมนต์แต่ละรายการ
 private struct CommentRowView: View {
     let comment: SocialComment
     
@@ -397,6 +405,7 @@ private struct CommentRowView: View {
     }
 }
 
+// แถบ Input สำหรับพิมพ์คอมเมนต์
 private struct CommentInputBar: View {
     @Binding var newCommentContent: String
     @Binding var isAnonymousComment: Bool

@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// MARK: - Board Game Booking View
+// หน้าจอสำหรับการจองโต๊ะบอร์ดเกม
+// ผู้ใช้สามารถเลือกโต๊ะและเกมที่ต้องการเล่น (สูงสุด 3 เกม)
 struct BoardGameBookingView: View {
     
     // MARK: - Properties
@@ -17,6 +20,7 @@ struct BoardGameBookingView: View {
     let tableColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
     
     // MARK: - State
+    // รายชื่อเกมจำลอง (Mock Data)
     @State private var mockGames = [
         "Catan", "Monopoly", "Clue", "Risk", "Uno", "Jenga", "Exploding Kittens",
         "Ticket to Ride", "Carcassonne", "Pandemic", "Scythe", "Terraforming Mars",
@@ -26,6 +30,7 @@ struct BoardGameBookingView: View {
     @State private var selectedTable: Int? = nil
     @State private var selectedGames: Set<String> = []
     
+    // ตรวจสอบความถูกต้องของการเลือก (ต้องเลือกโต๊ะและเลือกเกม 1-3 เกม)
     var isSelectionValid: Bool {
         selectedTable != nil && (1...3).contains(selectedGames.count)
     }
@@ -200,10 +205,12 @@ struct BoardGameBookingView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
+            // เริ่มฟังข้อมูลการจองโต๊ะและเกม
             appState.listenToServiceBookings(service: service.name, timeSlot: nil)
             appState.listenToBookedGames()
         }
         .onDisappear {
+            // หยุดฟังข้อมูลเมื่อออกจากหน้า
             appState.stopListeningToServiceBookings()
             appState.stopListeningToBookedGames()
         }
@@ -211,6 +218,7 @@ struct BoardGameBookingView: View {
 }
 
 // MARK: - Table View Component (ปรับแต่งเล็กน้อย)
+// คอมโพเนนต์แสดงปุ่มเลือกโต๊ะ
 struct BoardGameTableView: View {
     let tableNumber: Int
     @Binding var selectedTable: Int?

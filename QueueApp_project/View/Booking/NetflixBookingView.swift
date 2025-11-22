@@ -7,7 +7,9 @@
 
 import SwiftUI
 
-// MARK: - 1. NetflixBookingView
+// MARK: - Netflix Booking View
+// หน้าจอสำหรับการจองห้อง Netflix Room
+// ผู้ใช้ต้องเลือกรอบเวลา -> เลือกห้อง
 struct NetflixBookingView: View {
     
     // MARK: - Properties
@@ -178,7 +180,8 @@ struct NetflixBookingView: View {
     }
 }
 
-// MARK: - 2. NetflixRoomView (Component)
+// MARK: - NetflixRoomView (Component)
+// คอมโพเนนต์แสดงปุ่มเลือกห้อง Netflix
 struct NetflixRoomView: View {
     let roomNumber: Int
     @Binding var selectedRoom: Int?

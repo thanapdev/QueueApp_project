@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+// MARK: - Student Queue Join View
+// หน้าสำหรับนิสิตในการกดจองคิว (Join Queue) หรือดูสถานะคิวของตัวเอง
 struct StudentQueueJoinView: View {
     // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
     @EnvironmentObject var appState: AppState
@@ -14,6 +16,7 @@ struct StudentQueueJoinView: View {
     @Environment(\.presentationMode) var presentationMode
 
     // Computed Property: Check if user joined based on current queues
+    // ตรวจสอบว่าผู้ใช้จองคิวไปแล้วหรือยัง
     var isJoined: Bool {
         guard let studentId = appState.currentUser?.id else { return false }
         // เช็คจาก array queues ที่ activity ถืออยู่ (ซึ่งอัปเดต real-time จาก Listener ใน AppState)
@@ -228,6 +231,7 @@ struct StudentQueueJoinView: View {
     }
     
     // MARK: - LOGIC FUNCTIONS (เหมือนเดิมเป๊ะ)
+    // ฟังก์ชันจองคิว
     func joinQueue() {
         guard let student = appState.currentUser else { return }
         
@@ -245,6 +249,7 @@ struct StudentQueueJoinView: View {
         appState.addQueueItem(activity: activity, queueItem: newItem)
     }
 
+    // ฟังก์ชันยกเลิกคิว
     func leaveQueue() {
         guard let student = appState.currentUser else { return }
         

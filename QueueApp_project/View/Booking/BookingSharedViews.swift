@@ -8,6 +8,8 @@
 import SwiftUI
 
 // MARK: - 1. Active Booking Banner (ปรับปรุง UI ให้สวยขึ้น)
+// แบนเนอร์แสดงสถานะการจองปัจจุบัน (แสดงด้านล่างของหน้าจอ)
+// แสดงชื่อบริการ สถานะ เวลาที่เหลือ และปุ่มยกเลิก/ขยายเวลา
 struct MyBookingBannerView: View {
     @EnvironmentObject var appState: AppState
     
@@ -59,7 +61,7 @@ struct MyBookingBannerView: View {
                     }) {
                         VStack {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.title2)
+                            .font(.title2)
                             Text("End")
                                 .font(.caption)
                                 .fontWeight(.bold)
@@ -133,6 +135,8 @@ struct MyBookingBannerView: View {
 }
 
 // MARK: - 2. Already Booked View (หน้าเต็มจอบังไว้)
+// หน้าจอแจ้งเตือนเมื่อผู้ใช้พยายามจองซ้ำ
+// แสดงรายละเอียดการจองปัจจุบันและปุ่มยกเลิก
 struct AlreadyBookedView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss // 1. เพิ่มตัวสั่งปิดหน้า
@@ -229,6 +233,7 @@ struct AlreadyBookedView: View {
     }
 }
 // MARK: - 3. Legend View (คำอธิบายสี)
+// แสดงความหมายของสีในตารางจอง (Available, Selected, Booked)
 struct LegendView: View {
     let service: LibraryService
     var body: some View {
@@ -258,6 +263,7 @@ struct LegendItem: View {
 }
 
 // MARK: - 4. Time Slot View (ปุ่มเลือกรอบเวลา)
+// ปุ่มสำหรับเลือกช่วงเวลาจอง
 struct TimeSlotView: View {
     let slot: TimeSlot
     @Binding var selectedSlot: TimeSlot?

@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// MARK: - Co-Working Booking View
+// หน้าจอสำหรับการจองที่นั่ง Co-Working Space
+// แสดงผังที่นั่งแบบ Grid ให้ผู้ใช้เลือก
 struct CoWorkingBookingView: View {
     
     // MARK: - Properties
@@ -135,15 +138,18 @@ struct CoWorkingBookingView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
+            // เริ่มฟังข้อมูลการจองที่นั่ง
             appState.listenToServiceBookings(service: service.name, timeSlot: nil)
         }
         .onDisappear {
+            // หยุดฟังข้อมูลเมื่อออกจากหน้า
             appState.stopListeningToServiceBookings()
         }
     }
 }
 
 // MARK: - Seat View Component
+// คอมโพเนนต์แสดงปุ่มเลือกที่นั่ง
 struct SeatView: View {
     let seatNumber: Int
     @Binding var selectedSeat: Int?

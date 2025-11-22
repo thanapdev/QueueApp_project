@@ -5,31 +5,34 @@
 //  Created by Thanapong Yamkamol on 19/11/2568 BE.
 //
 
-
 import Foundation
 import FirebaseFirestore
 
+// MARK: - Social Post Model
+// โมเดลข้อมูลสำหรับโพสต์ในฟีเจอร์ Social Board
+// ใช้สำหรับรับ-ส่งข้อมูลกับ Firebase Firestore
 struct SocialPost: Identifiable, Codable {
     @DocumentID var id: String?
     
-    // ข้อมูลผู้โพสต์
+    // MARK: - Author Info
     var authorID: String       // UID ของผู้ใช้ (ใช้เช็คว่าเป็นเจ้าของโพสต์ไหม)
     var authorName: String     // ชื่อที่ใช้แสดงผล (ถ้า Anonymous จะเป็น "นิสิตท่านหนึ่ง")
     var realAuthorName: String // ชื่อจริงของผู้โพสต์ (เก็บไว้สำหรับ Admin ตรวจสอบ)
     
-    // เนื้อหา
-    var content: String
-    var category: String       // เช่น "ถาม-ตอบ", "ของหาย"
+    // MARK: - Content
+    var content: String        // เนื้อหาโพสต์
+    var category: String       // หมวดหมู่ เช่น "ถาม-ตอบ", "ของหาย", "รีวิวรายวิชา"
     
-    // Social Stats
-    var likes: Int
+    // MARK: - Social Stats
+    var likes: Int             // จำนวนไลค์
     var likedBy: [String]      // เก็บ UID ของคนที่กดไลค์ เพื่อป้องกันการกดซ้ำ
     
-    // สถานะ
+    // MARK: - Status & Metadata
     var isAnonymous: Bool      // โพสต์แบบไม่ระบุตัวตนหรือไม่
     var timestamp: Date        // เวลาที่โพสต์
     
-    // Helper Function: แปลงเวลาเป็นคำพูดภาษาไทย เช่น "เมื่อสักครู่", "2 ชั่วโมงที่แล้ว"
+    // MARK: - Helper Properties
+    // แปลงเวลาเป็นคำพูดภาษาไทย เช่น "เมื่อสักครู่", "2 ชั่วโมงที่แล้ว"
     var displayTime: String {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full

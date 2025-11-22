@@ -9,6 +9,7 @@ import SwiftUI
 import MapKit
 
 // MARK: - 1. Data Model
+// โมเดลข้อมูลสำหรับจุดปักหมุดบนแผนที่ (Location Pin)
 struct CampusLocation: Identifiable {
     let id = UUID()
     let name: String
@@ -16,6 +17,7 @@ struct CampusLocation: Identifiable {
     let coordinate: CLLocationCoordinate2D
     let type: LocationType
     
+    // ประเภทของสถานที่ เพื่อกำหนดไอคอนและสี
     enum LocationType {
         case building, admin, food, facility, sport, medical, school, shop
         
@@ -48,6 +50,7 @@ struct CampusLocation: Identifiable {
 }
 
 // MARK: - 2. Main Map View
+// หน้าแสดงแผนที่วิทยาเขต (Campus Map)
 struct CampusMapView: View {
     @Environment(\.presentationMode) var presentationMode
     
@@ -177,6 +180,7 @@ struct CampusMapView: View {
                 Spacer()
                 
                 // 3. DETAIL CARD (Popup)
+                // แสดงรายละเอียดสถานที่เมื่อกดเลือก
                 if let location = selectedLocation {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {

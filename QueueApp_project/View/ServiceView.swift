@@ -7,16 +7,19 @@
 
 import SwiftUI
 
+// MARK: - Service View (Main Dashboard)
+// หน้าหลักของแอป (Dashboard) แสดงรายการบริการต่างๆ
+// ผู้ใช้ทั้งแบบ Guest และ Logged-in จะเห็นหน้านี้ แต่จะเข้าถึงฟีเจอร์ได้ต่างกัน
 struct ServiceView: View {
     // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
     @EnvironmentObject var appState: AppState
     @StateObject var socialVM = SocialViewModel()
     
-    @State private var showBookingSpace = false // สำหรับ Logged-in user
-    @State private var showSocialBoard = false  // <--- [เพิ่มตรงนี้] ตามแบบอย่างข้างบน
+    @State private var showBookingSpace = false // State สำหรับเปิดหน้าจอง (เฉพาะ Logged-in)
+    @State private var showSocialBoard = false  // State สำหรับเปิดหน้า Social (เฉพาะ Logged-in)
     
-    @State private var showingLoginAlert = false
-    @State private var navigateToLoginFromAlert = false // สำหรับ Alert -> Login
+    @State private var showingLoginAlert = false // Alert แจ้งเตือนให้ล็อกอิน
+    @State private var navigateToLoginFromAlert = false // Trigger นำทางไปหน้า Login จาก Alert
 
     var body: some View {
         ZStack {
@@ -26,12 +29,14 @@ struct ServiceView: View {
             VStack(spacing: 0) {
                 // ---------------------------------------
                 // HEADER SECTION
+                // ส่วนหัวแสดงปุ่ม Login/Logout และข้อความต้อนรับ
                 // ---------------------------------------
                 VStack(alignment: .leading, spacing: 10) {
                     // Top Toolbar (Logout / Login)
                     HStack {
                         Spacer()
                         if appState.isLoggedIn {
+                            // ปุ่ม Logout (แสดงเมื่อล็อกอินแล้ว)
                             Button(action: {
                                 appState.logout()
                             }) {
@@ -48,6 +53,7 @@ struct ServiceView: View {
                                 .clipShape(Capsule())
                             }
                         } else {
+                            // ปุ่ม Login (แสดงเมื่อเป็น Guest)
                             Button(action: {
                                 navigateToLoginFromAlert = true
                             }) {
@@ -84,6 +90,7 @@ struct ServiceView: View {
                 
                 // ---------------------------------------
                 // SERVICE MENU (White Card Area)
+                // ส่วนเมนูบริการ (Grid 2 คอลัมน์)
                 // ---------------------------------------
                 ZStack {
                     Color.white
@@ -103,7 +110,7 @@ struct ServiceView: View {
                             // Grid Menu (2 Columns)
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
                                 
-                                // 1. Activity / Event Button
+                                // 1. Activity / Event Button (เข้าได้ทุกคน แต่เนื้อหาข้างในต่างกัน)
                                 NavigationLink(destination: destinationForActivity()) {
                                     ServiceCardNew(
                                         icon: "calendar.badge.clock",
@@ -113,7 +120,7 @@ struct ServiceView: View {
                                     )
                                 }
                                 
-                                // 2. Booking Space Button
+                                // 2. Booking Space Button (ต้องล็อกอิน)
                                 Button(action: {
                                     if appState.isLoggedIn {
                                         showBookingSpace = true
@@ -129,7 +136,7 @@ struct ServiceView: View {
                                     )
                                 }
                                 
-                                // 3. Campus Map Button
+                                // 3. Campus Map Button (เข้าได้ทุกคน)
                                 NavigationLink(destination: CampusMapView()) {
                                     ServiceCardNew(
                                         icon: "map.fill",
@@ -139,8 +146,7 @@ struct ServiceView: View {
                                     )
                                 }
                                 
-                                // 4. SWU Board Button (แก้ไขส่วนนี้ตามสั่ง)
-                                // ใช้ Logic เดียวกับ Booking ด้านบน คือเช็ค Login ก่อน
+                                // 4. SWU Board Button (Social - ต้องล็อกอิน)
                                 Button(action: {
                                     if appState.isLoggedIn {
                                         showSocialBoard = true // สั่งให้เปลี่ยนหน้า
@@ -165,12 +171,9 @@ struct ServiceView: View {
             .edgesIgnoringSafeArea(.bottom) // ให้ Card ชิดขอบล่าง
             
             // --- Hidden Navigation Links ---
+            // ใช้สำหรับ Programmatic Navigation (สั่งเปลี่ยนหน้าด้วย Code)
             NavigationLink(destination: LoginView().environmentObject(appState), isActive: $navigateToLoginFromAlert) { EmptyView() }
-            
-            // Navigation ไปหน้า Booking
             NavigationLink(destination: BookingView().environmentObject(appState), isActive: $showBookingSpace) { EmptyView() }
-            
-            // Navigation ไปหน้า Social (เพิ่มตรงนี้ตามตัวอย่างข้างบน)
             NavigationLink(destination: destinationForSocial(), isActive: $showSocialBoard) { EmptyView() }
         }
         .navigationBarHidden(true)
@@ -187,7 +190,9 @@ struct ServiceView: View {
         }
     }
     
-    // Logic เลือกปลายทาง Activity
+    // MARK: - Navigation Logic
+    
+    // Logic เลือกปลายทาง Activity (Student vs Guest)
     @ViewBuilder
     func destinationForActivity() -> some View {
         if appState.isLoggedIn {
@@ -197,7 +202,7 @@ struct ServiceView: View {
         }
     }
     
-    // Logic เลือกปลายทาง Social Board
+    // Logic เลือกปลายทาง Social Board (Admin vs Student)
     @ViewBuilder
     func destinationForSocial() -> some View {
         if socialVM.isAdmin {
@@ -209,6 +214,7 @@ struct ServiceView: View {
 }
 
 // MARK: - NEW SERVICE CARD COMPONENT
+// การ์ดเมนูบริการ (Reusable Component)
 struct ServiceCardNew: View {
     let icon: String
     let title: String

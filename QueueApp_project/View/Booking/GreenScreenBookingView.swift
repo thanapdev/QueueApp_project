@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// MARK: - Green Screen Booking View
+// หน้าจอสำหรับการจองห้อง Green Screen Studio
+// ผู้ใช้ต้องเลือกรอบเวลา -> เลือกห้อง -> เลือกอุปกรณ์เสริม
 struct GreenScreenBookingView: View {
     
     // MARK: - Properties
@@ -25,6 +28,7 @@ struct GreenScreenBookingView: View {
     @State private var selectedSlot: TimeSlot? = nil
     @State private var selectedEquipment: Set<String> = []
     
+    // ตรวจสอบความถูกต้อง (ต้องเลือกห้องและรอบเวลา)
     var isSelectionValid: Bool {
         selectedRoom != nil && selectedSlot != nil
     }
@@ -234,6 +238,7 @@ struct GreenScreenBookingView: View {
 }
 
 // MARK: - Room View Component
+// คอมโพเนนต์แสดงปุ่มเลือกห้อง
 struct GreenScreenRoomView: View {
     let roomNumber: Int
     @Binding var selectedRoom: Int?

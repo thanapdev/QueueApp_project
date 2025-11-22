@@ -1,23 +1,26 @@
 import SwiftUI
 import FirebaseAuth
 
+// MARK: - Login View
+// หน้าจอเข้าสู่ระบบสำหรับนิสิต
 struct LoginView: View {
     // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
-    @EnvironmentObject var appState: AppState
-    @State private var studentID = ""
-    @State private var password = ""
-    @State private var showAlert = false
-    @State private var errorMessage = ""
+    @EnvironmentObject var appState: AppState // เข้าถึง Global State
+    @State private var studentID = "" // ตัวแปรเก็บรหัสนิสิต
+    @State private var password = "" // ตัวแปรเก็บรหัสผ่าน
+    @State private var showAlert = false // สถานะการแสดง Alert
+    @State private var errorMessage = "" // ข้อความ Error
     
     var body: some View {
         ZStack {
-            // 1. Background (ใช้ตัวเดียวกับ WelcomeView)
+            // 1. Background (ใช้ตัวเดียวกับ WelcomeView เพื่อความต่อเนื่อง)
             DynamicBackground(style: .style2)
             
             // 2. Content
             VStack {
                 // ---------------------------------------
                 // HEADER: Logo & Welcome Text
+                // ส่วนหัวแสดงโลโก้และข้อความต้อนรับ
                 // ---------------------------------------
                 Spacer()
                 
@@ -45,6 +48,7 @@ struct LoginView: View {
                 
                 // ---------------------------------------
                 // FORM AREA: White Bottom Sheet
+                // ส่วนฟอร์มกรอกข้อมูล (พื้นหลังสีขาวโค้งมน)
                 // ---------------------------------------
                 ZStack {
                     Color.white
@@ -60,7 +64,7 @@ struct LoginView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.top, 30)
                         
-                        // Input Fields
+                        // Input Fields Group
                         VStack(spacing: 15) {
                             // Student ID Input
                             HStack {
@@ -93,7 +97,7 @@ struct LoginView: View {
                         }) {
                             Text("Login")
                         }
-                        .buttonStyle(BluePillButtonStyle()) // ใช้ปุ่มสีฟ้าตัวเดิม
+                        .buttonStyle(BluePillButtonStyle()) // ใช้ปุ่มสีฟ้าทรงแคปซูล
                         .padding(.top, 10)
                         
                         // Register Link
@@ -108,7 +112,7 @@ struct LoginView: View {
                         }
                         .font(.subheadline)
                         
-                        // Guest Link
+                        // Guest Link (เข้าใช้งานแบบไม่ล็อกอิน)
                         NavigationLink(destination: ServiceView().environmentObject(appState)) {
                             Text("Continue as Guest")
                                 .font(.subheadline)
@@ -134,10 +138,12 @@ struct LoginView: View {
     }
     
     // MARK: - LOGIC FUNCTIONS
+    // ฟังก์ชันล็อกอิน เรียกใช้ AppState
     func login() {
         appState.loginAsStudent(studentID: studentID, password: password) { success, message in
             if success {
                 print("LoginView: Login successful.")
+                // AppState จะเปลี่ยน isLoggedIn เป็น true และ ContentView จะเปลี่ยนหน้าให้เอง
             } else {
                 errorMessage = message ?? "Invalid credentials. Please try again."
                 showAlert = true
@@ -147,6 +153,7 @@ struct LoginView: View {
 }
 
 // MARK: - HELPER: Shape for Top Corners Only
+// Custom Shape สำหรับทำมุมโค้งเฉพาะบางมุม (ใช้กับ Bottom Sheet)
 struct RoundedCorner: Shape {
     var radius: CGFloat = .infinity
     var corners: UIRectCorner = .allCorners

@@ -7,13 +7,15 @@
 
 import SwiftUI
 
+// MARK: - Welcome View
+// หน้าแรกสุดของแอป (Landing Page) สำหรับผู้ใช้ที่ยังไม่ได้ล็อกอิน
 struct WelcomeView: View {
     @EnvironmentObject var appState: AppState
     
     var body: some View {
         NavigationView {
             ZStack {
-                // 1. Background กราฟิก
+                // 1. Background กราฟิก (ใช้ Style 1 สีฟ้าสดใส)
                 DynamicBackground(style: .style1)
                 
                 VStack(spacing: 0) {
@@ -23,6 +25,7 @@ struct WelcomeView: View {
                     Spacer()
                     
                     ZStack {
+                        // วงกลมตกแต่งพื้นหลังโลโก้
                         Circle()
                             .fill(Color.white.opacity(0.2))
                             .frame(width: 180, height: 180)
@@ -32,6 +35,7 @@ struct WelcomeView: View {
                             .frame(width: 150, height: 150)
                             .shadow(radius: 10)
                         
+                        // ไอคอนโลโก้
                         Image(systemName: "graduationcap.fill")
                             .font(.system(size: 80))
                             .foregroundColor(Color.Theme.primary)
@@ -41,19 +45,19 @@ struct WelcomeView: View {
                     Spacer()
                     
                     // ---------------------------------------
-                    // ส่วนล่าง: การ์ดสีฟ้าเข้มขึ้น หรือ พื้นที่โค้งๆ
+                    // ส่วนล่าง: Card สีขาวพร้อมข้อความต้อนรับ
                     // ---------------------------------------
                     ZStack {
-                        // สร้าง Shape โค้งด้านล่าง (เหมือนคลื่นในรูป)
+                        // สร้าง Shape โค้งด้านล่าง (เหมือนคลื่น)
                         WaveShapeBottomCard()
-                            .fill(Color.white) // เปลี่ยนเป็นสีขาวเพื่อให้ Text อ่านง่าย
+                            .fill(Color.white) // พื้นหลังสีขาว
                             .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: -5)
                         
                         VStack(spacing: 20) {
                             // Text Content
                             VStack(spacing: 8) {
                                 Text("SWU Services")
-                                    .font(.system(size: 32, weight: .heavy)) // Font หนาๆ
+                                    .font(.system(size: 32, weight: .heavy)) // Font หนาพิเศษ
                                     .foregroundColor(Color.Theme.primary)
                                 
                                 Text("มหาวิทยาลัยศรีนครินทรวิโรฒ")
@@ -71,33 +75,13 @@ struct WelcomeView: View {
                             
                             Spacer()
                             
-                            // ปุ่ม Sign In (สไตล์ขาว)
+                            // ปุ่ม Sign In (นำทางไป LoginView)
                             NavigationLink(destination: LoginView().environmentObject(appState)) {
                                 Text("Sign In")
                             }
-                            .buttonStyle(BluePillButtonStyle()) // ใช้ Style ใหม่แต่อาจจะกลืนกับพื้นขาว
+                            .buttonStyle(BluePillButtonStyle()) // ใช้ปุ่มมาตรฐานของแอป
                             .padding(.horizontal, 30)
                             .padding(.bottom, 10)
-                            // *ถ้าพื้นหลังเป็นขาว ปุ่มขาวจะมองไม่เห็น ให้ Override สีปุ่มตรงนี้*
-//                            .overlay(
-//                                Capsule()
-//                                    .stroke(Color.Theme.primary, lineWidth: 2) // ใส่ขอบแทน หรือเปลี่ยนเป็นปุ่มสีฟ้า
-//                            )
-                            
-                            // ** หรือถ้าอยากได้ปุ่มทึบสีฟ้าบนพื้นขาว ให้ใช้ Code นี้แทนปุ่มข้างบน **
-                            /*
-                            NavigationLink(destination: LoginView().environmentObject(appState)) {
-                                Text("Sign In")
-                                    .font(.headline)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 56)
-                                    .background(Color.Theme.primary)
-                                    .clipShape(Capsule())
-                                    .padding(.horizontal, 30)
-                            }
-                            */
                             
                             Text("Powered by SWU")
                                 .font(.caption)
@@ -109,13 +93,14 @@ struct WelcomeView: View {
                 }
                 .edgesIgnoringSafeArea(.bottom)
             }
-            .navigationBarHidden(true)
+            .navigationBarHidden(true) // ซ่อน Navigation Bar
         }
-        .navigationViewStyle(.stack)
+        .navigationViewStyle(.stack) // บังคับใช้ Stack Style เพื่อให้แสดงผลถูกต้องบน iPad
     }
 }
 
-// Shape สำหรับส่วนโค้งด้านล่าง
+// MARK: - Helper Shape
+// Shape สำหรับส่วนโค้งด้านล่าง (Wave Effect)
 struct WaveShapeBottomCard: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()

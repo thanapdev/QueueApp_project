@@ -8,14 +8,18 @@
 import SwiftUI
 
 // ==========================================
-// MARK: - BACKGROUND SYSTEM (คงเดิม)
+// MARK: - BACKGROUND SYSTEM
 // ==========================================
+// ระบบจัดการพื้นหลังแบบ Dynamic ที่สามารถเปลี่ยน Style ได้
+
 enum BackgroundStyle {
     case style1, style2, style3, random
 }
 
 struct DynamicBackground: View {
     var style: BackgroundStyle = .style1
+    
+    // คำนวณ Style ที่จะแสดงจริง (กรณี Random)
     var selectedStyle: BackgroundStyle {
         if style == .random {
             let styles: [BackgroundStyle] = [.style1, .style2, .style3]
@@ -26,8 +30,11 @@ struct DynamicBackground: View {
     
     var body: some View {
         ZStack {
+            // พื้นหลังไล่เฉดสีฟ้า
             LinearGradient(gradient: Gradient(colors: [Color.Theme.bgGradientStart, Color.Theme.bgGradientEnd]), startPoint: .top, endPoint: .bottom)
                 .edgesIgnoringSafeArea(.all)
+            
+            // แสดงลวดลายตาม Style ที่เลือก
             switch selectedStyle {
             case .style1: BackgroundVariant1()
             case .style2: BackgroundVariant2()
@@ -38,7 +45,9 @@ struct DynamicBackground: View {
     }
 }
 
-// --- BACKGROUND VARIANTS ---
+// --- BACKGROUND VARIANTS (ลวดลายต่างๆ) ---
+
+// แบบที่ 1: วงกลมและเส้นหยัก
 struct BackgroundVariant1: View {
     var body: some View {
         GeometryReader { geometry in
@@ -48,6 +57,8 @@ struct BackgroundVariant1: View {
         }
     }
 }
+
+// แบบที่ 2: วงกลมใหญ่กลางจอ
 struct BackgroundVariant2: View {
     var body: some View {
         GeometryReader { geometry in
@@ -56,6 +67,8 @@ struct BackgroundVariant2: View {
         }
     }
 }
+
+// แบบที่ 3: ประกายวิ้งๆ
 struct BackgroundVariant3: View {
     var body: some View {
         GeometryReader { geometry in
@@ -65,6 +78,8 @@ struct BackgroundVariant3: View {
 }
 
 // MARK: - HELPER SHAPES & BUTTONS
+
+// Shape รูปเส้นหยัก (Squiggle)
 struct SquiggleShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -75,6 +90,7 @@ struct SquiggleShape: Shape {
     }
 }
 
+// ปุ่มทรงแคปซูลสีฟ้า (Primary Button)
 struct BluePillButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -85,12 +101,12 @@ struct BluePillButtonStyle: ButtonStyle {
             .background(Color.Theme.primary)
             .clipShape(Capsule())
             .shadow(color: Color.Theme.primary.opacity(0.4), radius: 8, x: 0, y: 4)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0) // Effect เวลากด
             .animation(.spring(), value: configuration.isPressed)
     }
 }
 
-// ✅ NEW: White Pill Button Style (ใช้สำหรับปุ่มรอง หรือปุ่มที่มีพื้นหลังสีเข้ม)
+// ✅ NEW: White Pill Button Style (ปุ่มรอง พื้นหลังขาว)
 struct WhitePillButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -112,15 +128,16 @@ struct WhitePillButtonStyle: ButtonStyle {
 }
 
 // ==========================================
-// MARK: - SHARED ACTIVITY CARD (แก้ไขให้ตรงกับ AppState)
+// MARK: - SHARED ACTIVITY CARD
 // ==========================================
+// การ์ดแสดงรายการกิจกรรม/บริการ (ใช้ในหน้า List)
 
 struct ActivityCardView: View {
     @ObservedObject var activity: Activity
     
     var body: some View {
         HStack(spacing: 15) {
-            // Icon Box
+            // Icon Box ด้านซ้าย
             ZStack {
                 RoundedRectangle(cornerRadius: 15)
                     .fill(Color.Theme.primary.opacity(0.1))
@@ -131,7 +148,7 @@ struct ActivityCardView: View {
                     .foregroundColor(Color.Theme.primary)
             }
             
-            // Text Info
+            // Text Info ตรงกลาง
             VStack(alignment: .leading, spacing: 6) {
                 Text(activity.name)
                     .font(.headline)
@@ -146,7 +163,7 @@ struct ActivityCardView: View {
             
             Spacer()
             
-            // Queue Badge
+            // Queue Badge ด้านขวา (แสดงจำนวนคิว)
             QueueCountBadge(activity: activity)
         }
         .padding(12)
@@ -160,13 +177,13 @@ struct ActivityCardView: View {
     }
 }
 
+// Badge แสดงจำนวนคิว (สีเปลี่ยนตามจำนวนคน)
 struct QueueCountBadge: View {
     @ObservedObject var activity: Activity
     
     var body: some View {
         VStack(spacing: 2) {
-            // ⭐️ แก้ไข: ใช้ queueCount (Int) แทน queues.count (Array)
-            // เพราะหน้า List โหลดมาแค่ queueCount ไม่ได้โหลด Array
+            // ⭐️ แสดงจำนวนคิว (Int)
             Text("\(activity.queueCount)")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(statusColor)
@@ -184,12 +201,12 @@ struct QueueCountBadge: View {
         )
     }
     
+    // คำนวณสีตามความหนาแน่นของคิว
     private var statusColor: Color {
-        // ใช้ queueCount เช็คสี
         switch activity.queueCount {
-        case 0: return Color.green
-        case 1...5: return Color.orange
-        default: return Color.red
+        case 0: return Color.green // ว่าง
+        case 1...5: return Color.orange // ปานกลาง
+        default: return Color.red // หนาแน่น
         }
     }
 }
