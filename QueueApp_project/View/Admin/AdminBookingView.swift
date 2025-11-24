@@ -56,7 +56,7 @@ struct AdminBookingView: View {
                     
                     // --- Content Area (White Sheet) ---
                     ZStack {
-                        Color.white
+                        Color.Theme.white
                             .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                             .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                         
@@ -254,7 +254,7 @@ struct BookingAdminCard: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(Color.Theme.white)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         .overlay(

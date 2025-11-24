@@ -76,7 +76,7 @@ struct QueueView: View {
                 // CONTENT (White Sheet)
                 // ---------------------------------------
                 ZStack {
-                    Color.white
+                    Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
@@ -119,7 +119,7 @@ struct QueueView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 30)
-                        .background(Color.white)
+                        .background(Color.Theme.white)
                         .cornerRadius(20)
                         .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
                         .overlay(
@@ -229,7 +229,7 @@ struct QueueView: View {
                                         }
                                     }
                                     .padding()
-                                    .background(Color.white)
+                                    .background(Color.Theme.white)
                                     .cornerRadius(15)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 15)
@@ -362,7 +362,7 @@ struct AddQueueSheet: View {
                     
                     TextField("Customer Name", text: $customerName)
                         .padding()
-                        .background(Color.white.opacity(0.9))
+                        .background(Color.Theme.white.opacity(0.9))
                         .cornerRadius(12)
                     
                     Spacer()
@@ -398,7 +398,7 @@ struct CountdownModal: View {
 
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            Color.Theme.white.ignoresSafeArea()
             
             VStack(spacing: 30) {
                 Text("Waiting for Customer...")

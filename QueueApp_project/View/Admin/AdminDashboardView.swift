@@ -85,7 +85,7 @@ struct AdminDashboardView: View {
                     // --- CONTENT AREA (White Sheet) ---
                     // พื้นที่แสดงเมนูจัดการต่างๆ
                     ZStack {
-                        Color.white
+                        Color.Theme.white
                             .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                             .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                         
@@ -203,7 +203,7 @@ struct AdminDashboardCard: View {
         .padding(16)
         .frame(minHeight: 150)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(Color.Theme.white)
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         .overlay(

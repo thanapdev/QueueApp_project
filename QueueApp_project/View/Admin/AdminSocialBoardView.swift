@@ -34,7 +34,7 @@ struct AdminSocialBoardView: View {
                     // 2. POST LIST (Content Sheet - White Bottom)
                     ZStack {
                         // White Sheet (แค่ด้านล่าง)
-                        Color.white
+                        Color.Theme.white
                             .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                             .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                             .edgesIgnoringSafeArea(.bottom) // ให้พื้นหลังขาวลากยาวถึงขอบล่าง
@@ -233,7 +233,7 @@ private struct AdminRowContent: View {
         }
         .padding(15)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(Color.Theme.white)
         .cornerRadius(15)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
     }
@@ -288,7 +288,7 @@ private struct AdminDetailHeaderView: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         // ✅ พื้นหลังขาวและเงาเพื่อให้ลอยเด่นบนพื้นหลังธีม
-        .background(Color.white)
+        .background(Color.Theme.white)
         .cornerRadius(15)
         .shadow(color: .black.opacity(0.08), radius: 8)
     }
@@ -339,7 +339,7 @@ private struct AdminCommentRowView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(Color.Theme.white)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.03), radius: 3, x: 0, y: 1)
         .overlay(

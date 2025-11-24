@@ -92,7 +92,7 @@ struct ActivityListView: View {
                 // CONTENT AREA (White Sheet)
                 // ---------------------------------------
                 ZStack {
-                    Color.white
+                    Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
@@ -138,7 +138,7 @@ struct ActivityListView: View {
                                             Label("Delete", systemImage: "trash")
                                         }
                                     }
-                                    .listRowBackground(Color.white)
+                                    .listRowBackground(Color.Theme.white)
                                     .listRowSeparator(.hidden)
                             }
                         }
@@ -259,7 +259,7 @@ struct AddEditActivitySheet: View {
                     
                     TextField("เช่น 'กิจกรรมรับน้อง', 'ไหว้ครู'", text: $activityName)
                         .padding()
-                        .background(Color.white.opacity(0.8))
+                        .background(Color.Theme.white.opacity(0.8))
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
