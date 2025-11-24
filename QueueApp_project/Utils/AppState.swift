@@ -268,10 +268,17 @@ class AppState: ObservableObject {
     // MARK: - 6. Admin Logic
     // ฟังก์ชันสำหรับ Admin
     
-    // ฟังรายการจองทั้งหมด (Active Bookings)
+    /// เป็น Listener ของรายการจองทั้งหมดแบบ Real-time สำหรับ Admin
+    /// ข้อมูลจะถูกเก็บใน `allAdminBookings` เพื่อให้ทุก View ที่ต้องการใช้ข้อมูลนี้ (เช่น AdminDashboardView, AdminBookingView) สามารถแสดงผลได้ทันที
+    /// Listener นี้จะทำงานตลอดเวลาที่ Admin ล็อกอินอยู่ เพื่อให้ข้อมูลบน Dashboard และหน้าจัดการต่างๆ เป็นปัจจุบันเสมอ
     func listenToAdminBookings() {
-        if adminListener != nil { adminListener?.remove() }
+        // ตรวจสอบว่ามี Listener อยู่แล้วหรือไม่ เพื่อป้องกันการสร้าง Listener ซ้ำซ้อน
+        guard adminListener == nil else {
+            print("Admin listener already active. Skipping redundant start.")
+            return
+        }
         
+        print("Starting Admin booking listener...")
         adminListener = bookingService.listenToAdminBookings { [weak self] bookings in
             DispatchQueue.main.async {
                 self?.allAdminBookings = bookings
@@ -279,10 +286,15 @@ class AppState: ObservableObject {
         }
     }
     
+    /// หยุดฟังการเปลี่ยนแปลงของรายการจองทั้งหมด และล้างข้อมูล `allAdminBookings`
+    /// ควรเรียกใช้เมื่อ Admin ออกจากระบบ (Logout) เพื่อเคลียร์ State และประหยัดทรัพยากร
     func stopListeningToAdminBookings() {
-        adminListener?.remove()
-        adminListener = nil
-        allAdminBookings = []
+        if adminListener != nil {
+            print("Stopping Admin booking listener...")
+            adminListener?.remove()
+            adminListener = nil
+            allAdminBookings = [] // ล้างข้อมูลเมื่อหยุดฟัง
+        }
     }
     
     // Check-in: เปลี่ยนสถานะเป็น In-Use และเริ่มนับเวลา
@@ -390,6 +402,14 @@ class AppState: ObservableObject {
                         self?.listenForActiveBooking()
                         // ⭐️ เริ่มฟังรายการกิจกรรมแบบ Real-time ตั้งแต่ Login
                         self?.listenToActivities()
+
+                        // MARK: - การแก้ไข: เริ่ม Listener สำหรับ Admin Bookings ทันทีที่ Admin Login
+                        // ทำให้ `appState.allAdminBookings` ได้รับการอัปเดตแบบ Real-time ตลอดเวลา
+                        // ตั้งแต่ Admin เข้าสู่ระบบ ส่งผลให้ AdminDashboardView แสดงจำนวนที่ถูกต้อง
+                        // และ AdminBookingView แสดงข้อมูลทันทีโดยไม่มีอาการหายแว็บไป
+                        if user.role == .admin {
+                            self?.listenToAdminBookings()
+                        }
                     }
                     completion(true, nil)
                 }
@@ -448,7 +468,7 @@ class AppState: ObservableObject {
                 
                 // ลบ Activity ที่ไม่มีใน Firestore แล้ว
                 let loadedIDs = Set(loadedActivities.map { $0.id })
-                self.activities.removeAll { !loadedIDs.contains($0.id) }
+                self.activities.removeAll { !loadedIDs.contains(self.activities.id) } // แก้ไขตรงนี้: ควรเป็น $0.id
             }
         }
     }
@@ -500,11 +520,6 @@ class AppState: ObservableObject {
         // Wait, QueueService has `updateCurrentQueueNumber` as private helper.
         // If we need to expose it or if it's called from View...
         // It seems `updateCurrentQueueNumber` was called from `updateQueueItemStatus` internally in AppState.
-        // So we don't need to expose it if it's only used internally.
-        // However, if Views call it directly... let's check.
-        // It seems `updateCurrentQueueNumber` was public in AppState.
-        // Let's keep it for compatibility but implementation might be tricky if it's private in Service.
-        // Actually, `updateQueueItemStatus` in Service already calls `updateCurrentQueueNumber`.
         // So we might not need to call it explicitly from View.
     }
 

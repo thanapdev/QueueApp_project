@@ -10,8 +10,9 @@ import SwiftUI
 // MARK: - Admin Booking View
 // หน้าจัดการการจองสำหรับ Admin
 // ทำหน้าที่:
-// 1. แสดงรายการจองทั้งหมด
-// 2. ยกเลิกการจอง
+// 1. แสดงรายการจองทั้งหมดที่ยัง Active อยู่ (ดึงข้อมูลจาก `appState.allAdminBookings` ที่อัปเดตแบบ Real-time)
+// 2. มีปุ่มสำหรับ Check-in, Finish หรือ Skip Time สำหรับแต่ละรายการ
+// 3. (เดิม) ยกเลิกการจอง
 struct AdminBookingView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.presentationMode) var presentationMode
@@ -74,6 +75,7 @@ struct AdminBookingView: View {
                                 Spacer()
                                 
                                 // Count Badge
+                                // แสดงจำนวนการจองที่อัปเดตแบบ Real-time จาก appState.allAdminBookings
                                 Text("\(appState.allAdminBookings.count)")
                                     .font(.caption)
                                     .fontWeight(.bold)
@@ -87,7 +89,7 @@ struct AdminBookingView: View {
                             
                             // Booking List
                             if appState.allAdminBookings.isEmpty {
-                                // Empty State
+                                // Empty State: แสดงเมื่อไม่มีการจองที่ Active
                                 VStack(spacing: 15) {
                                     Spacer()
                                     Image(systemName: "calendar.badge.exclamationmark")
@@ -100,10 +102,11 @@ struct AdminBookingView: View {
                                 }
                                 .frame(maxWidth: .infinity)
                             } else {
-                                // List of Bookings
+                                // List of Bookings: แสดงรายการการจองทั้งหมด
                                 ScrollView(showsIndicators: false) {
                                     LazyVStack(spacing: 16) {
-                                        // Loop แสดงรายการจอง
+                                        // Loop แสดงรายการจอง โดยใช้ข้อมูลจาก appState.allAdminBookings
+                                        // ซึ่งถูกฟังและอัปเดตโดย AppState ตลอดเวลาที่ Admin Login อยู่
                                         ForEach(appState.allAdminBookings, id: \.docID) { bookingTuple in
                                             BookingAdminCard(booking: bookingTuple.data, docID: bookingTuple.docID)
                                         }
@@ -119,8 +122,6 @@ struct AdminBookingView: View {
             }
             .navigationBarHidden(true)
         }
-        .onAppear { appState.listenToAdminBookings() } // เริ่มฟังข้อมูล Real-time
-        .onDisappear { appState.stopListeningToAdminBookings() } // หยุดฟังเมื่อออก
     }
 }
 

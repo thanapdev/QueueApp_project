@@ -121,6 +121,7 @@ struct AdminDashboardView: View {
                                     NavigationLink(destination: AdminBookingView().environmentObject(appState)) {
                                         AdminDashboardCard(
                                             title: "Bookings Management",
+                                            // ⭐️ จะแสดงจำนวนที่โหลดมาล่าสุดจาก AdminBookingView หรือเป็น 0 ถ้า AdminBookingView ยังไม่โหลด
                                             count: "\(appState.allAdminBookings.count)",
                                             icon: "calendar.badge.clock",
                                             color: .orange
@@ -154,12 +155,14 @@ struct AdminDashboardView: View {
             .navigationBarHidden(true)
         }
         .onAppear {
-            // เริ่ม Listener สำหรับการจองทั้งหมด (Bookings) เพื่อแสดงตัวเลข Real-time
-            appState.listenToAdminBookings()
+            // ไม่ต้อง listenToAdminBookings() ตรงนี้แล้ว
+            // appState.listenToAdminBookings() // <-- ลบบรรทัดนี้ออก
+            // ถ้าอยากให้ตัวเลขบน Dashboard update real-time อาจจะต้องให้ AppState มี listener แยกสำหรับ "นับจำนวน" เฉยๆ
+            // แต่สำหรับตอนนี้ ให้ AdminBookingView เป็นคนจัดการทั้งหมด
         }
         .onDisappear {
-            // หยุด Listener เมื่อออกจากหน้า Dashboard
-            appState.stopListeningToAdminBookings()
+            // ไม่ต้อง stopListeningToAdminBookings() ตรงนี้แล้ว
+            // appState.stopListeningToAdminBookings() // <-- ลบบรรทัดนี้ออก
         }
     }
 }
