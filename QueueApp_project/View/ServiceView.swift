@@ -93,7 +93,7 @@ struct ServiceView: View {
                 // ส่วนเมนูบริการ (Grid 2 คอลัมน์)
                 // ---------------------------------------
                 ZStack {
-                    Color.white
+                    Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
@@ -248,7 +248,7 @@ struct ServiceCardNew: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 160)
-        .background(Color.white)
+        .background(Color.Theme.white)
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
         .overlay(

@@ -104,7 +104,7 @@ struct PostRowView: View {
         }
         .padding(15)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(Color.Theme.white)
         .cornerRadius(15)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         .overlay(
@@ -355,7 +355,7 @@ private struct PostHeaderDetailView: View {
         .padding(15)
         .frame(maxWidth: .infinity, alignment: .leading)
         // ✅ Style: พื้นหลังขาวและเงาเพื่อให้ลอยเด่นบน DynamicBackground
-        .background(Color.white)
+        .background(Color.Theme.white)
         .cornerRadius(15)
         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
         .overlay(
@@ -394,7 +394,7 @@ private struct CommentRowView: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         // ✅ Style: การ์ดคอมเมนต์ที่เล็กและสะอาดกว่า
-        .background(Color.white)
+        .background(Color.Theme.white)
         .cornerRadius(10)
         .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 1)
         .overlay(
@@ -447,7 +447,7 @@ private struct CommentInputBar: View {
             .padding(.top, 8)
             .padding(.bottom, 8)
         }
-        .background(Color.white)
+        .background(Color.Theme.white)
         .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: -2)
     }
 }

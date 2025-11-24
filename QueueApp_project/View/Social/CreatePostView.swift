@@ -79,7 +79,7 @@ struct CreatePostView: View {
                                 .padding(.horizontal, 10)
                                 .padding(.bottom, 5)
                             }
-                            .background(Color.white)
+                            .background(Color.Theme.white)
                             .cornerRadius(15)
                             .overlay(RoundedRectangle(cornerRadius: 15).stroke(Color.gray.opacity(0.2), lineWidth: 1))
                             .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
@@ -120,7 +120,7 @@ struct CreatePostView: View {
                             }
                             .padding()
                         }
-                        .background(Color.white)
+                        .background(Color.Theme.white)
                         .cornerRadius(15)
                         .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
                         .padding(.horizontal, 20)

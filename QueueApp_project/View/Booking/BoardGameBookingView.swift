@@ -77,7 +77,7 @@ struct BoardGameBookingView: View {
                 
                 // --- CONTENT (White Sheet) ---
                 ZStack {
-                    Color.white
+                    Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
@@ -147,7 +147,7 @@ struct BoardGameBookingView: View {
                                             }
                                         }
                                         .padding()
-                                        .background(isSelected ? Color.green.opacity(0.05) : Color.white)
+                                        .background(isSelected ? Color.green.opacity(0.05) : Color.Theme.white)
                                         .cornerRadius(10)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)

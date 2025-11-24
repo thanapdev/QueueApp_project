@@ -51,7 +51,7 @@ struct LoginView: View {
                 // ส่วนฟอร์มกรอกข้อมูล (พื้นหลังสีขาวโค้งมน)
                 // ---------------------------------------
                 ZStack {
-                    Color.white
+                    Color.Theme.white
                         // ทำมุมโค้งเฉพาะด้านบน
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)

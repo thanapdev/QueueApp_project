@@ -69,7 +69,7 @@ struct StudentQueueJoinView: View {
                 // CONTENT AREA (White Sheet)
                 // ---------------------------------------
                 ZStack {
-                    Color.white
+                    Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
