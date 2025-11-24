@@ -194,9 +194,6 @@ struct ActivityListView: View {
                 }
             )
         }
-        .onAppear {
-            appState.loadActivities()
-        }
     }
 }
 

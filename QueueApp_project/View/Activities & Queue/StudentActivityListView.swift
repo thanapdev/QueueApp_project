@@ -99,8 +99,5 @@ struct StudentActivityListView: View {
             .edgesIgnoringSafeArea(.bottom)
         }
         .navigationBarHidden(true)
-        .onAppear {
-            appState.loadActivities()
-        }
     }
 }

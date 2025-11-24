@@ -148,9 +148,7 @@ struct AdminDashboardView: View {
             .navigationBarHidden(true)
         }
         .onAppear {
-            // 1. ดึงรายการกิจกรรม (Activities)
-            appState.loadActivities()
-            // 2. เริ่ม Listener สำหรับการจองทั้งหมด (Bookings) เพื่อแสดงตัวเลข Real-time
+            // เริ่ม Listener สำหรับการจองทั้งหมด (Bookings) เพื่อแสดงตัวเลข Real-time
             appState.listenToAdminBookings()
         }
         .onDisappear {

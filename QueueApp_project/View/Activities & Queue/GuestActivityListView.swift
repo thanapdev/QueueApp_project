@@ -96,8 +96,5 @@ struct GuestActivityListView: View {
                 dismissButton: .default(Text("ตกลง"))
             )
         }
-        .onAppear {
-            appState.loadActivities()
-        }
     }
 }
