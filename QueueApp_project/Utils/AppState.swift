@@ -268,8 +268,9 @@ class AppState: ObservableObject {
     // MARK: - 6. Admin Logic
     // ฟังก์ชันสำหรับ Admin
     
-    /// เป็น Listener ของรายการจองทั้งหมดแบบ Real-time สำหรับ Admin
-    /// ข้อมูลจะถูกเก็บใน `allAdminBookings` เพื่อให้ทุก View ที่ต้องการใช้ข้อมูลนี้ (เช่น AdminDashboardView, AdminBookingView) สามารถแสดงผลได้ทันที
+    /// เริ่มฟังการเปลี่ยนแปลงของรายการจองทั้งหมดแบบ Real-time สำหรับ Admin
+    /// ข้อมูลจะถูกเก็บใน `allAdminBookings` เพื่อให้ทุก View ที่ต้องการใช้ข้อมูลนี้ (เช่น AdminDashboardView, AdminBookingView)
+    /// สามารถแสดงผลได้ทันทีและอัปเดตอย่างต่อเนื่อง
     /// Listener นี้จะทำงานตลอดเวลาที่ Admin ล็อกอินอยู่ เพื่อให้ข้อมูลบน Dashboard และหน้าจัดการต่างๆ เป็นปัจจุบันเสมอ
     func listenToAdminBookings() {
         // ตรวจสอบว่ามี Listener อยู่แล้วหรือไม่ เพื่อป้องกันการสร้าง Listener ซ้ำซ้อน
@@ -403,10 +404,10 @@ class AppState: ObservableObject {
                         // ⭐️ เริ่มฟังรายการกิจกรรมแบบ Real-time ตั้งแต่ Login
                         self?.listenToActivities()
 
-                        // MARK: - การแก้ไข: เริ่ม Listener สำหรับ Admin Bookings ทันทีที่ Admin Login
-                        // ทำให้ `appState.allAdminBookings` ได้รับการอัปเดตแบบ Real-time ตลอดเวลา
-                        // ตั้งแต่ Admin เข้าสู่ระบบ ส่งผลให้ AdminDashboardView แสดงจำนวนที่ถูกต้อง
-                        // และ AdminBookingView แสดงข้อมูลทันทีโดยไม่มีอาการหายแว็บไป
+                        // MARK: - อัปเดต Comment: เริ่ม Listener สำหรับ Admin Bookings ทันทีที่ Admin Login
+                        // Logic นี้ทำให้ `appState.allAdminBookings` ได้รับการอัปเดตแบบ Real-time ตลอดเวลา
+                        // ตั้งแต่ Admin เข้าสู่ระบบ ส่งผลให้ `AdminDashboardView` แสดงจำนวนการจองที่ถูกต้อง
+                        // และ `AdminBookingView` แสดงข้อมูลทันทีโดยไม่มีอาการข้อมูลหายแว็บไป เนื่องจาก `AppState` เป็นผู้จัดการ Listener หลัก
                         if user.role == .admin {
                             self?.listenToAdminBookings()
                         }
@@ -467,8 +468,9 @@ class AppState: ObservableObject {
                 }
                 
                 // ลบ Activity ที่ไม่มีใน Firestore แล้ว
+                // แก้ไขข้อผิดพลาด: ควรใช้ $0.id เพื่อเข้าถึง id ของแต่ละ Activity ใน array
                 let loadedIDs = Set(loadedActivities.map { $0.id })
-                self.activities.removeAll { !loadedIDs.contains(self.activities.id) } // แก้ไขตรงนี้: ควรเป็น $0.id
+                self.activities.removeAll { !loadedIDs.contains($0.id) }
             }
         }
     }
