@@ -8,10 +8,16 @@
 import SwiftUI
 
 // MARK: - Admin Dashboard View
-// หน้าหลักสำหรับผู้ดูแลระบบ (Admin)
-// แสดงภาพรวมและเมนูนำทางไปยังฟีเจอร์จัดการต่างๆ
+// หน้าหลักสำหรับ Admin
+// ทำหน้าที่:
+// 1. แสดงสถิติภาพรวม (จำนวนการจอง, กิจกรรม)
+// 2. นำทางไปหน้าจัดการต่างๆ
 struct AdminDashboardView: View {
-    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var appState: AppState               // Global state
+    
+    // MARK: - State
+    @State private var totalBookings: Int = 0               // จำนวนการจองทั้งหมด
+    @State private var totalActivities: Int = 0             // จำนวนกิจกรรมทั้งหมด
     
     var body: some View {
         NavigationStack {

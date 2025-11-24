@@ -3,18 +3,24 @@ import FirebaseAuth
 import FirebaseFirestore
 
 // MARK: - Register View
-// หน้าจอลงทะเบียนสมาชิกใหม่
+// หน้าจอลงทะเบียนสมาชิกใหม่ (Registration)
+// ทำหน้าที่:
+// 1. รับข้อมูลผู้ใช้ใหม่ (ชื่อ, รหัสนิสิต, Email, Password)
+// 2. เลือกบทบาท (Student/Admin)
+// 3. เรียกใช้ AppState.register() เพื่อสร้างบัญชีใน Firebase
+// 4. แสดง Alert เมื่อสำเร็จหรือล้มเหลว
 struct RegisterView: View {
-    // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
-    @EnvironmentObject var appState: AppState
+    // MARK: - Properties
+    
+    @EnvironmentObject var appState: AppState // Global state
     @State private var name = "" // ชื่อ-นามสกุล
-    @State private var studentID = "" // รหัสนิสิต
+    @State private var studentID = "" // รหัสนิสิต (11 หลัก)
     @State private var email = "" // อีเมล
     @State private var password = "" // รหัสผ่าน
     @State private var selectedRole: AppState.UserRole = .student // บทบาทที่เลือก (Default: Student)
-    @State private var showAlert = false
-    @State private var errorMessage = ""
-    @State private var showSuccessAlert = false
+    @State private var showAlert = false // สถานะการแสดง Alert สำหรับข้อผิดพลาด
+    @State private var errorMessage = "" // ข้อความแสดงข้อผิดพลาด
+    @State private var showSuccessAlert = false // สถานะการแสดง Alert สำหรับความสำเร็จ
     @Environment(\.presentationMode) var presentationMode // ใช้สำหรับปิดหน้านี้ (Back)
 
     var body: some View {
@@ -137,8 +143,11 @@ struct RegisterView: View {
         }
     }
     
-    // MARK: - LOGIC FUNCTION
-    // ฟังก์ชันสมัครสมาชิก เรียกใช้ AppState
+    // MARK: - Registration Logic
+    
+    /// ฟังก์ชันลงทะเบียนสมาชิก
+    /// เรียกใช้ AppState.register() และจัดการผลลัพธ์
+    /// - Note: ตรวจสอบรหัสนิสิต 11 หลักและบันทึกลง Firestore
     func register() {
         appState.register(name: name, studentID: studentID, email: email, password: password, role: selectedRole) { success, message in
             if success {

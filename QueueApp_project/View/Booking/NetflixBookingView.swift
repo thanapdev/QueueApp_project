@@ -8,23 +8,26 @@
 import SwiftUI
 
 // MARK: - Netflix Booking View
-// หน้าจอสำหรับการจองห้อง Netflix Room
-// ผู้ใช้ต้องเลือกรอบเวลา -> เลือกห้อง
+// หน้าจองห้อง Netflix Room
+// ทำหน้าที่:
+// 1. เลือกรอบเวลา (Time Slot)
+// 2. เลือกห้อง (Room 1-6)
+// 3. ตรวจสอบสถานะว่างและยืนยันการจอง
 struct NetflixBookingView: View {
     
     // MARK: - Properties
-    @EnvironmentObject var appState: AppState
-    @Environment(\.dismiss) var dismiss
-    let service: LibraryService
+    @EnvironmentObject var appState: AppState       // Global state
+    @Environment(\.dismiss) var dismiss             // ใช้สำหรับปิดหน้านี้
+    let service: LibraryService                     // ข้อมูลบริการที่เลือก
     
     // Layouts
-    let roomColumns = [GridItem(.flexible(), spacing: 15), GridItem(.flexible(), spacing: 15), GridItem(.flexible(), spacing: 15)]
-    let slotColumns = [GridItem(.flexible()), GridItem(.flexible())]
+    let roomColumns = [GridItem(.flexible(), spacing: 15), GridItem(.flexible(), spacing: 15), GridItem(.flexible(), spacing: 15)]  // Grid 3 คอลัมน์สำหรับห้อง
+    let slotColumns = [GridItem(.flexible()), GridItem(.flexible())]  // Grid 2 คอลัมน์สำหรับรอบเวลา
     
     // MARK: - State
-    @State private var timeSlots: [TimeSlot] = [] // (ข้อมูลรอบเวลา)
-    @State private var selectedRoom: Int? = nil
-    @State private var selectedSlot: TimeSlot? = nil
+    @State private var timeSlots: [TimeSlot] = []   // รายการรอบเวลาทั้งหมด
+    @State private var selectedRoom: Int? = nil     // ห้องที่เลือก (1-6)
+    @State private var selectedSlot: TimeSlot? = nil // รอบเวลาที่เลือก
     
     // MARK: - Body
     var body: some View {

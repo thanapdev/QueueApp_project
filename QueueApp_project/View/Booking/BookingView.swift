@@ -9,12 +9,15 @@ import SwiftUI
 
 // MARK: - Booking View
 // หน้าหลักสำหรับการจองบริการห้องสมุด (Library Services)
-// แสดงรายการบริการต่างๆ เช่น Co-working Space, Netflix Room, Board Game, Green Screen
+// ทำหน้าที่:
+// 1. แสดงรายการบริการทั้งหมด (Co-working, Netflix, Board Game, Green Screen)
+// 2. แสดงสถานะการจองปัจจุบัน (ถ้ามี)
+// 3. นำทางไปหน้าจองแต่ละบริการ
 struct BookingView: View {
     
     // MARK: - Properties
-    @EnvironmentObject var appState: AppState
-    @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var appState: AppState               // Global state
+    @Environment(\.presentationMode) var presentationMode   // ใช้สำหรับปิดหน้านี้
     
     // Grid Layout: จัดวางการ์ดบริการเป็น 2 คอลัมน์
     let gridColumns: [GridItem] = [

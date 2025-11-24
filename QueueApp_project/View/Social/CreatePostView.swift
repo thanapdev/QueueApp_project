@@ -9,17 +9,21 @@ import SwiftUI
 
 // MARK: - Create Post View
 // หน้าสร้างโพสต์ใหม่
-// ให้ผู้ใช้กรอกเนื้อหา เลือกหมวดหมู่ และเลือกว่าจะโพสต์แบบไม่ระบุตัวตนหรือไม่
+// ทำหน้าที่:
+// 1. รับข้อความโพสต์จากผู้ใช้
+// 2. เลือกหมวดหมู่ (ทั่วไป, ถาม-ตอบ, อื่นๆ)
+// 3. เลือกโหมด Anonymous หรือไม่
+// 4. ส่งโพสต์ไป Firestore
 struct CreatePostView: View {
-    @Environment(\.presentationMode) var presentationMode
-    @ObservedObject var viewModel: SocialViewModel
+    @Environment(\.presentationMode) var presentationMode   // ใช้สำหรับปิดหน้านี้
+    @ObservedObject var viewModel: SocialViewModel          // ViewModel หลัก
     
-    @State private var contentText: String = ""
-    @State private var selectedCategory: String = "พูดคุยทั่วไป"
-    @State private var isAnonymous: Bool = false
+    @State private var contentText: String = ""             // ข้อความโพสต์
+    @State private var selectedCategory: String = "พูดคุยทั่วไป"  // หมวดหมู่ที่เลือก
+    @State private var isAnonymous: Bool = false            // โหมด Anonymous
     
-    let characterLimit = 500
-    let categories = ["พูดคุยทั่วไป", "ถาม-ตอบ", "รีวิววิชา/อาจารย์", "ของหาย", "หาเพื่อน", "ตลาดนัด"]
+    let characterLimit = 500                                // จำกัดจำนวนตัวอักษร
+    let categories = ["พูดคุยทั่วไป", "ถาม-ตอบ", "รีวิววิชา/อาจารย์", "ของหาย", "หาเพื่อน", "ตลาดนัด"] // รายการหมวดหมู่ทั้งหมด
     
     // Logic การโพสต์ (PRESERVED)
     private func submitPost() {

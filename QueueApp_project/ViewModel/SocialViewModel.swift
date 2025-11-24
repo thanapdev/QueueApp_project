@@ -4,18 +4,26 @@ import FirebaseAuth
 import FirebaseFirestore
 
 // MARK: - Social View Model
-// ตัวจัดการ Logic ทั้งหมดของหน้า Social (Community Board)
-// ทำหน้าที่: ดึงโพสต์, สร้างโพสต์, กดไลค์, ลบโพสต์, และจัดการคอมเมนต์
+// ViewModel สำหรับจัดการ Logic ทั้งหมดของหน้า Social (Community Board)
+// ทำหน้าที่:
+// 1. ดึงโพสต์แบบ Real-time จาก Firestore
+// 2. สร้างโพสต์ใหม่ (รองรับโหมด Anonymous)
+// 3. จัดการไลค์ (Like/Unlike)
+// 4. ลบโพสต์ (Admin และเจ้าของโพสต์)
+// 5. จัดการคอมเมนต์ (เพิ่ม/ลบ)
 class SocialViewModel: ObservableObject {
     
     // MARK: - Published Properties
-    @Published var posts: [SocialPost] = [] // รายการโพสต์ทั้งหมด
-    @Published var isLoading: Bool = false // สถานะการโหลดข้อมูล
-    @Published var errorMessage: String? // ข้อความ Error (ถ้ามี)
-    @Published var isAdmin: Bool = false // สถานะ Admin ของผู้ใช้ปัจจุบัน (เพื่อโชว์ปุ่มลบทุกโพสต์)
     
-    private var db = Firestore.firestore()
-    private var listenerRegistration: ListenerRegistration? // ตัวเก็บ Listener เพื่อใช้ยกเลิกเมื่อไม่ต้องการฟังแล้ว
+    @Published var posts: [SocialPost] = []      // รายการโพสต์ทั้งหมดที่ดึงมาจาก Firestore
+    @Published var isLoading: Bool = false       // สถานะการโหลดข้อมูล (แสดง Loading Indicator)
+    @Published var errorMessage: String?         // ข้อความ Error (ถ้ามี) สำหรับแสดง Alert
+    @Published var isAdmin: Bool = false         // สถานะ Admin ของผู้ใช้ปัจจุบัน (เพื่อแสดงปุ่มลบทุกโพสต์)
+    
+    // MARK: - Private Properties
+    
+    private var db = Firestore.firestore()                      // Firebase Firestore instance
+    private var listenerRegistration: ListenerRegistration?     // Listener สำหรับฟังการเปลี่ยนแปลงของโพสต์แบบ Real-time
     
     init() {
         checkAdminStatus() // ตรวจสอบสิทธิ์ก่อน
@@ -26,8 +34,10 @@ class SocialViewModel: ObservableObject {
         listenerRegistration?.remove() // ยกเลิกการดึงข้อมูลเมื่อหน้านี้ถูกปิด (Memory Management)
     }
     
-    // MARK: - 1. Authentication & Admin Check
-    // ตรวจสอบว่า User ปัจจุบันเป็น Admin หรือไม่
+    // MARK: - Authentication & Admin Check
+    
+    /// ตรวจสอบสิทธิ์ Admin ของผู้ใช้ปัจจุบัน
+    /// - Note: ใช้วิธีเช็คจาก Email (Hardcoded List) หรือดึงจาก Firestore Collection 'users'
     func checkAdminStatus() {
         guard let user = Auth.auth().currentUser else { return }
         
@@ -49,8 +59,10 @@ class SocialViewModel: ObservableObject {
         */
     }
     
-    // MARK: - 2. Fetch Posts (Real-time)
-    // ดึงข้อมูลโพสต์จาก Firestore แบบ Real-time
+    // MARK: - Fetch Posts
+    
+    /// ดึงข้อมูลโพสต์จาก Firestore แบบ Real-time
+    /// ใช้ Snapshot Listener เพื่อให้ UI อัปเดตทันทีเมื่อมีการเปลี่ยนแปลง
     func fetchPosts() {
         isLoading = true
         
@@ -83,8 +95,14 @@ class SocialViewModel: ObservableObject {
             }
     }
     
-    // MARK: - 3. Create Post
-    // สร้างโพสต์ใหม่
+    // MARK: - Create Post
+    
+    /// สร้างโพสต์ใหม่
+    /// - Parameters:
+    ///   - content: เนื้อหาโพสต์
+    ///   - category: หมวดหมู่ (เช่น "ทั่วไป", "ถาม-ตอบ")
+    ///   - isAnonymous: โพสต์แบบไม่ระบุชื่อหรือไม่
+    ///   - completion: Callback เมื่อเสร็จสิ้น (success: Bool)
     func createPost(content: String, category: String, isAnonymous: Bool, completion: @escaping (Bool) -> Void) {
         guard let user = Auth.auth().currentUser else {
             self.errorMessage = "กรุณาเข้าสู่ระบบ"
@@ -138,8 +156,10 @@ class SocialViewModel: ObservableObject {
         }
     }
     
-    // MARK: - 4. Toggle Like
-    // กดไลค์ / ยกเลิกไลค์
+    // MARK: - Toggle Like
+    
+    /// กดไลค์หรือยกเลิกไลค์โพสต์
+    /// - Parameter post: โพสต์ที่ต้องการไลค์/ยกเลิกไลค์
     func toggleLike(post: SocialPost) {
         guard let postID = post.id, let userID = Auth.auth().currentUser?.uid else { return }
         
@@ -160,8 +180,11 @@ class SocialViewModel: ObservableObject {
         }
     }
     
-    // MARK: - 5. Delete Post
-    // ลบโพสต์ (ใช้ได้ทั้ง Admin และ เจ้าของโพสต์)
+    // MARK: - Delete Post
+    
+    /// ลบโพสต์
+    /// - Parameter post: โพสต์ที่ต้องการลบ
+    /// - Note: ใช้ได้ทั้ง Admin และเจ้าของโพสต์
     func deletePost(post: SocialPost) {
         guard let postID = post.id else { return }
         
@@ -178,9 +201,12 @@ class SocialViewModel: ObservableObject {
         }
     }
     
-    // MARK: - 6. Comments Logic
+    // MARK: - Comments Management
     
-    /// ดึงคอมเมนต์ของโพสต์ที่กำหนด (ใช้ใน PostDetailView)
+    /// ดึงคอมเมนต์ของโพสต์แบบ Real-time
+    /// - Parameters:
+    ///   - postID: ID ของโพสต์
+    ///   - completion: Callback ที่ส่งรายการคอมเมนต์กลับมา
     func fetchComments(for postID: String, completion: @escaping ([SocialComment]) -> Void) {
         db.collection("social_posts").document(postID).collection("comments")
             .order(by: "timestamp", descending: false) // เรียงจากเก่าไปใหม่ (คอมเมนต์แรกอยู่บน)
@@ -199,6 +225,11 @@ class SocialViewModel: ObservableObject {
     }
 
     /// เพิ่มคอมเมนต์ใหม่
+    /// - Parameters:
+    ///   - postID: ID ของโพสต์ที่ต้องการคอมเมนต์
+    ///   - content: เนื้อหาคอมเมนต์
+    ///   - isAnonymous: คอมเมนต์แบบไม่ระบุชื่อหรือไม่
+    ///   - completion: Callback เมื่อเสร็จสิ้น (success: Bool)
     func addComment(to postID: String, content: String, isAnonymous: Bool, completion: @escaping (Bool) -> Void) {
         guard let user = Auth.auth().currentUser else { return }
         let userID = user.uid
@@ -235,7 +266,11 @@ class SocialViewModel: ObservableObject {
         }
     }
     
-    /// ลบคอมเมนต์ที่กำหนด (Admin สามารถใช้ฟังก์ชันนี้ได้)
+    /// ลบคอมเมนต์
+    /// - Parameters:
+    ///   - postID: ID ของโพสต์
+    ///   - commentID: ID ของคอมเมนต์ที่ต้องการลบ
+    /// - Note: Admin สามารถลบคอมเมนต์ทุกอันได้
     func deleteComment(postID: String, commentID: String) {
         db.collection("social_posts").document(postID)
             .collection("comments").document(commentID).delete { error in

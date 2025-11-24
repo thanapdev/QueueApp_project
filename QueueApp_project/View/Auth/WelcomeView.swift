@@ -8,7 +8,11 @@
 import SwiftUI
 
 // MARK: - Welcome View
-// หน้าแรกสุดของแอป (Landing Page) สำหรับผู้ใช้ที่ยังไม่ได้ล็อกอิน
+// หน้าต้อนรับแรก (Landing Page)
+// ทำหน้าที่:
+// 1. แสดงโลโก้และข้อความต้อนรับ
+// 2. นำทางไปหน้า Login หรือ Register
+// 3. ใช้ DynamicBackground สำหรับพื้นหลังแบบ Animated
 struct WelcomeView: View {
     @EnvironmentObject var appState: AppState
     

@@ -12,8 +12,11 @@ import FirebaseAuth
 // MARK: - 1. ADMIN MAIN FEED VIEW (AdminSocialBoardView)
 // ******************************************************
 // หน้าหลักสำหรับ Admin ในการจัดการ Social Board
-// แสดงรายการโพสต์ทั้งหมด และสามารถลบโพสต์ที่ไม่เหมาะสมได้
-
+// MARK: - Admin Social Board View
+// หน้าจัดการ Social Board สำหรับ Admin
+// ทำหน้าที่:
+// 1. แสดงรายการโพสต์ทั้งหมด
+// 2. ลบโพสต์และคอมเมนต์ที่ไม่เหมาะสม
 struct AdminSocialBoardView: View {
     @StateObject var viewModel = SocialViewModel()
     @Environment(\.presentationMode) var presentationMode

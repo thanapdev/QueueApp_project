@@ -8,27 +8,28 @@
 import SwiftUI
 
 // MARK: - Board Game Booking View
-// หน้าจอสำหรับการจองโต๊ะบอร์ดเกม
-// ผู้ใช้สามารถเลือกโต๊ะและเกมที่ต้องการเล่น (สูงสุด 3 เกม)
+// หน้ายืมบอร์ดเกม (Board Game Rental)
+// ทำหน้าที่:
+// 1. แสดงรายการบอร์ดเกมที่มีให้ยืม
+// 2. เลือกเกมและยืนยันการยืม
+// 3. ตรวจสอบสถานะว่าง (ถ้าถูกยืมไปแล้ว)
 struct BoardGameBookingView: View {
     
     // MARK: - Properties
-    @EnvironmentObject var appState: AppState
-    @Environment(\.dismiss) var dismiss
-    let service: LibraryService
+    @EnvironmentObject var appState: AppState       // Global state
+    @Environment(\.dismiss) var dismiss             // ใช้สำหรับปิดหน้านี้
+    let service: LibraryService                     // ข้อมูลบริการที่เลือก
     
-    let tableColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+    let tableColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]  // Grid 3 คอลัมน์
     
     // MARK: - State
-    // รายชื่อเกมจำลอง (Mock Data)
-    @State private var mockGames = [
-        "Catan", "Monopoly", "Clue", "Risk", "Uno", "Jenga", "Exploding Kittens",
-        "Ticket to Ride", "Carcassonne", "Pandemic", "Scythe", "Terraforming Mars",
-        "Wingspan", "Chess", "Cards Against Humanity", "What Do You Meme?"
+    @State private var selectedTable: Int? = nil    // โต๊ะที่เลือก
+    @State private var selectedGames: [String] = [] // เกมที่เลือก (สูงสุด 3 เกม)
+    @State private var availableGames: [String] = [ // รายการเกมที่มีให้ยืม
+        "Catan", "Monopoly", "Uno", "Exploding Kittens",
+        "Codenames", "Ticket to Ride", "Pandemic"
     ]
     
-    @State private var selectedTable: Int? = nil
-    @State private var selectedGames: Set<String> = []
     
     // ตรวจสอบความถูกต้องของการเลือก (ต้องเลือกโต๊ะและเลือกเกม 1-3 เกม)
     var isSelectionValid: Bool {
@@ -121,7 +122,7 @@ struct BoardGameBookingView: View {
                                     }
                                     
                                     // Custom List Row
-                                    ForEach(mockGames, id: \.self) { game in
+                                    ForEach(availableGames, id: \.self) { game in
                                         let isGameBooked = appState.currentBookedGames.contains(game)
                                         let isSelected = selectedGames.contains(game)
                                         
@@ -157,9 +158,9 @@ struct BoardGameBookingView: View {
                                         .onTapGesture {
                                             guard !isGameBooked else { return }
                                             if isSelected {
-                                                selectedGames.remove(game)
+                                                selectedGames.removeAll { $0 == game }
                                             } else if selectedGames.count < 3 {
-                                                selectedGames.insert(game)
+                                                selectedGames.append(game)
                                             }
                                         }
                                     }

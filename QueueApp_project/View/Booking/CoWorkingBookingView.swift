@@ -8,23 +8,28 @@
 import SwiftUI
 
 // MARK: - Co-Working Booking View
-// หน้าจอสำหรับการจองที่นั่ง Co-Working Space
-// แสดงผังที่นั่งแบบ Grid ให้ผู้ใช้เลือก
+// หน้าจองพื้นที่ Co-Working Space
+// ทำหน้าที่:
+// 1. เลือกรอบเวลา (Time Slot)
+// 2. เลือกโต๊ะ (Table 1-12)
+// 3. ตรวจสอบสถานะว่างและยืนยันการจอง
 struct CoWorkingBookingView: View {
     
     // MARK: - Properties
-    @EnvironmentObject var appState: AppState
-    @Environment(\.dismiss) var dismiss
-    let service: LibraryService
+    @EnvironmentObject var appState: AppState       // Global state
+    @Environment(\.dismiss) var dismiss             // ใช้สำหรับปิดหน้านี้
+    let service: LibraryService                     // ข้อมูลบริการที่เลือก
     
-    let columns = [
+    let columns = [                                 // Grid 3 คอลัมน์สำหรับแสดงโต๊ะ
         GridItem(.flexible(), spacing: 15),
         GridItem(.flexible(), spacing: 15),
         GridItem(.flexible(), spacing: 15)
     ]
     
     // MARK: - State
-    @State private var selectedSeat: Int? = nil
+    @State private var selectedSeat: Int? = nil     // โต๊ะที่เลือก (1-12)
+    @State private var selectedSlot: TimeSlot? = nil // รอบเวลาที่เลือก
+    @State private var timeSlots: [TimeSlot] = []   // รายการรอบเวลาทั้งหมด
     
     // MARK: - Body
     var body: some View {

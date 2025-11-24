@@ -206,8 +206,13 @@ private struct PostFooterView: View {
     }
 }
 
-// MARK: - 3. Post Detail View (หน้าหลักแสดงคอมเมนต์)
-// หน้ารายละเอียดโพสต์ แสดงเนื้อหาเต็มและรายการคอมเมนต์
+// MARK: - Social Board View
+// หน้า Community Board (กระดานโพสต์ชุมชน)
+// ทำหน้าที่:
+// 1. แสดงรายการโพสต์ทั้งหมดแบบ Real-time
+// 2. สร้างโพสต์ใหม่ (รองรับ Anonymous)
+// 3. กดไลค์และคอมเมนต์โพสต์
+// 4. ลบโพสต์ (สำหรับ Admin และเจ้าของโพสต์)
 struct PostDetailView: View {
     // โพสต์แม่ (Passed from SocialBoardView)
     let post: SocialPost

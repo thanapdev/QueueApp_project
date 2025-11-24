@@ -8,13 +8,17 @@
 import SwiftUI
 
 // MARK: - Student Queue Join View
-// หน้าสำหรับนิสิตในการกดจองคิว (Join Queue) หรือดูสถานะคิวของตัวเอง
+// หน้าต่อคิวกิจกรรม (Join Queue)
+// ทำหน้าที่:
+// 1. แสดงรายละเอียดกิจกรรม
+// 2. แสดงคิวที่รออยู่และคิวปัจจุบัน
+// 3. ต่อคิวและยกเลิกคิว
 struct StudentQueueJoinView: View {
-    // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
-    @EnvironmentObject var appState: AppState
-    @ObservedObject var activity: Activity
-    @Environment(\.presentationMode) var presentationMode
-
+    // MARK: - Properties
+    @EnvironmentObject var appState: AppState               // Global state
+    @ObservedObject var activity: Activity                  // กิจกรรมที่เลือก (ObservableObject สำหรับ Real-time update)
+    @Environment(\.presentationMode) var presentationMode   // ใช้สำหรับปิดหน้านี้
+    
     // Computed Property: Check if user joined based on current queues
     // ตรวจสอบว่าผู้ใช้จองคิวไปแล้วหรือยัง
     var isJoined: Bool {

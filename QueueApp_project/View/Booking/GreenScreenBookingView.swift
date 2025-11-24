@@ -8,25 +8,28 @@
 import SwiftUI
 
 // MARK: - Green Screen Booking View
-// หน้าจอสำหรับการจองห้อง Green Screen Studio
-// ผู้ใช้ต้องเลือกรอบเวลา -> เลือกห้อง -> เลือกอุปกรณ์เสริม
+// หน้าจองห้อง Green Screen
+// ทำหน้าที่:
+// 1. เลือกรอบเวลา (Time Slot)
+// 2. เลือกห้อง (Room 1-2)
+// 3. ตรวจสอบสถานะว่างและยืนยันการจอง
 struct GreenScreenBookingView: View {
     
     // MARK: - Properties
-    @EnvironmentObject var appState: AppState
-    @Environment(\.dismiss) var dismiss
-    let service: LibraryService
+    @EnvironmentObject var appState: AppState       // Global state
+    @Environment(\.dismiss) var dismiss             // ใช้สำหรับปิดหน้านี้
+    let service: LibraryService                     // ข้อมูลบริการที่เลือก
     
-    let slotColumns = [GridItem(.flexible()), GridItem(.flexible())]
-    let roomColumns = [GridItem(.flexible()), GridItem(.flexible())]
+    let slotColumns = [GridItem(.flexible()), GridItem(.flexible())]  // Grid 2 คอลัมน์สำหรับรอบเวลา
+    let roomColumns = [GridItem(.flexible()), GridItem(.flexible())]  // Grid 2 คอลัมน์สำหรับห้อง
     
     // MARK: - State
-    @State private var mockEquipment = ["Camera (Sony A7)", "Tripod", "LED Light Panel", "Microphone (Rode)"]
-    @State private var timeSlots: [TimeSlot] = []
+    @State private var mockEquipment = ["Camera (Sony A7)", "Tripod", "LED Light Panel", "Microphone (Rode)"] // รายการอุปกรณ์เสริมทั้งหมด
+    @State private var timeSlots: [TimeSlot] = []   // รายการรอบเวลาทั้งหมด
     
-    @State private var selectedRoom: Int? = nil
-    @State private var selectedSlot: TimeSlot? = nil
-    @State private var selectedEquipment: Set<String> = []
+    @State private var selectedRoom: Int? = nil     // ห้องที่เลือก (1-2)
+    @State private var selectedSlot: TimeSlot? = nil // รอบเวลาที่เลือก
+    @State private var selectedEquipment: Set<String> = [] // อุปกรณ์เสริมที่เลือก
     
     // ตรวจสอบความถูกต้อง (ต้องเลือกห้องและรอบเวลา)
     var isSelectionValid: Bool {

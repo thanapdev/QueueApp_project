@@ -2,14 +2,21 @@ import SwiftUI
 import FirebaseAuth
 
 // MARK: - Login View
-// หน้าจอเข้าสู่ระบบสำหรับนิสิต
+// หน้าจอล็อกอิน (Login)
+// ทำหน้าที่:
+// 1. รับ Student ID และ Password จากผู้ใช้
+// 2. เรียกใช้ AppState.loginAsStudent() เพื่อตรวจสอบข้อมูล
+// 3. นำทางไปหน้า Register (ถ้ายังไม่มีบัญชี)
+// 4. แสดง Alert เมื่อ Login ล้มเหลว
 struct LoginView: View {
-    // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
-    @EnvironmentObject var appState: AppState // เข้าถึง Global State
-    @State private var studentID = "" // ตัวแปรเก็บรหัสนิสิต
-    @State private var password = "" // ตัวแปรเก็บรหัสผ่าน
-    @State private var showAlert = false // สถานะการแสดง Alert
-    @State private var errorMessage = "" // ข้อความ Error
+    // MARK: - Properties
+    
+    @EnvironmentObject var appState: AppState           // Global state
+    @State private var studentID = ""                   // รหัสนิสิตที่กรอก
+    @State private var password = ""                    // รหัสผ่านที่กรอก
+    @State private var showAlert = false                // สถานะแสดง Alert (เมื่อ Login ล้มเหลว)
+    @State private var errorMessage = ""                // ข้อความ Error สำหรับแสดงใน Alert
+    @Environment(\.presentationMode) var presentationMode  // ใช้สำหรับปิดหน้านี้ (Back)
     
     var body: some View {
         ZStack {
@@ -137,8 +144,11 @@ struct LoginView: View {
         }
     }
     
-    // MARK: - LOGIC FUNCTIONS
-    // ฟังก์ชันล็อกอิน เรียกใช้ AppState
+    // MARK: - Authentication Logic
+    
+    /// ฟังก์ชันเข้าสู่ระบบ
+    /// เรียกใช้ AppState.loginAsStudent() และจัดการผลลัพธ์
+    /// - Note: เมื่อ Login สำเร็จ AppState จะเปลี่ยน isLoggedIn เป็น true และ ContentView จะนำทางไปหน้าหลักอัตโนมัติ
     func login() {
         appState.loginAsStudent(studentID: studentID, password: password) { success, message in
             if success {

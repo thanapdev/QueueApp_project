@@ -9,7 +9,9 @@ import SwiftUI
 
 // MARK: - Admin Booking View
 // หน้าจัดการการจองสำหรับ Admin
-// แสดงรายการจองทั้งหมด (Active Reservations) และปุ่ม Action ต่างๆ
+// ทำหน้าที่:
+// 1. แสดงรายการจองทั้งหมด
+// 2. ยกเลิกการจอง
 struct AdminBookingView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.presentationMode) var presentationMode

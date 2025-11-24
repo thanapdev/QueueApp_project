@@ -8,19 +8,23 @@
 import SwiftUI
 
 // MARK: - Activity List View (Admin)
-// หน้าแสดงรายการกิจกรรมทั้งหมดสำหรับ Admin
-// สามารถเพิ่ม ลบ และแก้ไขกิจกรรมได้
+// หน้าจัดการกิจกรรมสำหรับ Admin
+// ทำหน้าที่:
+// 1. แสดงรายการกิจกรรมทั้งหมด
+// 2. สร้าง, แก้ไข, ลบกิจกรรม
 struct ActivityListView: View {
-    // MARK: - SYSTEM LOGIC (PRESERVED)
-    @EnvironmentObject var appState: AppState
-    @State private var showingAddActivity = false
-    @State private var newActivityName = ""
-    @State private var showDeleteConfirmation = false
-    @State private var deleteIndex: Int? = nil
-    @Environment(\.editMode) var editMode
-    @State private var showEditActivity = false
-    @State private var editIndex: Int? = nil
-    @State private var editActivityName: String = ""
+    // MARK: - Properties
+    @EnvironmentObject var appState: AppState               // Global state
+    
+    // MARK: - State
+    @State private var showingAddActivity = false           // สถานะแสดงหน้าเพิ่มกิจกรรม
+    @State private var newActivityName = ""                 // ชื่อกิจกรรมใหม่
+    @State private var showDeleteConfirmation = false       // สถานะแสดง Alert ยืนยันการลบ
+    @State private var deleteIndex: Int? = nil              // Index ของกิจกรรมที่จะลบ
+    @Environment(\.editMode) var editMode                   // โหมดแก้ไข (Edit Mode)
+    @State private var showEditActivity = false             // สถานะแสดงหน้าแก้ไขกิจกรรม
+    @State private var editIndex: Int? = nil                // Index ของกิจกรรมที่กำลังแก้ไข
+    @State private var editActivityName: String = ""        // ชื่อกิจกรรมที่กำลังแก้ไข
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {

@@ -8,19 +8,22 @@
 import SwiftUI
 
 // MARK: - Queue View (Admin)
-// หน้าจัดการคิวสำหรับกิจกรรม (Activity)
-// Admin สามารถเรียกคิวถัดไป, ข้ามคิว, หรือเพิ่มคิวแบบ Manual ได้
+// หน้าจัดการคิวสำหรับ Admin
+// ทำหน้าที่:
+// 1. แสดงรายการคิวที่รออยู่
+// 2. เรียกคิว, ข้ามคิว, ยกเลิกคิว
 struct QueueView: View {
     // MARK: - Properties
-    @Binding var activity: Activity
-    @EnvironmentObject var appState: AppState
-    @Environment(\.presentationMode) var presentationMode
+    @Binding var activity: Activity                         // กิจกรรมที่กำลังจัดการ (Binding เพื่อ sync กับหน้าอื่น)
+    @EnvironmentObject var appState: AppState               // Global state
+    @Environment(\.presentationMode) var presentationMode   // ใช้สำหรับปิดหน้านี้
     
-    @State private var showingAddQueue = false
-    @State private var newCustomerName = ""
-    @State private var showingCallOptions = false
-    @State private var isCountingDown = false
-    @State private var showTimeoutMessage = false
+    // MARK: - State
+    @State private var showingAddQueue = false              // สถานะแสดงหน้าเพิ่มคิวแบบ Manual
+    @State private var newCustomerName = ""                 // ชื่อลูกค้าใหม่สำหรับเพิ่มคิวแบบ Manual
+    @State private var showingCallOptions = false           // สถานะแสดงตัวเลือกการเรียกคิว (Call, Skip, Cancel)
+    @State private var isCountingDown = false               // สถานะการนับถอยหลังเมื่อเรียกคิว
+    @State private var showTimeoutMessage = false           // สถานะแสดงข้อความเมื่อคิวหมดเวลา
     
     // Local state for queue items (to manage filtering/sorting locally if needed)
     @State private var queueItems: [QueueItem] = []

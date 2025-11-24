@@ -8,8 +8,10 @@
 import SwiftUI
 
 // MARK: - Guest Activity List View
-// หน้าแสดงรายการกิจกรรมสำหรับบุคคลทั่วไป (Guest)
-// สามารถดูรายการกิจกรรมได้ แต่ไม่สามารถจองคิวได้ (ต้อง Login ก่อน)
+// หน้ารายการกิจกรรมสำหรับผู้เยี่ยมชม (Guest Mode)
+// ทำหน้าที่:
+// 1. แสดงรายการกิจกรรม (ดูอย่างเดียว)
+// 2. แจ้งเตือนให้ Login เมื่อกดเข้าไปดูรายละเอียด
 struct GuestActivityListView: View {
     @EnvironmentObject var appState: AppState
     @State private var showLoginAlert = false

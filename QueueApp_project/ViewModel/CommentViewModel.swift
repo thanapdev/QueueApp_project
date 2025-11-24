@@ -2,22 +2,25 @@
 //  CommentViewModel.swift
 //  QueueApp_project
 //
-//  Created by Thanapong Yamkamol on 19/11/2568 BE.
+//  Created by Thanapong Yamkamol.
 //
 
 import SwiftUI
-import FirebaseAuth
+import Firebase
 
 // MARK: - Comment View Model
-// ตัวจัดการ Logic สำหรับหน้า Comment (PostDetailView)
-// แยกออกมาจาก SocialViewModel เพื่อให้จัดการได้ง่ายขึ้นเมื่อเข้าสู่หน้า Detail
+// ViewModel สำหรับจัดการคอมเมนต์ในโพสต์ Social
+// ทำหน้าที่:
+// 1. ดึงคอมเมนต์ของโพสต์แบบ Real-time
+// 2. เพิ่มคอมเมนต์ใหม่
+// 3. ลบคอมเมนต์ (สำหรับ Admin)
 class CommentViewModel: ObservableObject {
-    @Published var comments: [SocialComment] = [] // รายการคอมเมนต์
-    @Published var isLoading = false
-    @Published var postID: String // ID ของโพสต์ที่กำลังดูอยู่
+    @Published var comments: [SocialComment] = []   // รายการคอมเมนต์ทั้งหมดของโพสต์
+    @Published var isLoading = false                // สถานะการโหลดข้อมูล
+    @Published var postID: String                   // ID ของโพสต์ที่กำลังดูอยู่
     
     // ต้องรับ SocialViewModel มาเพื่อเรียกใช้ฟังก์ชัน add/fetch ที่เขียนไว้แล้ว (Reusability)
-    private var socialVM: SocialViewModel
+    private var socialVM: SocialViewModel           // Reference ไปยัง SocialViewModel หลัก
     
     init(postID: String, socialVM: SocialViewModel) {
         self.postID = postID

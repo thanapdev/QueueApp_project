@@ -8,12 +8,20 @@
 import SwiftUI
 
 // MARK: - Student Activity List View
-// หน้าแสดงรายการกิจกรรมสำหรับนิสิต (Student)
-// สามารถเลือกกิจกรรมเพื่อเข้าไปจองคิวได้
+// หน้ารายการกิจกรรมสำหรับนิสิต (Legacy Queue System)
+// ทำหน้าที่:
+// 1. แสดงรายการกิจกรรมทั้งหมดแบบ Real-time
+// 2. แสดงจำนวนคนรอคิว (queueCount)
+// 3. นำทางไปหน้าต่อคิว (StudentQueueJoinView)
 struct StudentActivityListView: View {
-    @EnvironmentObject var appState: AppState
-    @Environment(\.presentationMode) var presentationMode
-
+    @EnvironmentObject var appState: AppState               // Global state
+    @Environment(\.presentationMode) var presentationMode   // ใช้สำหรับปิดหน้านี้
+    
+    let gridColumns = [                                     // Grid 2 คอลัมน์สำหรับการ์ดกิจกรรม
+        GridItem(.flexible(), spacing: 15),
+        GridItem(.flexible(), spacing: 15)
+    ]
+    
     var body: some View {
         ZStack {
             // Background Theme
