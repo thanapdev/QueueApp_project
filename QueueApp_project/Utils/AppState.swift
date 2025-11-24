@@ -533,7 +533,15 @@ class AppState: ObservableObject {
             try db.collection("activities").document(activity.id.uuidString)
                 .collection("queues").document(queueItem.id.uuidString)
                 .setData(from: queueItem) { _ in
+                    // 1. เพิ่มจำนวนคิวที่รอ
                     self.updateQueueCount(activity: activity, increment: true)
+                    
+                    // 2. อัปเดตเลขคิวถัดไป (Next Queue Number)
+                    let newNextNumber = activity.nextQueueNumber + 1
+                    self.db.collection("activities").document(activity.id.uuidString)
+                        .updateData(["nextQueueNumber": newNextNumber]) { _ in
+                            activity.nextQueueNumber = newNextNumber
+                        }
                 }
         } catch {
             print("Error adding queue item: \(error)")
@@ -555,7 +563,27 @@ class AppState: ObservableObject {
         db.collection("activities").document(activity.id.uuidString).collection("queues")
             .document(queueItem.id.uuidString)
             .updateData(["status": status]) { _ in
-                self.updateCurrentQueueNumber(activity: activity, queueItem: queueItem)
+                
+                // ถ้าสถานะเป็น "มาแล้ว" หรือ "ข้ามคิว" -> ลดจำนวนคนที่รอ
+                if status == "มาแล้ว" || status == "ข้ามคิว" {
+                    self.updateQueueCount(activity: activity, increment: false)
+                    self.updateCurrentQueueNumber(activity: activity, queueItem: queueItem)
+                }
+                
+                // ถ้าสถานะเป็น "ยกเลิกคิว"
+                if status == "ยกเลิกคิว" {
+                    self.updateQueueCount(activity: activity, increment: false)
+                    
+                    // เช็คว่าเป็นคิวล่าสุดหรือไม่? (ถ้าใช่ ให้ลด nextQueueNumber ลง เพื่อให้คนถัดไปได้เลขเดิม)
+                    // Logic: ถ้า number ของคนที่ยกเลิก == nextQueueNumber - 1 แสดงว่าเป็นคนล่าสุด
+                    if queueItem.number == activity.nextQueueNumber - 1 {
+                        let newNextNumber = max(1, activity.nextQueueNumber - 1)
+                        self.db.collection("activities").document(activity.id.uuidString)
+                            .updateData(["nextQueueNumber": newNextNumber]) { _ in
+                                activity.nextQueueNumber = newNextNumber
+                            }
+                    }
+                }
             }
     }
 

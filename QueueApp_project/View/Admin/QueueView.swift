@@ -334,8 +334,8 @@ struct QueueView: View {
             )
             appState.addQueueItem(activity: activity, queueItem: newItem)
             queueItems.append(newItem)
-            activity.nextQueueNumber += 1
-            appState.updateActivity(activity: activity)
+            // activity.nextQueueNumber += 1 // ✅ ไม่ต้องบวกเองแล้ว AppState จัดการให้
+            // appState.updateActivity(activity: activity) // ✅ ไม่ต้อง update ทั้ง activity แล้ว
             newCustomerName = ""
             showingAddQueue = false
         }
