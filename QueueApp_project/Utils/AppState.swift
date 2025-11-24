@@ -28,6 +28,13 @@ class AppState: ObservableObject {
     @Published var activities: [Activity] = [] // รายการกิจกรรม (สำหรับระบบคิวเดิม)
     @Published var isBrowsingAsGuest = false // สถานะ Guest Mode
     
+    // --- State ใหม่ (Dark Mode) ---
+    @Published var isDarkMode: Bool = UserDefaults.standard.bool(forKey: "isDarkMode") {
+        didSet {
+            UserDefaults.standard.set(isDarkMode, forKey: "isDarkMode")
+        }
+    }
+    
     // --- State ใหม่ (Library Booking System) ---
     
     // R3: State สำหรับการจอง "ส่วนตัว" (ของ User นี้)

@@ -17,14 +17,26 @@ extension Color {
         // สีรอง: สีส้มพีชเข้ม (ใช้ตัดขอบ, หรือจุดที่ต้องการเน้น)
         static let secondary = Color(red: 255/255, green: 185/255, blue: 165/255)
         
-        // สีขาวมาตรฐาน
-        static let white = Color.white
+        // สีพื้นหลัง Card/Container: ขาว ใน Light Mode -> เทาเข้ม ใน Dark Mode
+        static let white = Color(UIColor { trait in
+            return trait.userInterfaceStyle == .dark ? UIColor(red: 28/255, green: 28/255, blue: 30/255, alpha: 1) : UIColor.white
+        })
         
-        // สีดำเข้มสำหรับ Text (ไม่ดำสนิท เพื่อให้อ่านสบายตา)
-        static let textDark = Color(red: 30/255, green: 30/255, blue: 30/255)
+        // สี Text: ดำเข้ม ใน Light Mode -> ขาว ใน Dark Mode
+        static let textDark = Color(UIColor { trait in
+            return trait.userInterfaceStyle == .dark ? UIColor.white : UIColor(red: 30/255, green: 30/255, blue: 30/255, alpha: 1)
+        })
         
-        // Gradient พื้นหลัง (ไล่เฉดจากฟ้าสด -> ฟ้าเข้ม)
-        static let bgGradientStart = Color(red: 80/255, green: 190/255, blue: 255/255)
-        static let bgGradientEnd = Color(red: 40/255, green: 140/255, blue: 240/255)
+        // Gradient พื้นหลัง (ไล่เฉด)
+        static let bgGradientStart = Color(UIColor { trait in
+            // Dark Mode: ฟ้าเข้มเกือบดำ / Light Mode: ฟ้าสดใส
+            return trait.userInterfaceStyle == .dark ? UIColor(red: 10/255, green: 20/255, blue: 40/255, alpha: 1) : UIColor(red: 80/255, green: 190/255, blue: 255/255, alpha: 1)
+        })
+        
+        static let bgGradientEnd = Color(UIColor { trait in
+            // Dark Mode: ดำ / Light Mode: ฟ้าเข้มขึ้น
+            return trait.userInterfaceStyle == .dark ? UIColor(red: 5/255, green: 10/255, blue: 20/255, alpha: 1) : UIColor(red: 40/255, green: 140/255, blue: 240/255, alpha: 1)
+        })
     }
 }
+

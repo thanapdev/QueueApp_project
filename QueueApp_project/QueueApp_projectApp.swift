@@ -24,7 +24,9 @@ struct QueueApp_projectApp: App {
     var body: some Scene {
         WindowGroup {
             // เริ่มต้นที่ ContentView และส่ง environmentObject 'appState' ไปให้
-            ContentView().environmentObject(appState)
+            ContentView()
+                .environmentObject(appState)
+                .preferredColorScheme(appState.isDarkMode ? .dark : .light)
         }
     }
 }

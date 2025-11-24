@@ -31,7 +31,7 @@ struct WelcomeView: View {
                             .frame(width: 180, height: 180)
                         
                         Circle()
-                            .fill(Color.white)
+                            .fill(Color.Theme.white)
                             .frame(width: 150, height: 150)
                             .shadow(radius: 10)
                         
@@ -50,7 +50,7 @@ struct WelcomeView: View {
                     ZStack {
                         // สร้าง Shape โค้งด้านล่าง (เหมือนคลื่น)
                         WaveShapeBottomCard()
-                            .fill(Color.white) // พื้นหลังสีขาว
+                            .fill(Color.Theme.white) // พื้นหลังสีขาว/เทาเข้ม
                             .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: -5)
                         
                         VStack(spacing: 20) {
@@ -91,7 +91,31 @@ struct WelcomeView: View {
                     }
                     .frame(height: 380) // ความสูงของ Card ด้านล่าง
                 }
+
                 .edgesIgnoringSafeArea(.bottom)
+                
+                // Dark Mode Toggle Button
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            withAnimation {
+                                appState.isDarkMode.toggle()
+                            }
+                        }) {
+                            Image(systemName: appState.isDarkMode ? "sun.max.fill" : "moon.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(Color.Theme.primary)
+                                .padding(10)
+                                .background(Color.Theme.white.opacity(0.8))
+                                .clipShape(Circle())
+                                .shadow(radius: 4)
+                        }
+                        .padding(.top, 60)
+                        .padding(.trailing, 20)
+                    }
+                    Spacer()
+                }
             }
             .navigationBarHidden(true) // ซ่อน Navigation Bar
         }

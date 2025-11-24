@@ -114,7 +114,7 @@ struct WhitePillButtonStyle: ButtonStyle {
             .foregroundColor(Color.Theme.primary) // ตัวหนังสือสีฟ้า
             .frame(maxWidth: .infinity)
             .frame(height: 56)
-            .background(Color.white) // พื้นหลังขาว
+            .background(Color.Theme.white) // พื้นหลังขาว
             .clipShape(Capsule())
             .overlay(
                 // เพิ่มขอบสีฟ้าจางๆ ให้ปุ่ม
@@ -167,7 +167,7 @@ struct ActivityCardView: View {
             QueueCountBadge(activity: activity)
         }
         .padding(12)
-        .background(Color.white)
+        .background(Color.Theme.white)
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         .overlay(

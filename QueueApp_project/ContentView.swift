@@ -4,7 +4,8 @@ import SwiftUI
 // หน้าจอหลักที่เป็นตัวกำหนดว่าจะแสดงหน้าไหน (Login หรือ หน้าใช้งานจริง)
 struct ContentView: View {
     // รับค่า AppState มาจาก @main (QueueApp_projectApp)
-    @StateObject private var appState = AppState()
+    // รับค่า AppState มาจาก @main (QueueApp_projectApp)
+    @EnvironmentObject var appState: AppState
 
     var body: some View {
         
