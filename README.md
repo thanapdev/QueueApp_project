@@ -4,7 +4,7 @@
 ![SwiftUI](https://img.shields.io/badge/SwiftUI-100%25-blue?style=flat-square&logo=swift)
 ![Firebase](https://img.shields.io/badge/Firebase-Realtime-yellow?style=flat-square&logo=firebase)
 ![Platform](https://img.shields.io/badge/Platform-iOS-lightgrey?style=flat-square&logo=apple)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+[![GitHub](https://img.shields.io/badge/GitHub-thanapdev-181717?style=flat-square&logo=github)](https://github.com/thanapdev)
 
 > **"Smart Queue & Learning Space Management Solution"**
 >
@@ -105,14 +105,6 @@ QueueApp_project/
     *   Ensure `GoogleService-Info.plist` is placed in the `QueueApp_project/Resources` folder.
 5.  **Run the App**
     *   Select your simulator and press `Cmd + R`.
-
----
-
-## 📸 Screenshots
-
-| Home Dashboard | Booking System | Social Board |
-|:---:|:---:|:---:|
-| <!-- ใส่รูปตรงนี้ --> <img src="https://via.placeholder.com/200x400?text=Home" width="200"/> | <!-- ใส่รูปตรงนี้ --> <img src="https://via.placeholder.com/200x400?text=Booking" width="200"/> | <!-- ใส่รูปตรงนี้ --> <img src="https://via.placeholder.com/200x400?text=Social" width="200"/> |
 
 ---
 
