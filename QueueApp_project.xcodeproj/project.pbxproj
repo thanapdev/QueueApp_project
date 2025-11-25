@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6B2BC6B52ED54DA000740F10 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 6B2BC6892ED54DA000740F10 /* README.md */; };
 		6BDBD7E32EC48530001DB481 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 6BDBD7E22EC48530001DB481 /* FirebaseAnalytics */; };
 		6BDBD7E52EC48530001DB481 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 6BDBD7E42EC48530001DB481 /* FirebaseAuth */; };
 		6BDBD7E72EC48530001DB481 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 6BDBD7E62EC48530001DB481 /* FirebaseDatabase */; };
@@ -32,6 +33,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6B2BC6892ED54DA000740F10 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		6BE039E82EC1B3E6007C7532 /* QueueApp_project.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QueueApp_project.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6BE039FA2EC1B3E7007C7532 /* QueueApp_projectTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QueueApp_projectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6BE03A042EC1B3E7007C7532 /* QueueApp_projectUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QueueApp_projectUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -96,6 +98,7 @@
 			isa = PBXGroup;
 			children = (
 				6BE039EA2EC1B3E6007C7532 /* QueueApp_project */,
+				6B2BC6892ED54DA000740F10 /* README.md */,
 				6BE039FD2EC1B3E7007C7532 /* QueueApp_projectTests */,
 				6BE03A072EC1B3E7007C7532 /* QueueApp_projectUITests */,
 				6BDBD7F02EC48F4C001DB481 /* Frameworks */,
@@ -241,6 +244,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B2BC6B52ED54DA000740F10 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
