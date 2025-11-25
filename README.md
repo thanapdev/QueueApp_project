@@ -1,4 +1,4 @@
-# 🚀 QueueApp (SWU Queue & Space)
+# 🚀 SWU HUB
 
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange?style=flat-square&logo=swift)
 ![SwiftUI](https://img.shields.io/badge/SwiftUI-100%25-blue?style=flat-square&logo=swift)
