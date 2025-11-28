@@ -23,9 +23,7 @@ struct WelcomeView: View {
                 DynamicBackground(style: .style1)
                 
                 VStack(spacing: 0) {
-                    // ---------------------------------------
-                    // ส่วนบน: Logo และ พื้นที่ว่าง
-                    // ---------------------------------------
+                    // Logo และ พื้นที่ว่าง
                     Spacer()
                     
                     ZStack {
@@ -60,15 +58,15 @@ struct WelcomeView: View {
                         VStack(spacing: 20) {
                             // Text Content
                             VStack(spacing: 8) {
-                                Text("SWU Services")
+                                Text("SWU Hub")
                                     .font(.system(size: 32, weight: .heavy)) // Font หนาพิเศษ
                                     .foregroundColor(Color.Theme.primary)
                                 
-                                Text("มหาวิทยาลัยศรีนครินทรวิโรฒ")
+                                Text("service hub for srinakharinwirot student")
                                     .font(.headline)
                                     .foregroundColor(Color.gray)
                                 
-                                Text("แหล่งรวมบริการนักศึกษาครบวงจร\nใช้งานง่าย สะดวก รวดเร็ว")
+                                Text("แอปรวมบริการสำหรับนักศึกษา มศว.")
                                     .font(.body)
                                     .multilineTextAlignment(.center)
                                     .foregroundColor(Color.gray)
@@ -87,7 +85,7 @@ struct WelcomeView: View {
                             .padding(.horizontal, 30)
                             .padding(.bottom, 10)
                             
-                            Text("Powered by SWU")
+                            Text("168 Thanapong | 468 Wiriya")
                                 .font(.caption)
                                 .foregroundColor(Color.gray.opacity(0.6))
                                 .padding(.bottom, 40)
