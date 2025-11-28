@@ -8,8 +8,9 @@
 import SwiftUI
 
 // MARK: - Service View (Main Dashboard)
-// หน้าหลักของแอป (Dashboard) แสดงรายการบริการต่างๆ
+// หน้าหลักของแอป แสดงรายการบริการต่างๆ
 // ผู้ใช้ทั้งแบบ Guest และ Logged-in จะเห็นหน้านี้ แต่จะเข้าถึงฟีเจอร์ได้ต่างกัน
+
 struct ServiceView: View {
     // MARK: - SYSTEM LOGIC (DO NOT CHANGE)
     @EnvironmentObject var appState: AppState
@@ -27,10 +28,9 @@ struct ServiceView: View {
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
-                // ---------------------------------------
-                // HEADER SECTION
-                // ส่วนหัวแสดงปุ่ม Login/Logout และข้อความต้อนรับ
-                // ---------------------------------------
+                
+                // MARK: - HEADER SECTION
+                // แสดงปุ่ม Login/Logout และข้อความต้อนรับ
                 VStack(alignment: .leading, spacing: 10) {
                     // Top Toolbar (Logout / Login)
                     HStack {
@@ -88,10 +88,8 @@ struct ServiceView: View {
                 .padding(.horizontal, 30)
                 .padding(.bottom, 40)
                 
-                // ---------------------------------------
-                // SERVICE MENU (White Card Area)
+                // MARK: - SERVICE MENU
                 // ส่วนเมนูบริการ (Grid 2 คอลัมน์)
-                // ---------------------------------------
                 ZStack {
                     Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -130,8 +128,8 @@ struct ServiceView: View {
                                 }) {
                                     ServiceCardNew(
                                         icon: "table.furniture",
-                                        title: "Booking",
-                                        subtitle: "จองพื้นที่",
+                                        title: "Library",
+                                        subtitle: "บริการห้องสมุด",
                                         color: Color.Theme.secondary
                                     )
                                 }
@@ -156,7 +154,7 @@ struct ServiceView: View {
                                 }) {
                                     ServiceCardNew(
                                         icon: "bubble.left.and.bubble.right.fill",
-                                        title: "SWU Board",
+                                        title: "SWU Social",
                                         subtitle: "พูดคุย/ข่าวสาร",
                                         color: Color.purple
                                     )

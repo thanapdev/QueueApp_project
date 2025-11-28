@@ -9,6 +9,7 @@ import FirebaseFirestore
 // 2. เลือกบทบาท (Student/Admin)
 // 3. เรียกใช้ AppState.register() เพื่อสร้างบัญชีใน Firebase
 // 4. แสดง Alert เมื่อสำเร็จหรือล้มเหลว
+
 struct RegisterView: View {
     // MARK: - Properties
     
@@ -51,7 +52,7 @@ struct RegisterView: View {
                 
                 VStack(alignment: .leading, spacing: 10) {
                     // Title Area
-                    Text("Create\nAccount")
+                    Text("Register")
                         .font(.system(size: 40, weight: .bold))
                         .foregroundColor(.white)
                         .lineSpacing(5)
@@ -66,10 +67,8 @@ struct RegisterView: View {
                 
                 Spacer()
                 
-                // ---------------------------------------
-                // FORM AREA: White Bottom Sheet
-                // ส่วนฟอร์มกรอกข้อมูล (พื้นหลังสีขาว)
-                // ---------------------------------------
+                // FORM AREA
+                // ส่วนฟอร์มกรอกข้อมูล
                 ZStack {
                     Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -81,7 +80,7 @@ struct RegisterView: View {
                             // Input Fields Group
                             VStack(spacing: 15) {
                                 CustomTextField(icon: "person.fill", placeholder: "Full Name", text: $name)
-                                CustomTextField(icon: "person.text.rectangle", placeholder: "Student ID (11 digits)", text: $studentID, keyboardType: .numberPad)
+                                CustomTextField(icon: "person.text.rectangle", placeholder: "Student ID (เช่น 67130010xxx)", text: $studentID, keyboardType: .numberPad)
                                 CustomTextField(icon: "envelope.fill", placeholder: "Email Address", text: $email, keyboardType: .emailAddress)
                                 CustomSecureField(icon: "lock.fill", placeholder: "Password", text: $password)
                             }
