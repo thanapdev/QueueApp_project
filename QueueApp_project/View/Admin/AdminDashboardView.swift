@@ -10,8 +10,8 @@ import SwiftUI
 // MARK: - Admin Dashboard View
 // หน้าหลักสำหรับ Admin
 // ทำหน้าที่:
-// 1. แสดงสถิติภาพรวม (จำนวนการจอง, กิจกรรม)
-// 2. นำทางไปหน้าจัดการต่างๆ
+// 1. แสดงภาพรวม (จำนวนการจอง, กิจกรรม)
+// 2. นำทางไปหน้าจัดการต่าง ๆ
 struct AdminDashboardView: View {
     @EnvironmentObject var appState: AppState               // Global state
     
@@ -88,8 +88,8 @@ struct AdminDashboardView: View {
                     .padding(.top, 20)
                     .padding(.bottom, 30)
                     
-                    // --- CONTENT AREA (White Sheet) ---
-                    // พื้นที่แสดงเมนูจัดการต่างๆ
+                    // CONTENT AREA (White Sheet)
+                    // พื้นที่แสดงเมนูจัดการต่าง ๆ
                     ZStack {
                         Color.Theme.white
                             .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -121,7 +121,7 @@ struct AdminDashboardView: View {
                                     NavigationLink(destination: AdminBookingView().environmentObject(appState)) {
                                         AdminDashboardCard(
                                             title: "Bookings Management",
-                                            // ⭐️ จะแสดงจำนวนที่โหลดมาล่าสุดจาก AdminBookingView หรือเป็น 0 ถ้า AdminBookingView ยังไม่โหลด
+                                            // จะแสดงจำนวนที่โหลดมาล่าสุดจาก AdminBookingView หรือเป็น 0 ถ้า AdminBookingView ยังไม่โหลด
                                             count: "\(appState.allAdminBookings.count)",
                                             icon: "calendar.badge.clock",
                                             color: .orange
@@ -130,7 +130,7 @@ struct AdminDashboardView: View {
                                     .buttonStyle(PlainButtonStyle())
                                     
                                     // -------------------------------------------
-                                    // ✅ Card 3: Social Board (Moderation)
+                                    // Card 3: Social Board (Moderation)
                                     // จัดการโพสต์และคอมเมนต์ (ลบเนื้อหาที่ไม่เหมาะสม)
                                     // -------------------------------------------
                                     NavigationLink(destination: AdminSocialBoardView()) {

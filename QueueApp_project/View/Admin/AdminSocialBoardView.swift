@@ -119,11 +119,11 @@ struct AdminSocialBoardView: View {
     }
 }
 
-// ******************************************************
+
 // MARK: - 2. ADMIN POST DETAIL VIEW (Moderation Screen)
-// ******************************************************
 // หน้าแสดงรายละเอียดโพสต์สำหรับ Admin
 // แสดงเนื้อหาโพสต์ ชื่อจริงผู้โพสต์ และรายการคอมเมนต์ (พร้อมปุ่มลบ)
+
 struct AdminPostDetailView: View {
     let post: SocialPost
     @ObservedObject var socialVM: SocialViewModel
@@ -138,7 +138,7 @@ struct AdminPostDetailView: View {
     
     var body: some View {
         ZStack {
-            // ✅ FIX: Base Layer (Theme Background)
+            // FIX: Base Layer (Theme Background)
             DynamicBackground(style: .random).edgesIgnoringSafeArea(.all)
             
             ScrollView {
@@ -193,7 +193,7 @@ private struct AdminRowContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             
-            // --- Top Row (Admin Info & Delete Button) ---
+            // Top Row (Admin Info & Delete Button)
             HStack(alignment: .top) {
                 // Admin Info
                 VStack(alignment: .leading) {
@@ -202,7 +202,7 @@ private struct AdminRowContent: View {
                             .foregroundColor(.gray)
                         Text("Real Author:").font(.caption).foregroundColor(.gray)
                     }
-                    Text(post.realAuthorName) // 🎯 Real Name (ชัดเจน)
+                    Text(post.realAuthorName) // Real Name (ชัดเจน)
                         .font(.subheadline).fontWeight(.bold).foregroundColor(.red)
                 }
                 
@@ -221,7 +221,7 @@ private struct AdminRowContent: View {
             
             Divider()
             
-            // --- Content Preview ---
+            // Content Preview
             Text(post.content)
                 .font(.body).lineLimit(2).foregroundColor(Color.Theme.textDark)
             
@@ -290,7 +290,7 @@ private struct AdminDetailHeaderView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        // ✅ พื้นหลังขาวและเงาเพื่อให้ลอยเด่นบนพื้นหลังธีม
+        // พื้นหลังขาว + เงา ให้เด่น ๆ
         .background(Color.Theme.white)
         .cornerRadius(15)
         .shadow(color: .black.opacity(0.08), radius: 8)

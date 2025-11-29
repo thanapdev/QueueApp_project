@@ -1,7 +1,7 @@
 import SwiftUI
 
 // MARK: - Library Service Model
-// โมเดลสำหรับบริการต่างๆ ในห้องสมุด (Library Services)
+// โมเดลสำหรับบริการต่าง ๆ ในห้องสมุด (Library Services)
 // ใช้สำหรับแสดงรายการบริการที่นิสิตสามารถจองได้
 // เช่น: Co-Working Space, Netflix Room, Green Screen, Board Game
 struct LibraryService: Identifiable {

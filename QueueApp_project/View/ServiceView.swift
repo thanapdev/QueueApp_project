@@ -155,7 +155,7 @@ struct ServiceView: View {
                                     ServiceCardNew(
                                         icon: "bubble.left.and.bubble.right.fill",
                                         title: "SWU Social",
-                                        subtitle: "พูดคุย/ข่าวสาร",
+                                        subtitle: "พูดคุย / ข่าวสาร",
                                         color: Color.purple
                                     )
                                 }
@@ -168,7 +168,7 @@ struct ServiceView: View {
             }
             .edgesIgnoringSafeArea(.bottom) // ให้ Card ชิดขอบล่าง
             
-            // --- Hidden Navigation Links ---
+            // Hidden Navigation Links
             // ใช้สำหรับ Programmatic Navigation (สั่งเปลี่ยนหน้าด้วย Code)
             NavigationLink(destination: LoginView().environmentObject(appState), isActive: $navigateToLoginFromAlert) { EmptyView() }
             NavigationLink(destination: BookingView().environmentObject(appState), isActive: $showBookingSpace) { EmptyView() }

@@ -13,13 +13,13 @@ import SwiftUI
 struct BookingDetailView: View {
     
     // MARK: - Properties
-    @EnvironmentObject var appState: AppState // 👈 รับ "สมอง"
+    @EnvironmentObject var appState: AppState // รับ "สมอง"
     let service: LibraryService
     
     // MARK: - Body
     var body: some View {
         ZStack {
-            // ✅ 1. ใช้ Theme Background ใหม่ (แทน Gradient เดิม)
+            // 1. ใช้ Theme Background ใหม่ (แทน Gradient เดิม)
             DynamicBackground(style: .random)
             
             // MARK: - Check for Active Booking (R3)
@@ -46,7 +46,7 @@ struct BookingDetailView: View {
                     GreenScreenBookingView(service: service)
                         .environmentObject(appState)
                 default:
-                    // (เผื่อไว้ถ้ามี Service อื่นๆ)
+                    // (เผื่อไว้ถ้ามี Service อื่น ๆ)
                     VStack {
                         Image(systemName: "hammer.fill")
                             .font(.system(size: 50))
@@ -60,7 +60,7 @@ struct BookingDetailView: View {
                 }
             }
         }
-        // ✅ ซ่อน Navbar ของระบบ เพื่อให้หน้าลูกๆ แสดง Custom Header ได้สวยงาม
+        // ซ่อน Navbar ของระบบ เพื่อให้หน้าลูกๆ แสดง Custom Header ได้สวยงาม
         .navigationBarHidden(true)
     }
 }

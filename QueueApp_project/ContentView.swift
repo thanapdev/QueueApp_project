@@ -11,13 +11,13 @@ struct ContentView: View {
         
         Group {
             if appState.isLoggedIn {
-                // --- 1. กรณีผู้ใช้ Login แล้ว ---
+                // 1. กรณีผู้ใช้ Login แล้ว
                 // เรียกฟังก์ชันเพื่อตัดสินใจว่าจะไปหน้า Student หรือ Admin
                 loggedInDestinationView()
                     .environmentObject(appState)
                 
             } else {
-                // --- 2. สถานะเริ่มต้น (ยังไม่ Login) ---
+                // 2. สถานะเริ่มต้น (ยังไม่ Login)
                 // ให้เริ่มที่ WelcomeView เสมอ
                 // WelcomeView จะมี NavigationStack ของตัวเอง
                 // เพื่อจัดการ Flow ของ Guest (Welcome -> Login -> Service)

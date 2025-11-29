@@ -12,7 +12,7 @@ import Foundation
 // ใช้สำหรับแยกสิทธิ์การเข้าถึงฟีเจอร์ต่างๆ
 enum UserRole {
     case admin   // ผู้ดูแลระบบ (มีสิทธิ์จัดการทุกอย่าง)
-    case student // นิสิต (ใช้งานบริการต่างๆ)
+    case student // นิสิต (ใช้งานบริการต่าง ๆ )
 }
 
 // MARK: - Activity Model (Legacy Queue System)

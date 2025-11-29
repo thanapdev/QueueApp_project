@@ -4,9 +4,9 @@ import FirebaseAuth
 // MARK: - Login View
 // หน้าจอล็อกอิน (Login)
 // ทำหน้าที่:
-// 1. รับ Student ID และ Password จากผู้ใช้
+// 1. รับข้อมูล Student ID และ Password จากผู้ใช้
 // 2. เรียกใช้ AppState.loginAsStudent() เพื่อตรวจสอบข้อมูล
-// 3. นำทางไปหน้า Register (ถ้ายังไม่มีบัญชี)
+// 3. พายังไปหน้า Register (ถ้ายังไม่มีบัญชี)
 // 4. แสดง Alert เมื่อ Login ล้มเหลว
 struct LoginView: View {
     // MARK: - Properties
@@ -14,8 +14,8 @@ struct LoginView: View {
     @EnvironmentObject var appState: AppState           // Global state
     @State private var studentID = ""                   // รหัสนิสิตที่กรอก
     @State private var password = ""                    // รหัสผ่านที่กรอก
-    @State private var showAlert = false                // สถานะแสดง Alert (เมื่อ Login ล้มเหลว)
-    @State private var errorMessage = ""                // ข้อความ Error สำหรับแสดงใน Alert
+    @State private var showAlert = false                // แจ้งเตือน (เมื่อ Login ล้มเหลว)
+    @State private var errorMessage = ""                // ข้อความ Error สำหรับแสดงในแจ้งเตือน
     @Environment(\.presentationMode) var presentationMode  // ใช้สำหรับปิดหน้านี้ (Back)
     
     var body: some View {
@@ -40,12 +40,12 @@ struct LoginView: View {
                             .foregroundColor(.white)
                     }
                     
-                    Text("        \n Welcome !")
+                    Text("       \n Welcome !")
                         .font(.system(size: 40, weight: .bold))
                         .foregroundColor(.white)
                         .lineSpacing(5)
                     
-                    Text("ลงชื่อเข้าใช้เพื่อเริ่มใช้งานบริการต่างๆ")
+                    Text("ลงชื่อเข้าใช้เพื่อเริ่มใช้งานบริการต่าง ๆ")
                         .font(.body)
                         .foregroundColor(Color.white.opacity(0.9))
                 }
@@ -59,7 +59,7 @@ struct LoginView: View {
                 // ---------------------------------------
                 ZStack {
                     Color.Theme.white
-                        // ทำมุมโค้งเฉพาะด้านบน
+                        // ทำมุมโค้งแค่ด้านบน
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
                         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
                     
@@ -148,7 +148,7 @@ struct LoginView: View {
     
     /// ฟังก์ชันเข้าสู่ระบบ
     /// เรียกใช้ AppState.loginAsStudent() และจัดการผลลัพธ์
-    /// - Note: เมื่อ Login สำเร็จ AppState จะเปลี่ยน isLoggedIn เป็น true และ ContentView จะนำทางไปหน้าหลักอัตโนมัติ
+    /// - Note: เมื่อ Login สำเร็จ AppState จะเปลี่ยน isLoggedIn เป็น true และ ContentView จะพาไปหน้าหลักอัตโนมัติ
     func login() {
         appState.loginAsStudent(studentID: studentID, password: password) { success, message in
             if success {

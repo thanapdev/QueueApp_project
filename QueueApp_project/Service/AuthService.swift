@@ -30,7 +30,7 @@ class AuthService {
     /// สมัครสมาชิกใหม่ (Register)
     /// - Parameters:
     ///   - name: ชื่อ-นามสกุล
-    ///   - studentID: รหัสนิสิต 11 หลัก
+    ///   - studentID: รหัสนิสิต 11 ตัว
     ///   - email: อีเมล (สำหรับ Login)
     ///   - password: รหัสผ่าน
     ///   - role: บทบาท (Student/Admin)
@@ -69,7 +69,7 @@ class AuthService {
     
     /// เข้าสู่ระบบด้วยรหัสนิสิต (Login as Student)
     /// - Parameters:
-    ///   - studentID: รหัสนิสิต 11 หลัก
+    ///   - studentID: รหัสนิสิต 11 ตัว
     ///   - password: รหัสผ่าน
     ///   - completion: Callback เมื่อเสร็จสิ้น (Result<UserData, Error>)
     /// - Note: ระบบจะค้นหา Email จาก StudentID ก่อน แล้วค่อย Login ด้วย Firebase Auth

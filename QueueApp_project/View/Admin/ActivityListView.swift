@@ -33,11 +33,10 @@ struct ActivityListView: View {
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
-                // ---------------------------------------
+
                 // CUSTOM HEADER (ปรับให้มีปุ่ม Add)
-                // ---------------------------------------
                 VStack(alignment: .leading, spacing: 10) {
-                    // ✅ TOP UTILITY ROW: Back | Add
+                    // TOP UTILITY ROW: Back | Add
                     HStack {
                         // Back Button (Left)
                         Button(action: {
@@ -57,7 +56,7 @@ struct ActivityListView: View {
                         
                         Spacer()
                         
-                        // ✅ ADD Button (Right)
+                        // ADD Button (Right)
                         Button(action: {
                             showingAddActivity = true
                         }) {
@@ -71,7 +70,7 @@ struct ActivityListView: View {
                             .foregroundColor(.white)
                             .padding(.vertical, 8)
                             .padding(.horizontal, 12)
-                            .background(Color.orange.opacity(0.8)) // ใช้สีส้ม Accent
+                            .background(Color.orange.opacity(0.8)) // ใช้สีส้มสำหรับ Accent (text ที่เป็นเหมือนตัวหนา/ตัวหลัก แต่ใช้สีแทนตัวหนา)
                             .clipShape(Capsule())
                             .shadow(radius: 3)
                         }
@@ -92,9 +91,7 @@ struct ActivityListView: View {
                 .padding(.horizontal, 30)
                 .padding(.bottom, 30)
 
-                // ---------------------------------------
                 // CONTENT AREA (White Sheet)
-                // ---------------------------------------
                 ZStack {
                     Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -173,7 +170,7 @@ struct ActivityListView: View {
             }
         })
         
-        // --- Add Activity Sheet ---
+        // Add Activity Sheet
         .sheet(isPresented: $showingAddActivity) {
             AddEditActivitySheet(
                 title: "สร้างกิจกรรมใหม่",
@@ -185,7 +182,7 @@ struct ActivityListView: View {
             )
         }
         
-        // --- Edit Activity Sheet ---
+        // Edit Activity Sheet
         .sheet(isPresented: $showEditActivity) {
             AddEditActivitySheet(
                 title: "แก้ไขกิจกรรม",
@@ -223,7 +220,7 @@ struct ActivityNavigationLink: View {
                 
                 Spacer()
                 
-                Text("คิว: \(activity.queueCount)") // ✅ ใช้ queueCount ที่แก้บั๊กแล้ว
+                Text("คิว: \(activity.queueCount)") // ใช้ queueCount ที่แก้บั๊กแล้ว
                     .font(.subheadline)
                     .fontWeight(activity.queueCount > 0 ? .bold : .regular)
                     .foregroundColor(activity.queueCount > 0 ? .orange : .gray)

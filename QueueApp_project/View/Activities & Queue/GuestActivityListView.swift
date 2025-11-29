@@ -69,7 +69,7 @@ struct GuestActivityListView: View {
                         // Activities List
                         ScrollView(showsIndicators: false) {
                             LazyVStack(spacing: 15) {
-                                // ✅ ใช้ indices loop เพื่อให้ได้ข้อมูลล่าสุด
+                                // ใช้ indices loop เพื่อให้ได้ข้อมูลล่าสุด
                                 ForEach(appState.activities.indices, id: \.self) { index in
                                     let activity = appState.activities[index]
                                     

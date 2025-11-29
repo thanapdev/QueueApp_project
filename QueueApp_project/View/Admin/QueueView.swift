@@ -39,9 +39,8 @@ struct QueueView: View {
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
-                // ---------------------------------------
+                
                 // HEADER
-                // ---------------------------------------
                 VStack(alignment: .leading, spacing: 10) {
                     // Back Button
                     Button(action: {
@@ -75,9 +74,7 @@ struct QueueView: View {
                 .padding(.horizontal, 30)
                 .padding(.bottom, 20)
                 
-                // ---------------------------------------
                 // CONTENT (White Sheet)
-                // ---------------------------------------
                 ZStack {
                     Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -337,8 +334,8 @@ struct QueueView: View {
             )
             appState.addQueueItem(activity: activity, queueItem: newItem)
             queueItems.append(newItem)
-            // activity.nextQueueNumber += 1 // ✅ ไม่ต้องบวกเองแล้ว AppState จัดการให้
-            // appState.updateActivity(activity: activity) // ✅ ไม่ต้อง update ทั้ง activity แล้ว
+            // activity.nextQueueNumber += 1 // ไม่ต้องบวกเองแล้ว AppState จัดการให้
+            // appState.updateActivity(activity: activity) // ไม่ต้อง update ทั้ง activity แล้ว
             newCustomerName = ""
             showingAddQueue = false
         }

@@ -68,7 +68,7 @@ struct BackgroundVariant2: View {
     }
 }
 
-// แบบที่ 3: ประกายวิ้งๆ
+// แบบที่ 3: ประกายวิ้ง ๆ
 struct BackgroundVariant3: View {
     var body: some View {
         GeometryReader { geometry in
@@ -183,7 +183,7 @@ struct QueueCountBadge: View {
     
     var body: some View {
         VStack(spacing: 2) {
-            // ⭐️ แสดงจำนวนคิว (Int)
+            // แสดงจำนวนคิว (Int)
             Text("\(activity.queueCount)")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(statusColor)

@@ -16,7 +16,7 @@ class SocialViewModel: ObservableObject {
     // MARK: - Published Properties
     
     @Published var posts: [SocialPost] = []      // รายการโพสต์ทั้งหมดที่ดึงมาจาก Firestore
-    @Published var isLoading: Bool = false       // สถานะการโหลดข้อมูล (แสดง Loading Indicator)
+    @Published var isLoading: Bool = false       // สถานะการโหลดข้อมูล (แสดง Loading) Indicator)
     @Published var errorMessage: String?         // ข้อความ Error (ถ้ามี) สำหรับแสดง Alert
     @Published var isAdmin: Bool = false         // สถานะ Admin ของผู้ใช้ปัจจุบัน (เพื่อแสดงปุ่มลบทุกโพสต์)
     
@@ -41,7 +41,7 @@ class SocialViewModel: ObservableObject {
     func checkAdminStatus() {
         guard let user = Auth.auth().currentUser else { return }
         
-        // --- LOGIC ตรวจสอบ Admin ---
+        // LOGIC ตรวจสอบ Admin
         // วิธีที่ 1: เช็คจาก Email (Hardcoded List) - ง่ายที่สุดสำหรับการเริ่มต้น
         let adminEmails = ["admin@swu.ac.th", "staff@swu.ac.th"] // ใส่ Email ของ Admin ที่นี่
         if let email = user.email, adminEmails.contains(email) {

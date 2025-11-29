@@ -62,11 +62,11 @@ struct WelcomeView: View {
                                     .font(.system(size: 32, weight: .heavy)) // Font หนาพิเศษ
                                     .foregroundColor(Color.Theme.primary)
                                 
-                                Text("service hub for srinakharinwirot student")
+                                Text("Service Hub for Srinakharinwirot Student")
                                     .font(.headline)
                                     .foregroundColor(Color.gray)
                                 
-                                Text("แอปรวมบริการสำหรับนักศึกษา มศว.")
+                                Text("แหล่งรวมบริการสำหรับชาว มศว")
                                     .font(.body)
                                     .multilineTextAlignment(.center)
                                     .foregroundColor(Color.gray)

@@ -89,7 +89,7 @@ class AppState: ObservableObject {
         case student
     }
 
-    // ⭐️ Data Model สำหรับ Booking (การจอง)
+    // Data Model สำหรับ Booking (การจอง)
     // ใช้ Codable เพื่อแปลงไป-กลับจาก Firestore ได้ง่าย
     struct Booking: Codable, Identifiable {
         @DocumentID var id: String? // ID ของเอกสารใน Firestore
@@ -106,8 +106,8 @@ class AppState: ObservableObject {
         
         // เวลา
         let startTime: Timestamp // เวลาที่กดจอง
-        var endTime: Timestamp?  // ⭐️ เวลาสิ้นสุด (สำหรับคำนวณ 2 ชม.) - เป็น Optional เพราะตอนจองอาจจะยังไม่กำหนดเวลาจบแน่นอน
-        var extensionCount: Int? // ⭐️ จำนวนครั้งที่ต่อเวลา (เริ่มที่ 0)
+        var endTime: Timestamp?  // เวลาสิ้นสุด (สำหรับคำนวณ 2 ชม.) - เป็น Optional เพราะตอนจองอาจจะยังไม่กำหนดเวลาจบแน่นอน
+        var extensionCount: Int? // จำนวนครั้งที่ต่อเวลา (เริ่มที่ 0)
         
         // Helper สำหรับแสดงผลรายละเอียดแบบรวมๆ
         var details: String {
@@ -119,7 +119,7 @@ class AppState: ObservableObject {
         }
     }
     
-    // สถานะที่ถือว่า Active (ยังไม่จบ)
+    // สถานะ Active (ยังไม่จบ)
     private var activeStatuses = ["Booked", "Queued", "In-Use"]
 
     
@@ -131,7 +131,7 @@ class AppState: ObservableObject {
         activeReservation != nil || activeQueue != nil
     }
 
-    // ⭐️ Listener ส่วนตัว: ดักฟังการจองของตัวเองจาก Firestore
+    // Listener ส่วนตัว: ดักฟังการจองของตัวเองจาก Firestore
     // ทำงานแบบ Real-time: ถ้าสถานะใน Database เปลี่ยน หน้าจอก็จะเปลี่ยนตามทันที
     func listenForActiveBooking() {
         guard let userID = currentUser?.id else { return }
@@ -162,7 +162,7 @@ class AppState: ObservableObject {
                 self.activeReservation = (docID, booking)
                 self.activeQueue = nil // ล้างค่าเก่า
                 
-                // ⭐️ เริ่มจับเวลา (Unified Timer) ถ้าสถานะเป็น In-Use
+                // เริ่มจับเวลา (Unified Timer) ถ้าสถานะเป็น In-Use
                 self.startTimer(booking: booking)
             }
         }
@@ -175,7 +175,7 @@ class AppState: ObservableObject {
         clearLocalBooking(fromListener: true)
     }
 
-    // ⭐️ สร้าง Reservation ใหม่ (บันทึกลง Firestore)
+    // สร้าง Reservation ใหม่ (บันทึกลง Firestore)
     // สถานะเริ่มต้นจะเป็น "Booked" (รอ Admin Check-in ถึงจะเริ่มนับเวลา)
     func createReservation(service: LibraryService, slotID: String, timeSlot: String?, items: [String]?) {
         guard let userID = currentUser?.id else { return }
@@ -187,7 +187,7 @@ class AppState: ObservableObject {
         createReservation(service: service, slotID: slotID, timeSlot: nil, items: items)
     }
 
-    // ⭐️ ต่อเวลา (+2 ชม.)
+    // ต่อเวลา (+2 ชม.)
     func extendBooking() {
         guard let booking = activeReservation ?? activeQueue else { return }
         guard let currentEndTime = booking.data.endTime?.dateValue() else { return }
@@ -200,7 +200,7 @@ class AppState: ObservableObject {
         }
     }
 
-    // ⭐️ ยกเลิก/จบการจอง (เปลี่ยน Status เป็น Cancelled)
+    // ยกเลิก/จบการจอง (เปลี่ยน Status เป็น Cancelled)
     func cancelActiveBooking(fromListener: Bool = false) {
         if fromListener {
             clearLocalBooking(fromListener: true)
@@ -329,7 +329,7 @@ class AppState: ObservableObject {
     // MARK: - 7. Unified Timer Logic
     // ระบบจับเวลาถอยหลัง
     
-    // ⭐️ Timer ที่ฉลาดขึ้น (เริ่มนับเมื่อ In-Use เท่านั้น)
+    // Timer ที่ฉลาดขึ้น (เริ่มนับเมื่อ In-Use เท่านั้น)
     func startTimer(booking: Booking) {
         stopTimer()
         
@@ -401,7 +401,7 @@ class AppState: ObservableObject {
                         self?.isLoggedIn = true
                         self?.isBrowsingAsGuest = false
                         self?.listenForActiveBooking()
-                        // ⭐️ เริ่มฟังรายการกิจกรรมแบบ Real-time ตั้งแต่ Login
+                        // เริ่มฟังรายการกิจกรรมแบบ Real-time ตั้งแต่ Login
                         self?.listenToActivities()
 
                         // MARK: - อัปเดต Comment: เริ่ม Listener สำหรับ Admin Bookings ทันทีที่ Admin Login
@@ -450,7 +450,7 @@ class AppState: ObservableObject {
             guard let self = self else { return }
             
             DispatchQueue.main.async {
-                // ⭐️ แทนที่จะแทนที่ array ทั้งหมด ให้อัปเดตค่าใน Activity object เดิม
+                // แทนที่จะแทนที่ array ทั้งหมด ให้อัปเดตค่าใน Activity object เดิม
                 // เพื่อให้ SwiftUI ยังคง observe object เดิมอยู่
                 
                 for loadedActivity in loadedActivities {

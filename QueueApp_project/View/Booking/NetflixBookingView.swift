@@ -36,7 +36,7 @@ struct NetflixBookingView: View {
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
-                // --- HEADER ---
+                // HEADER
                 VStack(alignment: .leading, spacing: 10) {
                     // Back Button
                     Button(action: {
@@ -69,7 +69,7 @@ struct NetflixBookingView: View {
                 .padding(.horizontal, 30)
                 .padding(.bottom, 30)
                 
-                // --- CONTENT (White Sheet) ---
+                // CONTENT (White Sheet)
                 ZStack {
                     Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -79,7 +79,7 @@ struct NetflixBookingView: View {
                         ScrollView(showsIndicators: false) {
                             VStack(alignment: .leading, spacing: 25) {
                                 
-                                // --- 1. เลือกรอบเวลา ---
+                                // 1. เลือกรอบเวลา
                                 VStack(alignment: .leading, spacing: 10) {
                                     Text("1. Select a Time Slot")
                                         .font(.title3).fontWeight(.bold)
@@ -94,7 +94,7 @@ struct NetflixBookingView: View {
                                 
                                 Divider()
                                 
-                                // --- 2. เลือกห้อง ---
+                                // 2. เลือกห้อง
                                 VStack(alignment: .leading, spacing: 10) {
                                     Text("2. Select a Room")
                                         .font(.title3).fontWeight(.bold)
@@ -127,7 +127,7 @@ struct NetflixBookingView: View {
             }
             .edgesIgnoringSafeArea(.bottom)
             
-            // --- Floating Action Button ---
+            // Floating Action Button
             VStack {
                 Spacer()
                 Button(action: {

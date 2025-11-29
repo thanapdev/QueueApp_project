@@ -43,7 +43,7 @@ struct BoardGameBookingView: View {
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
-                // --- HEADER ---
+                // HEADER
                 VStack(alignment: .leading, spacing: 10) {
                     // Back Button
                     Button(action: {
@@ -76,7 +76,7 @@ struct BoardGameBookingView: View {
                 .padding(.horizontal, 30)
                 .padding(.bottom, 30)
                 
-                // --- CONTENT (White Sheet) ---
+                // CONTENT (White Sheet)
                 ZStack {
                     Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -86,7 +86,7 @@ struct BoardGameBookingView: View {
                         ScrollView(showsIndicators: false) {
                             VStack(alignment: .leading, spacing: 25) {
                                 
-                                // --- 1. เลือกโต๊ะ ---
+                                // 1. เลือกโต๊ะ
                                 VStack(alignment: .leading, spacing: 10) {
                                     Text("1. Select a Table")
                                         .font(.title3).fontWeight(.bold)
@@ -106,7 +106,7 @@ struct BoardGameBookingView: View {
                                 
                                 Divider()
                                 
-                                // --- 2. เลือกเกม ---
+                                // 2. เลือกเกม
                                 VStack(alignment: .leading, spacing: 10) {
                                     HStack {
                                         Text("2. Select Games")
@@ -175,7 +175,7 @@ struct BoardGameBookingView: View {
             }
             .edgesIgnoringSafeArea(.bottom)
             
-            // --- Floating Action Button ---
+            // Floating Action Button
             VStack {
                 Spacer()
                 Button(action: {

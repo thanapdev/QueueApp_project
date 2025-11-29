@@ -33,7 +33,7 @@ struct StudentActivityListView: View {
                     HStack {
                         // ปุ่ม Back แบบไม่ใช้ Navigation Link เพื่อความสวยงาม
                         Button(action: {
-                            // เช็คก่อนว่ามีให้ Dismiss ไหม ถ้าไม่มี (เช่นเป็น Root view) ก็ไม่ทำอะไร
+                            // เช็กก่อนว่ามีให้ Dismiss ไหม ถ้าไม่มี (เช่นเป็น Root view) ก็ไม่ทำอะไร
                             presentationMode.wrappedValue.dismiss()
                         }) {
                             HStack(spacing: 5) {
@@ -87,7 +87,7 @@ struct StudentActivityListView: View {
                         // Activities List
                         ScrollView(showsIndicators: false) {
                             LazyVStack(spacing: 16) {
-                                // ✅ ใช้ indices loop เพื่อส่ง activity object ตัวจริงให้ ObservedObject ทำงาน
+                                // ใช้ indices loop เพื่อส่ง activity object ตัวจริงให้ ObservedObject ทำงาน
                                 ForEach(appState.activities.indices, id: \.self) { index in
                                     let activity = appState.activities[index]
                                     

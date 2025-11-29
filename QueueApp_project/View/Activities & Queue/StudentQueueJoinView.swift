@@ -23,7 +23,7 @@ struct StudentQueueJoinView: View {
     // ตรวจสอบว่าผู้ใช้จองคิวไปแล้วหรือยัง
     var isJoined: Bool {
         guard let studentId = appState.currentUser?.id else { return false }
-        // เช็คจาก array queues ที่ activity ถืออยู่ (ซึ่งอัปเดต real-time จาก Listener ใน AppState)
+        // เช็กจาก array queues ที่ activity ถืออยู่ (ซึ่งอัปเดต real-time จาก Listener ใน AppState)
         return activity.queues.contains { $0.studentId == studentId }
     }
 
@@ -33,9 +33,8 @@ struct StudentQueueJoinView: View {
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
-                // ---------------------------------------
+           
                 // HEADER SECTION
-                // ---------------------------------------
                 VStack(alignment: .leading, spacing: 10) {
                     // Back Button
                     Button(action: {
@@ -69,9 +68,8 @@ struct StudentQueueJoinView: View {
                 .padding(.horizontal, 30)
                 .padding(.bottom, 30)
                 
-                // ---------------------------------------
+   
                 // CONTENT AREA (White Sheet)
-                // ---------------------------------------
                 ZStack {
                     Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -81,9 +79,8 @@ struct StudentQueueJoinView: View {
                         Spacer()
                         
                         if isJoined {
-                            // =========================================
+                     
                             // CASE 1: JOINED (แสดงสถานะคิว)
-                            // =========================================
                             if let myQueue = activity.queues.first(where: { $0.studentId == appState.currentUser?.id }),
                                let myIndex = activity.queues.firstIndex(where: { $0.id == myQueue.id }) {
                                 
@@ -119,7 +116,7 @@ struct StudentQueueJoinView: View {
                                         } else {
                                             // ยังรออยู่
                                             Circle()
-                                                .trim(from: 0.0, to: 0.75) // แสดงขีดความคืบหน้าหลอกๆ ให้ดูสวย
+                                                .trim(from: 0.0, to: 0.75)
                                                 .stroke(style: StrokeStyle(lineWidth: 15, lineCap: .round))
                                                 .foregroundColor(Color.Theme.primary)
                                                 .frame(width: 220, height: 220)
@@ -140,7 +137,7 @@ struct StudentQueueJoinView: View {
                                     }
                                     .padding(.top, 20)
                                     
-                                    // --- Info Text ---
+                                    // Info Text
                                     VStack(spacing: 5) {
                                         Text("หมายเลขคิวของคุณ")
                                             .foregroundColor(.gray)
@@ -156,7 +153,7 @@ struct StudentQueueJoinView: View {
                                     
                                     Spacer()
                                     
-                                    // --- Cancel Button ---
+                                    // Cancel Button
                                     Button(action: {
                                         leaveQueue()
                                     }) {
@@ -177,9 +174,8 @@ struct StudentQueueJoinView: View {
                             }
                             
                         } else {
-                            // =========================================
+
                             // CASE 2: NOT JOINED (ยังไม่จอง)
-                            // =========================================
                             VStack(spacing: 30) {
                                 Image(systemName: "person.3.sequence.fill")
                                     .font(.system(size: 80))

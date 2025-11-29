@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Admin Booking View
 // หน้าจัดการการจองสำหรับ Admin
 // ทำหน้าที่:
-// 1. แสดงรายการจองทั้งหมดที่ยัง Active อยู่ (ดึงข้อมูลจาก `appState.allAdminBookings` ที่อัปเดตแบบ Real-time)
+// 1. แสดงรายการจองทั้งหมดที่ยัง Active อยู่ (ดึงข้อมูลจาก 'appState.allAdminBookings' ที่อัปเดตแบบ Real-time)
 // 2. มีปุ่มสำหรับ Check-in, Finish หรือ Skip Time สำหรับแต่ละรายการ
 // 3. (เดิม) ยกเลิกการจอง
 struct AdminBookingView: View {

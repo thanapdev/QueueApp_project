@@ -144,7 +144,7 @@ struct AlreadyBookedView: View {
     var body: some View {
         ZStack(alignment: .topLeading) { // 2. ใช้ ZStack เพื่อวางปุ่ม Back มุมซ้ายบน
             
-            // --- ปุ่ม Back (กลับไปหน้าเลือกบริการ) ---
+            // ปุ่ม Back (กลับไปหน้าเลือกบริการ)
             Button(action: {
                 dismiss()
             }) {
@@ -163,7 +163,7 @@ struct AlreadyBookedView: View {
             .padding(.top, 50) // เผื่อพื้นที่ Safe Area ด้านบน
             .zIndex(1) // ให้ปุ่มลอยอยู่ชั้นบนสุด
             
-            // --- เนื้อหาแจ้งเตือน (อยู่ตรงกลางเหมือนเดิม) ---
+            // เนื้อหาแจ้งเตือน (อยู่ตรงกลางเหมือนเดิม)
             VStack(spacing: 24) {
                 Spacer()
                 
@@ -210,7 +210,7 @@ struct AlreadyBookedView: View {
                 
                 Spacer()
                 
-                // ปุ่ม End Session (เผื่ออยากยกเลิกจริงๆ)
+                // ปุ่ม End Session (เผื่ออยากยกเลิกจริง ๆ )
                 Button(action: {
                     appState.cancelActiveBooking()
                 }) {

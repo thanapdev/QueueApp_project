@@ -31,7 +31,7 @@ struct BookingView: View {
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
-                // --- Header ---
+                // Header
                 VStack(alignment: .leading, spacing: 8) {
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
@@ -54,7 +54,7 @@ struct BookingView: View {
                         .foregroundColor(.white)
                         .padding(.top, 10)
                     
-                    Text("จองห้องและบริการต่างๆ ของห้องสมุด")
+                    Text("จองห้องและบริการต่าง ๆ ของห้องสมุด")
                         .font(.body)
                         .foregroundColor(Color.white.opacity(0.9))
                 }
@@ -62,7 +62,7 @@ struct BookingView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 30)
                 
-                // --- Content Area ---
+                // Content Area
                 ZStack {
                     Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -87,9 +87,8 @@ struct BookingView: View {
                                 }
                             }
                             
-                            // -------------------------------------------------
-                            // 2. ✅ NEW: FOOTER SECTION (เติมตรงนี้ให้เต็ม)
-                            // -------------------------------------------------
+                            // 2. NEW: FOOTER SECTION (เติมตรงนี้ให้เต็ม)
+
                             VStack(spacing: 20) {
                                 Divider()
                                     .padding(.vertical, 10)
@@ -151,7 +150,7 @@ struct BookingView: View {
                                     .padding(.top, 10)
                             }
                             .padding(.top, 20)
-                            // -------------------------------------------------
+
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 120) // เว้นที่ให้ Banner เยอะหน่อย
@@ -160,7 +159,7 @@ struct BookingView: View {
             }
             .edgesIgnoringSafeArea(.bottom)
             
-            // --- Active Banner ---
+            // Active Banner
             // แสดง Banner แจ้งเตือนถ้ามีการจองค้างอยู่
             if appState.hasActiveBooking {
                 VStack {

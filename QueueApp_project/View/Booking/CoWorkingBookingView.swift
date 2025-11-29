@@ -38,7 +38,7 @@ struct CoWorkingBookingView: View {
             DynamicBackground(style: .random)
             
             VStack(spacing: 0) {
-                // --- HEADER ---
+                // HEADER
                 VStack(alignment: .leading, spacing: 10) {
                     // Back Button
                     Button(action: {
@@ -71,7 +71,7 @@ struct CoWorkingBookingView: View {
                 .padding(.horizontal, 30)
                 .padding(.bottom, 30)
                 
-                // --- CONTENT (White Sheet) ---
+                // CONTENT (White Sheet)
                 ZStack {
                     Color.Theme.white
                         .clipShape(RoundedCorner(radius: 30, corners: [.topLeft, .topRight]))
@@ -113,7 +113,7 @@ struct CoWorkingBookingView: View {
             }
             .edgesIgnoringSafeArea(.bottom)
             
-            // --- Floating Action Button ---
+            // Floating Action Button 
             VStack {
                 Spacer()
                 Button(action: {

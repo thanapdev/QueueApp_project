@@ -9,7 +9,7 @@ import CoreData
 
 // MARK: - Core Data Persistence
 // ตัวจัดการฐานข้อมูล Core Data (Local Database)
-// หมายเหตุ: ในโปรเจกต์นี้หลักๆ ใช้ Firebase เป็น Backend, Core Data อาจจะถูกสร้างมาโดย Default ของ Xcode
+// หมายเหตุ: ในโปรเจกต์นี้หลัก ๆ ใช้ Firebase เป็น Backend, Core Data อาจจะถูกสร้างมาโดย Default ของ Xcode
 // แต่อาจจะยังเก็บไว้ใช้สำหรับ Cache ข้อมูลบางอย่างในเครื่องได้
 struct PersistenceController {
     // Singleton Instance สำหรับเรียกใช้ทั่วทั้งแอป
